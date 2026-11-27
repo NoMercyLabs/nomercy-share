@@ -49,7 +49,7 @@ internal sealed class FakeDiscordServer : IDisposable
             {
                 context = await _listener.GetContextAsync();
             }
-            catch (Exception error) when (error is HttpListenerException or ObjectDisposedException or InvalidOperationException)
+            catch (Exception error) when (error is HttpListenerException or ObjectDisposedException or InvalidOperationException or ArgumentException)
             {
                 return;
             }

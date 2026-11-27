@@ -55,6 +55,14 @@ public static class Program
             model.MaxSizeMegabytes = "abc";
             model.Save();
             SaveSettings(Path.Combine(folder, $"share-settings-errors-{name}.png"), model);
+
+            SettingsViewModel on = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), new DiscordSettings { Enabled = true }, webhookStored: true);
+            SaveSettings(Path.Combine(folder, $"share-settings-discord-{name}.png"), on);
+            SettingsViewModel wrong = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
+            wrong.DiscordEnabled = true;
+            wrong.DiscordWebhook = "https://example.test/not-discord";
+            wrong.Save();
+            SaveSettings(Path.Combine(folder, $"share-settings-discord-error-{name}.png"), wrong);
         }
     }
 
@@ -89,16 +97,22 @@ public static class Program
         window.Close();
     }
 
-    private static SettingsViewModel SettingsModel(string temp)
+    private static SettingsViewModel SettingsModel(string temp, DiscordSettings? discord = null, bool webhookStored = false)
     {
         SettingsFile file = new(Path.Combine(temp, "settings.json"));
         file.Save(new ShareSettings
         {
             Storage = new StorageSettings { Endpoint = "https://storage.example.test", Bucket = "made-up-bucket", PublicBaseUrl = "https://share.example.test", CredentialName = "made-up" },
-            Expiry = new ExpirySettings { DefaultDays = 7 }
+            Expiry = new ExpirySettings { DefaultDays = 7 },
+            Discord = discord ?? new DiscordSettings()
         });
         FakeCredentialStore credentials = new();
         credentials.Stored["made-up"] = new StoredCredential("made-up-key-id", "made-up-secret");
+        if (webhookStored)
+        {
+            credentials.Stored[ShareDefaults.DiscordCredentialName] = new StoredCredential("webhook", "https://discord.com/api/webhooks/000/made-up-token");
+        }
+
         BarViewModel bar = new(new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings()),
             new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()));
         return new SettingsViewModel(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3"]);

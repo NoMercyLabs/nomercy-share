@@ -21,6 +21,8 @@ public sealed record ShareSettings
 
     public ClipboardSettings Clipboard { get; init; } = new();
 
+    public DiscordSettings Discord { get; init; } = new();
+
     public BarSettings Bar { get; init; } = new();
 
     public CaptureSettings Capture { get; init; } = new();

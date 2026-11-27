@@ -26,7 +26,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<IClipboard>(),
                 () => live.Current.Expiry,
                 sp.GetRequiredService<ClipboardSettings>(),
-                sp.GetService<RecentLinks>());
+                sp.GetService<RecentLinks>(),
+                () => [.. sp.GetServices<ILinkDestination>()]);
         });
         services.AddSingleton(sp => new CaptureFiles(
             sp.GetRequiredService<CaptureSettings>(),

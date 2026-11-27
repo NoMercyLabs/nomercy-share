@@ -12,6 +12,7 @@ One GET handler (`src/router.ts`). HEAD works too; other methods answer 405.
 | A key outside `exp-<N>d/` or `keep/`, or any `.json` key | 404 page. A sidecar is never served. |
 | The sidecar says the link expired | 410, a calm page (a raw request gets 410 too). |
 | `Accept` lists `text/html`, no `?raw=1` | The viewer page, with Open Graph and Twitter tags. |
+| A link preview bot (Discordbot, Twitterbot, Slackbot-LinkExpanding, TelegramBot, facebookexternalhit) in `User-Agent`, no `?raw=1` | The viewer page, whatever `Accept` says. |
 | Anything else, or `?raw=1` | The object, with its content type, ETag, a cache header and byte ranges. |
 | No such object | 404 page. |
 

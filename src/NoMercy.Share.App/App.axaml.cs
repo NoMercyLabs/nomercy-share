@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Destinations;
 using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
@@ -81,6 +82,7 @@ public sealed class App : Application
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));
         AddPlatform(services);
         services.AddS3Storage();
+        services.AddDiscordDestination();
         services.AddShareCore();
         return services.BuildServiceProvider();
     }

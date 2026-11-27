@@ -20,6 +20,17 @@
   <data name="settings.title" xml:space="preserve"><value>NoMercy Share settings</value></data>
   <data name="settings.section.sharing" xml:space="preserve"><value>Sharing</value></data>
   <data name="settings.section.links" xml:space="preserve"><value>Links</value></data>
+  <data name="settings.section.discord" xml:space="preserve"><value>Discord</value></data>
+  <data name="settings.discord.enabled" xml:space="preserve"><value>Post new links to Discord</value></data>
+  <data name="settings.discord.webhook" xml:space="preserve"><value>Webhook address</value></data>
+  <data name="settings.error.missing.discord" xml:space="preserve"><value>Enter a Discord webhook address.</value></data>
+  <data name="settings.error.discord" xml:space="preserve"><value>Enter a full Discord webhook address, like https://discord.com/api/webhooks/….</value></data>
+  <data name="notice.destination.failed" xml:space="preserve"><value>Posting to {0} failed: {1}.</value></data>
+  <data name="error.destination.unexpected" xml:space="preserve"><value>an unexpected error</value></data>
+  <data name="error.discord.address" xml:space="preserve"><value>the webhook address is not valid</value></data>
+  <data name="error.discord.status" xml:space="preserve"><value>status {0}</value></data>
+  <data name="error.discord.timeout" xml:space="preserve"><value>timed out</value></data>
+  <data name="error.discord.network" xml:space="preserve"><value>no connection</value></data>
   <data name="settings.section.hotkeys" xml:space="preserve"><value>Hotkeys</value></data>
   <data name="settings.section.recording" xml:space="preserve"><value>Recording</value></data>
   <data name="settings.sharing.on" xml:space="preserve"><value>Links go to {0}</value></data>

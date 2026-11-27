@@ -1,5 +1,6 @@
 using System.Globalization;
 using NoMercy.Share.Core.Bar;
+using NoMercy.Share.Core.Destinations;
 using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Sharing;
 
@@ -30,6 +31,9 @@ public sealed class SettingsViewModel : ObservableObject
     private string _accessKeyId;
     private string _secretAccessKey = string.Empty;
     private ExpiryChoice _selectedExpiry;
+    private bool _discordEnabled;
+    private string _discordWebhook = string.Empty;
+    private string? _discordWebhookError;
     private string _maxSizeMegabytes;
     private string _frameRate;
     private string? _endpointError;
@@ -60,6 +64,8 @@ public sealed class SettingsViewModel : ObservableObject
         SecretPlaceholder = stored is null ? string.Empty : Strings.Get("settings.secret.saved");
         ExpiryChoices = ChoicesFor(storage, current.Expiry);
         _selectedExpiry = ExpiryChoices.First(choice => choice.Days == current.Expiry.DefaultDays);
+        _discordEnabled = current.Discord.Enabled;
+        DiscordWebhookPlaceholder = credentials.Read(DiscordNameFor(current.Discord)) is null ? string.Empty : Strings.Get("settings.secret.saved");
         Hotkeys = [.. HotkeyActions.Select(action => new HotkeyRow(action, current.Hotkeys.Chords().GetValueOrDefault(action, string.Empty)))];
         _maxSizeMegabytes = current.Recording.MaxSizeMegabytes.ToString(CultureInfo.InvariantCulture);
         _frameRate = current.Recording.FrameRate.ToString(CultureInfo.InvariantCulture);
@@ -139,6 +145,28 @@ public sealed class SettingsViewModel : ObservableObject
     {
         get => _selectedExpiry;
         set => Set(ref _selectedExpiry, value);
+    }
+
+    public bool DiscordEnabled
+    {
+        get => _discordEnabled;
+        set => Set(ref _discordEnabled, value);
+    }
+
+    /// <summary>What the user typed this time. It goes to the credential store and nowhere else.</summary>
+    public string DiscordWebhook
+    {
+        get => _discordWebhook;
+        set => Set(ref _discordWebhook, value);
+    }
+
+    /// <summary>Shown in the empty webhook box when an address is stored; the address itself is never loaded.</summary>
+    public string DiscordWebhookPlaceholder { get; }
+
+    public string? DiscordWebhookError
+    {
+        get => _discordWebhookError;
+        private set => Set(ref _discordWebhookError, value);
     }
 
     public string MaxSizeMegabytes
@@ -227,6 +255,7 @@ public sealed class SettingsViewModel : ObservableObject
         ClearErrors();
         ShareSettings current = _file.Load();
         (StorageSettings storage, CredentialPlan credential) = PlanStorage(current.Storage);
+        (DiscordSettings discord, StoredCredential? discordWebhook) = PlanDiscord(current.Discord);
         RecordingSettings recording = PlanRecording(current.Recording);
         HotkeySettings hotkeys = PlanHotkeys(current.Hotkeys);
         if (HasErrors)
@@ -237,6 +266,7 @@ public sealed class SettingsViewModel : ObservableObject
         ShareSettings next = current with
         {
             Storage = storage,
+            Discord = discord,
             Expiry = current.Expiry with { DefaultDays = SelectedExpiry.Days },
             Recording = recording,
             Hotkeys = hotkeys
@@ -246,6 +276,11 @@ public sealed class SettingsViewModel : ObservableObject
             if (credential.Write is { } key)
             {
                 _credentials.Write(storage.CredentialName, key);
+            }
+
+            if (discordWebhook is not null)
+            {
+                _credentials.Write(discord.CredentialName, discordWebhook);
             }
 
             _file.Save(next);
@@ -266,12 +301,12 @@ public sealed class SettingsViewModel : ObservableObject
     public void Cancel() => CloseRequested?.Invoke(this, EventArgs.Empty);
 
     private bool HasErrors =>
-        new[] { EndpointError, BucketError, RegionError, PublicBaseUrlError, CredentialError, MaxSizeError, FrameRateError }.Any(error => error is not null)
+        new[] { EndpointError, BucketError, RegionError, PublicBaseUrlError, CredentialError, DiscordWebhookError, MaxSizeError, FrameRateError }.Any(error => error is not null)
         || Hotkeys.Any(row => row.Error is not null);
 
     private void ClearErrors()
     {
-        EndpointError = BucketError = RegionError = PublicBaseUrlError = CredentialError = MaxSizeError = FrameRateError = SaveError = null;
+        EndpointError = BucketError = RegionError = PublicBaseUrlError = CredentialError = DiscordWebhookError = MaxSizeError = FrameRateError = SaveError = null;
         foreach (HotkeyRow row in Hotkeys)
         {
             row.Error = null;
@@ -280,6 +315,31 @@ public sealed class SettingsViewModel : ObservableObject
 
     private static string CredentialNameFor(StorageSettings storage) =>
         string.IsNullOrWhiteSpace(storage.CredentialName) ? ShareDefaults.CredentialName : storage.CredentialName;
+
+    private static string DiscordNameFor(DiscordSettings discord) =>
+        string.IsNullOrWhiteSpace(discord.CredentialName) ? ShareDefaults.DiscordCredentialName : discord.CredentialName;
+
+    /// <summary>The Discord settings to save and the webhook to store; null when the stored one stays as it is.</summary>
+    private (DiscordSettings Discord, StoredCredential? Webhook) PlanDiscord(DiscordSettings current)
+    {
+        DiscordSettings discord = current with { Enabled = DiscordEnabled, CredentialName = DiscordNameFor(current) };
+        string typed = DiscordWebhook.Trim();
+        if (typed.Length > 0)
+        {
+            if (DiscordWebhookAddress.TryParse(typed, out _))
+            {
+                return (discord, DiscordWebhookAddress.ToCredential(typed));
+            }
+
+            DiscordWebhookError = Strings.Get("settings.error.discord");
+        }
+        else if (DiscordEnabled && _credentials.Read(discord.CredentialName) is null)
+        {
+            DiscordWebhookError = Strings.Get("settings.error.missing.discord");
+        }
+
+        return (discord, null);
+    }
 
     private static IReadOnlyList<ExpiryChoice> ChoicesFor(StorageSettings storage, ExpirySettings expiry)
     {

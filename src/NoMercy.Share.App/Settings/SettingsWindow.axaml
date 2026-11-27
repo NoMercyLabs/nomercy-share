@@ -118,6 +118,28 @@
         </StackPanel>
 
         <StackPanel Spacing="{DynamicResource Nm-Space-3}">
+          <TextBlock Classes="section" Text="{local:Loc settings.section.discord}" />
+          <Border Classes="section-line" />
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
+            <ToggleSwitch IsChecked="{Binding DiscordEnabled}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center"
+                          AutomationProperties.Name="{local:Loc settings.discord.enabled}" />
+            <TextBlock Classes="switch-label" Text="{local:Loc settings.discord.enabled}" />
+          </StackPanel>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.discord.webhook}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox PasswordChar="•" Text="{Binding DiscordWebhook}" PlaceholderText="{Binding DiscordWebhookPlaceholder}"
+                       AutomationProperties.Name="{local:Loc settings.discord.webhook}" />
+              <TextBlock Classes="field-error" Text="{Binding DiscordWebhookError}" IsVisible="{Binding DiscordWebhookError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="{DynamicResource Nm-Space-3}">
           <TextBlock Classes="section" Text="{local:Loc settings.section.hotkeys}" />
           <Border Classes="section-line" />
           <ItemsControl ItemsSource="{Binding Hotkeys}">

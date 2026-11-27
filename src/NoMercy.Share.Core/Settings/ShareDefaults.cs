@@ -29,6 +29,12 @@ public static class ShareDefaults
     /// <summary>The credential store name the settings window uses when the settings name none.</summary>
     public const string CredentialName = "nomercy-share";
 
+    /// <summary>The credential store name that holds the Discord webhook address when the settings name none.</summary>
+    public const string DiscordCredentialName = "nomercy-share-discord";
+
+    /// <summary>How long one post to Discord may take before it counts as failed.</summary>
+    public const int DiscordTimeoutSeconds = 10;
+
     /// <summary>How many days a link lives unless the upload says otherwise. Null in the settings means never.</summary>
     public const int ExpiryDays = 30;
 

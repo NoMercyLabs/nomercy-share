@@ -335,6 +335,11 @@ public sealed class BarViewModel : ObservableObject
     {
         ShareOutcome outcome = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
         Notice = Strings.Get(NoticeKeyFor(outcome));
+        foreach (DestinationFailure failure in outcome.DestinationFailures)
+        {
+            Notice += ". " + Strings.Get("notice.destination.failed", failure.Name, failure.Reason);
+        }
+
         if (capture.IsOverCap)
         {
             Notice += " " + Strings.Get("notice.recording.overcap", Megabytes(capture.SizeBytes), Megabytes(capture.SizeCapBytes));
