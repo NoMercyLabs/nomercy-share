@@ -87,7 +87,7 @@ public sealed class SettingsViewModelTests : IDisposable
         Assert.Equal(string.Empty, model.SecretAccessKey);
         Assert.Equal("Saved", model.SecretPlaceholder);
         Assert.Equal(7, model.SelectedExpiry.Days);
-        Assert.Equal("Ctrl+PrintScreen", model.Hotkeys.Single(row => row.Action == BarAction.Region).Chord);
+        Assert.Equal("Win+Shift+S", model.Hotkeys.Single(row => row.Action == BarAction.Region).Chord);
         Assert.Equal("25", model.MaxSizeMegabytes);
         Assert.Equal("24", model.FrameRate);
         Assert.Equal("Links go to share.example.test", model.SharingStatus);

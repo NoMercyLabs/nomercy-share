@@ -27,7 +27,7 @@ public sealed class HotkeyBinderTests
     {
         Binder().Start();
 
-        Assert.Equal(HotkeyChord.Parse("Ctrl+PrintScreen"), _hotkeys.Registered[BarAction.Region]);
+        Assert.Equal(HotkeyChord.Parse("Win+Shift+S"), _hotkeys.Registered[BarAction.Region]);
         Assert.Equal(HotkeyChord.Parse("PrintScreen"), _hotkeys.Registered[BarAction.FullScreen]);
         Assert.Equal(HotkeyChord.Parse("Alt+PrintScreen"), _hotkeys.Registered[BarAction.Window]);
         Assert.Equal(HotkeyChord.Parse("Shift+PrintScreen"), _hotkeys.Registered[BarAction.Record]);
@@ -59,21 +59,21 @@ public sealed class HotkeyBinderTests
     [Fact]
     public void ATakenChordIsNamedInOneNoticeAndTheAppKeepsRunning()
     {
-        _hotkeys.Taken.Add(HotkeyChord.Parse("Ctrl+PrintScreen"));
+        _hotkeys.Taken.Add(HotkeyChord.Parse("Win+Shift+S"));
         Binder().Start();
 
-        Assert.Equal("Hotkey Ctrl+PrintScreen is in use by another app", _bar.Notice);
+        Assert.Equal("Hotkey Win+Shift+S is in use by another app", _bar.Notice);
         Assert.Equal(4, _hotkeys.Registered.Count);
     }
 
     [Fact]
     public void SeveralTakenChordsAreNamedInTheSameNotice()
     {
-        _hotkeys.Taken.Add(HotkeyChord.Parse("Ctrl+PrintScreen"));
+        _hotkeys.Taken.Add(HotkeyChord.Parse("Win+Shift+S"));
         _hotkeys.Taken.Add(HotkeyChord.Parse("PrintScreen"));
         Binder().Start();
 
-        Assert.Equal("Hotkeys Ctrl+PrintScreen, PrintScreen are in use by another app", _bar.Notice);
+        Assert.Equal("Hotkeys Win+Shift+S, PrintScreen are in use by another app", _bar.Notice);
     }
 
     [Fact]

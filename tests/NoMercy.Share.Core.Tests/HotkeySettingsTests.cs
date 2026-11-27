@@ -21,7 +21,7 @@ public sealed class HotkeySettingsTests : IDisposable
     {
         IReadOnlyDictionary<BarAction, string> chords = new ShareSettings().Hotkeys.Chords();
 
-        Assert.Equal("Ctrl+PrintScreen", chords[BarAction.Region]);
+        Assert.Equal("Win+Shift+S", chords[BarAction.Region]);
         Assert.Equal("PrintScreen", chords[BarAction.FullScreen]);
         Assert.Equal("Alt+PrintScreen", chords[BarAction.Window]);
         Assert.Equal("Shift+PrintScreen", chords[BarAction.Record]);
@@ -42,6 +42,26 @@ public sealed class HotkeySettingsTests : IDisposable
     public void AChordInTheSettingsBeatsTheDefault()
     {
         Assert.Equal("Ctrl+Alt+R", new HotkeySettings { Region = "Ctrl+Alt+R" }.Chords()[BarAction.Region]);
+    }
+
+    [Fact]
+    public void AFileWithoutAHotkeysSectionGetsWinShiftSForRegion()
+    {
+        string path = Path.Combine(_folder, "settings.json");
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(path, "{}");
+
+        Assert.Equal("Win+Shift+S", new SettingsFile(path).Load().Hotkeys.Chords()[BarAction.Region]);
+    }
+
+    [Fact]
+    public void AFileThatNamesTheOldDefaultKeepsIt()
+    {
+        string path = Path.Combine(_folder, "settings.json");
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(path, JsonSerializer.Serialize(new { Hotkeys = new { Region = "Ctrl+PrintScreen" } }));
+
+        Assert.Equal("Ctrl+PrintScreen", new SettingsFile(path).Load().Hotkeys.Chords()[BarAction.Region]);
     }
 
     [Fact]
