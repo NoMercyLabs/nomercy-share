@@ -38,7 +38,7 @@ public sealed class NativeHostRunnerTests : IDisposable
     {
         output.Position = 0;
         byte[]? reply = await new NativeMessageCodec(new NativeHostSettings()).ReadAsync(output);
-        return JsonDocument.Parse(reply!).RootElement;
+        return JsonDocument.Parse(reply ?? []).RootElement;
     }
 
     [Fact]

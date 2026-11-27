@@ -119,6 +119,18 @@ public static class ShareDefaults
 
     public const int WebCaptureMaxFullPageHeight = 16384;
 
+    /// <summary>The id of the NoMercy Share browser extension; it comes from the public key in extension/manifest-key.txt.</summary>
+    public const string ExtensionId = "pffggmajnklhkjjgldpojacknecfkmlc";
+
+    public const string ExtensionOrigin = $"chrome-extension://{ExtensionId}/";
+
+    /// <summary>The name browsers know the native messaging host by.</summary>
+    public const string NativeHostName = "tv.nomercy.share";
+
+    public const int NativeHostMaxMessageMegabytes = 64;
+
+    public const bool NativeHostRegister = true;
+
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
 }

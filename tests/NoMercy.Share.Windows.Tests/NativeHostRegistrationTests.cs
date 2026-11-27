@@ -1,10 +1,13 @@
+using System.Runtime.Versioning;
 using System.Text.Json;
 using Microsoft.Win32;
+using NoMercy.Share.Core.NativeHost;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Platform.Windows;
 
 namespace NoMercy.Share.Windows.Tests;
 
+[SupportedOSPlatform("windows")]
 public sealed class NativeHostRegistrationTests : IDisposable
 {
     private const string HostName = "tv.nomercy.share";

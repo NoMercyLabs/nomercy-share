@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Security;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -7,6 +9,7 @@ using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
+using NoMercy.Share.Core.NativeHost;
 using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
@@ -34,11 +37,30 @@ public sealed class App : Application
             desktop.MainWindow = _window;
             services.GetRequiredService<BarViewModel>().SettingsRequested += (_, _) => ShowSettings(services);
             services.GetRequiredService<HotkeyBinder>().Start();
+            RegisterNativeHost(services.GetRequiredService<ShareSettings>().NativeHost);
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
             desktop.Exit += (_, _) => services.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>Tells Edge and Chrome where this exe is. A failure here never stops the bar.</summary>
+    private static void RegisterNativeHost(NativeHostSettings settings)
+    {
+        if (!OperatingSystem.IsWindows() || !settings.Register || Environment.ProcessPath is not { } exe)
+        {
+            return;
+        }
+
+        try
+        {
+            new NativeHostRegistration(Path.GetDirectoryName(SettingsFile.DefaultPath())!, exe, settings).Register();
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or SecurityException)
+        {
+            Trace.TraceError("The native messaging host could not be registered: {0}", error.Message);
+        }
     }
 
     /// <summary>Opens the settings window; a second request brings the open one to the front.</summary>

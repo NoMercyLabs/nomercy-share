@@ -1,5 +1,6 @@
 using Avalonia;
 using NoMercy.Share.Core;
+using NoMercy.Share.Core.NativeHost;
 
 namespace NoMercy.Share.App;
 
@@ -13,6 +14,11 @@ public static class Program
         {
             Console.Error.WriteLine(Strings.Get("unsupported.os"));
             return 2;
+        }
+
+        if (NativeHostArguments.Origin(args) is { } origin)
+        {
+            return NativeHostMain.Run(origin);
         }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

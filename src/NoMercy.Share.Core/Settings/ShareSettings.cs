@@ -1,3 +1,5 @@
+using NoMercy.Share.Core.NativeHost;
+
 namespace NoMercy.Share.Core.Settings;
 
 /// <summary>Where the bar was last seen, in screen pixels.</summary>
@@ -34,6 +36,8 @@ public sealed record ShareSettings
     public RecentSettings Recent { get; init; } = new();
 
     public WebCaptureSettings WebCapture { get; init; } = new();
+
+    public NativeHostSettings NativeHost { get; init; } = new();
 
     /// <summary>The recording limits in force. With Discord as the provider the size cap is the smaller of its own and Discord's.</summary>
     public RecordingSettings EffectiveRecording() =>

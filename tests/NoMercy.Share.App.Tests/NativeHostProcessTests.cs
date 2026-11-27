@@ -46,7 +46,7 @@ public sealed class NativeHostProcessTests : IDisposable
             process.Kill();
         }
 
-        return (JsonDocument.Parse(reply!).RootElement, exited);
+        return (JsonDocument.Parse(reply ?? []).RootElement, exited);
     }
 
     private static byte[] Request() => Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new

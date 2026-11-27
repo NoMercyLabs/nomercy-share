@@ -134,5 +134,15 @@
   <data name="web.error.unreachable" xml:space="preserve"><value>The page could not be opened.</value></data>
   <data name="web.error.browser" xml:space="preserve"><value>No Edge or Chrome was found. Set WebCapture.BrowserPath in settings.json.</value></data>
   <data name="web.error.failed" xml:space="preserve"><value>The browser could not capture that page. Try again.</value></data>
+  <data name="native.error.origin" xml:space="preserve"><value>This extension is not allowed to use NoMercy Share. Add its origin to NativeHost.AllowedOrigins in settings.json.</value></data>
+  <data name="native.error.type" xml:space="preserve"><value>The request is not a share request.</value></data>
+  <data name="native.error.mode" xml:space="preserve"><value>The capture mode must be fullPage, visible or element.</value></data>
+  <data name="native.error.base64" xml:space="preserve"><value>The picture is not valid base64.</value></data>
+  <data name="native.error.png" xml:space="preserve"><value>The picture is not a PNG file.</value></data>
+  <data name="native.error.upload" xml:space="preserve"><value>Upload failed: {0}</value></data>
+  <data name="native.error.save" xml:space="preserve"><value>The picture could not be saved: {0}</value></data>
+  <data name="native.error.empty" xml:space="preserve"><value>The extension sent no message.</value></data>
+  <data name="native.error.truncated" xml:space="preserve"><value>The message from the extension ended too soon.</value></data>
+  <data name="native.error.toobig" xml:space="preserve"><value>The message is bigger than {0} MB. Raise NativeHost.MaxMessageMegabytes in settings.json.</value></data>
   <data name="unsupported.os" xml:space="preserve"><value>NoMercy Share does not support this operating system yet. Windows is first; other platforms follow.</value></data>
 </root>
