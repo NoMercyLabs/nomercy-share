@@ -20,6 +20,18 @@ internal sealed class FakeCredentialStore(StoredCredential? credential) : ICrede
     }
 }
 
+public sealed class S3PutRequestsTests
+{
+    [Fact]
+    public void AnUploadIsSignedWithoutChunkedStreamingBecauseR2RefusesIt()
+    {
+        // R2 answers "STREAMING-AWS4-HMAC-SHA256-PAYLOAD not implemented" to the SDK's default chunked signing.
+        PutObjectRequest request = S3PutRequests.New("bucket", "key.png", "image/png");
+
+        Assert.False(request.UseChunkEncoding);
+    }
+}
+
 public sealed class S3ShareUploaderTests(S3MockFixture mock) : IClassFixture<S3MockFixture>
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 27, 10, 0, 0, TimeSpan.Zero);

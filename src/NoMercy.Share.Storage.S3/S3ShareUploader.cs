@@ -77,20 +77,16 @@ public sealed class S3ShareUploader(
 
     private async Task PutPictureAsync(AmazonS3Client client, string key, string filePath, string contentType, string? expiresAt, CancellationToken cancellationToken)
     {
-        PutObjectRequest request = new() { BucketName = settings.Bucket, Key = key, FilePath = filePath, ContentType = contentType };
+        PutObjectRequest request = S3PutRequests.New(settings.Bucket, key, contentType);
+        request.FilePath = filePath;
         request.Metadata[ExpiresAtMetadata] = expiresAt ?? NeverValue;
         await client.PutObjectAsync(request, cancellationToken);
     }
 
     private async Task PutSidecarAsync(AmazonS3Client client, string key, ShareSidecar sidecar, CancellationToken cancellationToken)
     {
-        PutObjectRequest request = new()
-        {
-            BucketName = settings.Bucket,
-            Key = key,
-            ContentBody = JsonSerializer.Serialize(sidecar, SidecarJson),
-            ContentType = ContentTypes.Json
-        };
+        PutObjectRequest request = S3PutRequests.New(settings.Bucket, key, ContentTypes.Json);
+        request.ContentBody = JsonSerializer.Serialize(sidecar, SidecarJson);
         await client.PutObjectAsync(request, cancellationToken);
     }
 
