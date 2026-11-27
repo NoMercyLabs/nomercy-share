@@ -117,6 +117,10 @@ internal sealed class FakeClipboard : IClipboard
         return Task.CompletedTask;
     }
 
+    public string? Text { get; set; }
+
+    public Task<string?> GetTextAsync(CancellationToken cancellationToken = default) => Task.FromResult(Text);
+
     public Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default)
     {
         Images.Add(pngFilePath);
