@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:NoMercy.Share.App"
+        x:Class="NoMercy.Share.App.RegionOverlayWindow"
+        Title="{local:Loc overlay.automation}" WindowDecorations="None" Topmost="True" ShowInTaskbar="False" CanResize="False"
+        WindowStartupLocation="Manual" Cursor="Cross" Background="{DynamicResource Share-Bar-Brush}" Focusable="True"
+        AutomationProperties.Name="{local:Loc overlay.automation}">
+  <Grid>
+    <Image x:Name="Frozen" Stretch="Fill" />
+    <Path x:Name="Dim" Fill="{DynamicResource Share-Dim-Brush}" IsHitTestVisible="False" />
+    <Canvas IsHitTestVisible="False">
+      <Border x:Name="Edge" BorderBrush="{DynamicResource Nm-Accent-Brush}" BorderThickness="{DynamicResource Nm-Space-0-5-Thickness}" IsVisible="False" />
+      <Border x:Name="SizeLabel" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+              CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}" IsVisible="False">
+        <TextBlock x:Name="SizeText" Foreground="{DynamicResource Nm-Text-Primary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}" />
+      </Border>
+    </Canvas>
+  </Grid>
+</Window>

@@ -4,4 +4,7 @@ namespace NoMercy.Share.Core;
 public interface IClipboard
 {
     Task SetTextAsync(string text, CancellationToken cancellationToken = default);
+
+    /// <summary>Puts the picture in a PNG file on the clipboard, so it can be pasted into a chat or an editor.</summary>
+    Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default);
 }

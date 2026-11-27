@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMercy.Share.Core.Bar;
+using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -9,7 +10,7 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Wires the bar. The caller registers the settings records (<see cref="StorageSettings"/>, <see cref="ExpirySettings"/>),
-    /// the platform interfaces and every <see cref="IShareUploader"/>; the uploader named in the storage settings is the one used.
+    /// <see cref="CaptureSettings"/>, the platform interfaces, the <see cref="ICaptureHost"/> and every <see cref="IShareUploader"/>; the uploader named in the storage settings is the one used.
     /// </summary>
     public static IServiceCollection AddShareCore(this IServiceCollection services)
     {
@@ -17,6 +18,15 @@ public static class ServiceCollectionExtensions
             ShareUploaderSelector.Select(sp.GetServices<IShareUploader>(), sp.GetRequiredService<StorageSettings>()),
             sp.GetRequiredService<IClipboard>(),
             sp.GetRequiredService<ExpirySettings>()));
+        services.AddSingleton(sp => new CaptureFiles(
+            sp.GetRequiredService<CaptureSettings>(),
+            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            () => DateTimeOffset.UtcNow));
+        services.AddSingleton(sp => new CaptureFlow(
+            sp.GetRequiredService<IScreenCapture>(),
+            sp.GetRequiredService<IClipboard>(),
+            sp.GetRequiredService<ICaptureHost>(),
+            sp.GetRequiredService<CaptureSettings>()));
         services.AddSingleton<BarViewModel>();
         return services;
     }

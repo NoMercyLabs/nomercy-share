@@ -13,16 +13,18 @@ public sealed class BarViewModelTests
     private readonly FakeUploader _uploader = new();
     private readonly FakeClipboard _clipboard = new();
 
-    private BarViewModel Bar() => new(_screen, _recorder, _web, new ShareFlow(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }));
+    private BarViewModel Bar() => new(
+        new CaptureFlow(_screen, _clipboard, new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
+        _recorder, _web, new ShareFlow(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }));
 
     [Fact]
-    public void TheRegionButtonCapturesARegionAndPutsTheLinkOnTheClipboard()
+    public void TheRegionButtonCapturesARegionAndPutsTheImageOnTheClipboardWithoutUploading()
     {
         Bar().RegionCommand.Execute(null);
 
         Assert.Equal(["region"], _screen.Calls);
-        Assert.Equal([("/tmp/region.png", Expiry.InDays(7))], _uploader.Uploads);
-        Assert.Equal(["https://share.example.test/abc"], _clipboard.Texts);
+        Assert.Equal(["/tmp/region.png"], _clipboard.Images);
+        Assert.Empty(_uploader.Uploads);
     }
 
     [Fact]

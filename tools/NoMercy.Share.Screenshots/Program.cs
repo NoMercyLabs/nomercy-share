@@ -13,6 +13,7 @@ using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
+using PixelRect = Avalonia.PixelRect;
 
 namespace NoMercy.Share.Screenshots;
 
@@ -49,13 +50,63 @@ public static class Program
         Application.Current.RequestedThemeVariant = ThemeVariant.Light;
         Save(reopened, Path.Combine(folder, "share-bar-v2-light.png"));
         reopened.Close();
+        RenderRegionOverlay(folder);
         return store.Load() == new BarPosition(300, 200) ? 0 : 1;
+    }
+
+    /// <summary>The region overlay on a made-up frozen screen with a selection drawn: full size, and a zoom on both ends of the selection.</summary>
+    private static void RenderRegionOverlay(string folder)
+    {
+        const int width = 1280;
+        const int height = 720;
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        RegionOverlayWindow overlay = new(SampleScreen(width, height), 1);
+        overlay.Show();
+        overlay.SetSelection(new Point(320, 180), new Point(900, 520));
+        Dispatcher.UIThread.RunJobs();
+        using (RenderTargetBitmap full = Render(overlay, 1, 0, width, 0, height))
+        {
+            full.Save(Path.Combine(folder, "region-overlay.png"));
+        }
+
+        using (RenderTargetBitmap start = Render(overlay, 4, 280, 120, 140, 90))
+        {
+            start.Save(Path.Combine(folder, "region-overlay-zoom-start.png"));
+        }
+
+        using (RenderTargetBitmap end = Render(overlay, 4, 820, 140, 460, 130))
+        {
+            end.Save(Path.Combine(folder, "region-overlay-zoom-end.png"));
+        }
+
+        overlay.Close();
+    }
+
+    /// <summary>A made-up screen: a diagonal gradient, a grid and a few colored blocks, so dimming and edges are easy to judge.</summary>
+    private static ScreenFrame SampleScreen(int width, int height)
+    {
+        byte[] pixels = new byte[width * height * ScreenFrame.BytesPerPixel];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int at = ((y * width) + x) * ScreenFrame.BytesPerPixel;
+                bool grid = x % 80 == 0 || y % 80 == 0;
+                pixels[at] = (byte)(grid ? 220 : 60 + (x * 120 / width));
+                pixels[at + 1] = (byte)(grid ? 220 : 50 + (y * 120 / height));
+                pixels[at + 2] = (byte)(grid ? 220 : 90);
+                pixels[at + 3] = 255;
+            }
+        }
+
+        return new ScreenFrame(0, 0, width, height, pixels);
     }
 
     private static BarWindow Open(BarPositionStore store)
     {
         ShareFlow flow = new(new NoUpload(), new NoClipboard(), new ExpirySettings());
-        BarViewModel model = new(new NotBuiltCapture(), new NotBuiltRecorder(), new NotBuiltWeb(), flow);
+        CaptureFlow capture = new(new NotBuiltCapture(), new NoClipboard(), new NoHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
+        BarViewModel model = new(capture, new NotBuiltRecorder(), new NotBuiltWeb(), flow);
         BarWindow window = new(model, store, new BarSettings());
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -79,13 +130,13 @@ public static class Program
         Console.WriteLine(file);
     }
 
-    private static RenderTargetBitmap Render(Window window, double scale, double from, double width)
+    private static RenderTargetBitmap Render(Window window, double scale, double from, double width, double fromY = 0, double? height = null)
     {
         Control root = (Control)window.GetVisualChildren().First();
         // A bitmap with a dpi above 96 puts the children in the wrong place in headless Skia, so the scale is a transform on a 96-dpi bitmap.
-        root.RenderTransform = new TransformGroup { Children = { new TranslateTransform(-from, 0), new ScaleTransform(scale, scale) } };
+        root.RenderTransform = new TransformGroup { Children = { new TranslateTransform(-from, -fromY), new ScaleTransform(scale, scale) } };
         root.RenderTransformOrigin = RelativePoint.TopLeft;
-        RenderTargetBitmap bitmap = new(new PixelSize((int)(width * scale), (int)(window.Bounds.Height * scale)));
+        RenderTargetBitmap bitmap = new(new PixelSize((int)(width * scale), (int)((height ?? window.Bounds.Height) * scale)));
         bitmap.Render(root);
         root.RenderTransform = null;
         return bitmap;
@@ -138,5 +189,14 @@ public static class Program
     private sealed class NoClipboard : NoMercy.Share.Core.IClipboard
     {
         public Task SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class NoHost : ICaptureHost
+    {
+        public Task HideAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task ShowAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

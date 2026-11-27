@@ -13,6 +13,8 @@ public sealed class CompositionTests
         ServiceCollection services = new();
         services.AddSingleton(settings.Storage);
         services.AddSingleton(settings.Expiry);
+        services.AddSingleton(settings.Capture with { HideDelayMilliseconds = 0 });
+        services.AddSingleton<ICaptureHost>(new FakeCaptureHost());
         services.AddSingleton<IScreenCapture>(new FakeScreenCapture());
         services.AddSingleton<IScreenRecorder>(new FakeScreenRecorder());
         services.AddSingleton<IWebPageCapture>(new FakeWebPageCapture());
@@ -34,7 +36,7 @@ public sealed class CompositionTests
         using ServiceProvider provider = Build(new ShareSettings { Storage = new StorageSettings { Provider = "minio" } }, r2, other);
 
         BarViewModel bar = provider.GetRequiredService<BarViewModel>();
-        await bar.RunAsync(BarAction.Region);
+        await bar.RunAsync(BarAction.WebPage);
 
         Assert.Empty(r2.Uploads);
         Assert.Single(other.Uploads);

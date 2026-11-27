@@ -7,16 +7,16 @@ namespace NoMercy.Share.Core.Bar;
 /// <summary>The floating bar: each button runs one action through the platform interfaces.</summary>
 public sealed class BarViewModel : ObservableObject
 {
-    private readonly IScreenCapture _screen;
+    private readonly CaptureFlow _capture;
     private readonly IScreenRecorder _recorder;
     private readonly IWebPageCapture _web;
     private readonly ShareFlow _flow;
     private string? _notice;
     private bool _busy;
 
-    public BarViewModel(IScreenCapture screen, IScreenRecorder recorder, IWebPageCapture web, ShareFlow flow)
+    public BarViewModel(CaptureFlow capture, IScreenRecorder recorder, IWebPageCapture web, ShareFlow flow)
     {
-        _screen = screen;
+        _capture = capture;
         _recorder = recorder;
         _web = web;
         _flow = flow;
@@ -102,13 +102,13 @@ public sealed class BarViewModel : ObservableObject
         switch (action)
         {
             case BarAction.Region:
-                await ShareAsync(await _screen.CaptureRegionAsync(cancellationToken), cancellationToken);
+                await CaptureAsync(CaptureKind.Region, cancellationToken);
                 break;
             case BarAction.Window:
-                await ShareAsync(await _screen.CaptureWindowAsync(cancellationToken), cancellationToken);
+                await CaptureAsync(CaptureKind.Window, cancellationToken);
                 break;
             case BarAction.FullScreen:
-                await ShareAsync(await _screen.CaptureFullScreenAsync(cancellationToken), cancellationToken);
+                await CaptureAsync(CaptureKind.FullScreen, cancellationToken);
                 break;
             case BarAction.WebPage:
                 await ShareAsync(await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken), cancellationToken);
@@ -124,6 +124,13 @@ public sealed class BarViewModel : ObservableObject
                 CloseRequested?.Invoke(this, EventArgs.Empty);
                 break;
         }
+    }
+
+    /// <summary>A still capture ends on the clipboard; sharing it is a later step.</summary>
+    private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken)
+    {
+        await _capture.RunAsync(kind, cancellationToken);
+        Notice = Strings.Get("notice.clipboard");
     }
 
     private async Task ToggleRecordingAsync(CancellationToken cancellationToken)

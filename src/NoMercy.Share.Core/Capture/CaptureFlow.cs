@@ -1,0 +1,63 @@
+using NoMercy.Share.Core.Settings;
+
+namespace NoMercy.Share.Core.Capture;
+
+/// <summary>Which still capture a bar button asks for.</summary>
+public enum CaptureKind
+{
+    Region,
+    Window,
+    FullScreen
+}
+
+/// <summary>The window that must not appear in a capture. The app registers the bar behind this.</summary>
+public interface ICaptureHost
+{
+    Task HideAsync(CancellationToken cancellationToken = default);
+
+    Task ShowAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>Lets the user drag a rectangle on a frozen picture of the screen. The UI toolkit implements it.</summary>
+public interface IRegionSelector
+{
+    /// <summary>Shows the frame and returns the chosen rectangle in virtual screen pixels, or null when the user cancels.</summary>
+    Task<PixelRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default);
+}
+
+/// <summary>A still capture: hide the bar, take the picture (which saves the PNG), bring the bar back, put the image on the clipboard.</summary>
+public sealed class CaptureFlow(
+    IScreenCapture screen,
+    IClipboard clipboard,
+    ICaptureHost host,
+    CaptureSettings settings,
+    Func<TimeSpan, CancellationToken, Task>? delay = null)
+{
+    private readonly Func<TimeSpan, CancellationToken, Task> _delay = delay ?? Task.Delay;
+
+    /// <summary>Runs one capture. A cancelled capture throws <see cref="OperationCanceledException"/> and touches nothing else.</summary>
+    public async Task<CaptureResult> RunAsync(CaptureKind kind, CancellationToken cancellationToken = default)
+    {
+        CaptureResult result;
+        await host.HideAsync(cancellationToken);
+        try
+        {
+            await _delay(TimeSpan.FromMilliseconds(settings.HideDelayMilliseconds), cancellationToken);
+            result = await CaptureAsync(kind, cancellationToken);
+        }
+        finally
+        {
+            await host.ShowAsync(CancellationToken.None);
+        }
+
+        await clipboard.SetImageAsync(result.FilePath, cancellationToken);
+        return result;
+    }
+
+    private Task<CaptureResult> CaptureAsync(CaptureKind kind, CancellationToken cancellationToken) => kind switch
+    {
+        CaptureKind.Region => screen.CaptureRegionAsync(cancellationToken),
+        CaptureKind.Window => screen.CaptureWindowAsync(cancellationToken),
+        _ => screen.CaptureFullScreenAsync(cancellationToken)
+    };
+}

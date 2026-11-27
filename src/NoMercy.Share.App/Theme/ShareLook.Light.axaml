@@ -6,5 +6,6 @@
   <SolidColorBrush x:Key="Share-Pressed-Brush" Color="#24000000" />
   <SolidColorBrush x:Key="Share-Separator-Brush" Color="#1F000000" />
   <!-- Fits inside the window margin (Nm-Space-6, 24): offset 4 + blur 12 stays within it. -->
+  <SolidColorBrush x:Key="Share-Dim-Brush" Color="#80000000" />
   <BoxShadows x:Key="Share-Shadow-Bar">0 4 12 0 #33000000</BoxShadows>
 </ResourceDictionary>

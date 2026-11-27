@@ -9,6 +9,9 @@ internal sealed class FakeScreenCapture : IScreenCapture
 
     public Exception? Throws { get; set; }
 
+    /// <summary>Runs inside every capture, so a test can look at the state at that moment.</summary>
+    public Action? OnCapture { get; set; }
+
     public Task<CaptureResult> CaptureRegionAsync(CancellationToken cancellationToken = default) => Run("region");
 
     public Task<CaptureResult> CaptureWindowAsync(CancellationToken cancellationToken = default) => Run("window");
@@ -18,6 +21,7 @@ internal sealed class FakeScreenCapture : IScreenCapture
     private Task<CaptureResult> Run(string call)
     {
         Calls.Add(call);
+        OnCapture?.Invoke();
         return Throws is null ? Task.FromResult(new CaptureResult($"/tmp/{call}.png", "image/png")) : Task.FromException<CaptureResult>(Throws);
     }
 }
@@ -77,9 +81,38 @@ internal sealed class FakeClipboard : IClipboard
 {
     public List<string> Texts { get; } = [];
 
+    public List<string> Images { get; } = [];
+
     public Task SetTextAsync(string text, CancellationToken cancellationToken = default)
     {
         Texts.Add(text);
+        return Task.CompletedTask;
+    }
+
+    public Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default)
+    {
+        Images.Add(pngFilePath);
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class FakeCaptureHost : ICaptureHost
+{
+    public List<string> Events { get; } = [];
+
+    public bool Hidden { get; private set; }
+
+    public Task HideAsync(CancellationToken cancellationToken = default)
+    {
+        Hidden = true;
+        Events.Add("hide");
+        return Task.CompletedTask;
+    }
+
+    public Task ShowAsync(CancellationToken cancellationToken = default)
+    {
+        Hidden = false;
+        Events.Add("show");
         return Task.CompletedTask;
     }
 }
