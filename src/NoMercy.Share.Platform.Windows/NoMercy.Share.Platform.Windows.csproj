@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Windows implementations of the platform interfaces. Step 1 holds stubs; each later step fills one in. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NoMercy.Share.Core/NoMercy.Share.Core.csproj" />
+  </ItemGroup>
+</Project>

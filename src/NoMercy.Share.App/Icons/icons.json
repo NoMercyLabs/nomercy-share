@@ -1,0 +1,15 @@
+{
+  "_about": "The Moooom icons the bar uses, by their Moooom name. Run tools/nm-icons/emit-avalonia-icons.mjs after a change.",
+  "icons": [
+    "crossHair",
+    "macOsWindow",
+    "monitor",
+    "webcam",
+    "globe",
+    "link",
+    "settings",
+    "grabDots",
+    "cross",
+    "nomercy"
+  ]
+}

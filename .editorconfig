@@ -1,0 +1,29 @@
+# The code style is enforced by the build (EnforceCodeStyleInBuild), not by a hand-run IDE cleanup.
+# Same rules as Arcanum (copied): each is an error, so `dotnet build` and `dotnet format --verify-no-changes` fail on a violation.
+root = true
+
+[*.cs]
+# Explicit types, never var (IDE0008).
+csharp_style_var_for_built_in_types = false:error
+csharp_style_var_when_type_is_apparent = false:error
+csharp_style_var_elsewhere = false:error
+
+# Collection expressions.
+dotnet_style_prefer_collection_expression = true:error
+dotnet_style_collection_initializer = true:error
+csharp_style_implicit_object_creation_when_type_is_apparent = true:error
+
+dotnet_diagnostic.IDE0005.severity = error
+dotnet_diagnostic.IDE0008.severity = error
+dotnet_diagnostic.IDE0028.severity = error
+dotnet_diagnostic.IDE0090.severity = error
+dotnet_diagnostic.IDE0300.severity = error
+dotnet_diagnostic.IDE0301.severity = error
+dotnet_diagnostic.IDE0305.severity = error
+dotnet_diagnostic.IDE0370.severity = error
+dotnet_diagnostic.SYSLIB1045.severity = error
+dotnet_diagnostic.IDE0060.severity = error
+
+[*.g.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
