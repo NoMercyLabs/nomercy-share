@@ -76,6 +76,8 @@ public sealed class App : Application
             EnvironmentRegionSelector.FromEnvironment(Environment.GetEnvironmentVariable(EnvironmentRegionSelector.VariableName)) is { } fixedRegion
                 ? new EnvironmentRegionSelector(fixedRegion)
                 : new AvaloniaRegionSelector(owner));
+        services.AddSingleton<IWebCaptureDialog>(sp => new WebCaptureDialog(
+            sp.GetRequiredService<Core.IClipboard>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));
         AddPlatform(services);
         services.AddS3Storage();

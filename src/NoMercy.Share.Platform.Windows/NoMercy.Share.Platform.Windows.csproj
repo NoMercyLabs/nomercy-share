@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The Windows implementations of the platform interfaces. Screen capture, recording and hotkeys are built; web page capture is still a stub. -->
+  <!-- The Windows implementations of the platform interfaces. Screen capture, recording, web page capture and hotkeys are built. -->
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="NoMercy.Share.Windows.Tests" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../NoMercy.Share.Core/NoMercy.Share.Core.csproj" />

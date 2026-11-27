@@ -37,6 +37,7 @@ public static class Program
         RenderRegionOverlay(folder);
         bool popupFollows = RenderRecent(folder);
         RenderSettings(folder);
+        RenderWebCapture(folder);
         return remembered && popupFollows ? 0 : 1;
     }
 
@@ -55,6 +56,37 @@ public static class Program
             model.Save();
             SaveSettings(Path.Combine(folder, $"share-settings-errors-{name}.png"), model);
         }
+    }
+
+    /// <summary>The web capture window at 2x, dark and light: Full page with a made-up address, and One element with a bad address and no selector.</summary>
+    private static void RenderWebCapture(string folder)
+    {
+        foreach ((ThemeVariant theme, string name) in new[] { (ThemeVariant.Dark, "dark"), (ThemeVariant.Light, "light") })
+        {
+            Application.Current!.RequestedThemeVariant = theme;
+            WebCaptureViewModel model = new(new FakeWebPageCapture(), new WebCaptureSettings(), "https://example.test/articles/made-up");
+            SaveWebCapture(Path.Combine(folder, $"share-web-{name}.png"), model);
+            model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+            model.Address = "example.test";
+            model.CaptureAsync().GetAwaiter().GetResult();
+            SaveWebCapture(Path.Combine(folder, $"share-web-element-errors-{name}.png"), model);
+        }
+    }
+
+    private static void SaveWebCapture(string file, WebCaptureViewModel model)
+    {
+        WebCaptureWindow shown = new(model);
+        Control content = (Control)shown.Content!;
+        shown.Content = null;
+        content.Width = shown.Width;
+        LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = content };
+        Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, SizeToContent = SizeToContent.WidthAndHeight, CanResize = false };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        using RenderTargetBitmap bitmap = Render(window, 1, 0, window.Bounds.Width);
+        bitmap.Save(file);
+        Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
+        window.Close();
     }
 
     private static SettingsViewModel SettingsModel(string temp)

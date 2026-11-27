@@ -98,5 +98,25 @@
   <data name="recent.expires.hours" xml:space="preserve"><value>expires in {0} h</value></data>
   <data name="recent.expires.day" xml:space="preserve"><value>expires in 1 day</value></data>
   <data name="recent.expires.days" xml:space="preserve"><value>expires in {0} days</value></data>
+  <data name="web.title" xml:space="preserve"><value>Capture a web page</value></data>
+  <data name="web.address" xml:space="preserve"><value>Address</value></data>
+  <data name="web.mode" xml:space="preserve"><value>Mode</value></data>
+  <data name="web.selector" xml:space="preserve"><value>CSS selector</value></data>
+  <data name="web.width" xml:space="preserve"><value>Width</value></data>
+  <data name="web.capture" xml:space="preserve"><value>Capture</value></data>
+  <data name="web.hint" xml:space="preserve"><value>Pages open signed out.</value></data>
+  <data name="web.mode.full" xml:space="preserve"><value>Full page</value></data>
+  <data name="web.mode.viewport" xml:space="preserve"><value>Visible area</value></data>
+  <data name="web.mode.element" xml:space="preserve"><value>One element</value></data>
+  <data name="web.device.desktop" xml:space="preserve"><value>Desktop ({0} px)</value></data>
+  <data name="web.device.phone" xml:space="preserve"><value>Phone ({0} px)</value></data>
+  <data name="web.error.address" xml:space="preserve"><value>Enter a full https:// address.</value></data>
+  <data name="web.error.selector" xml:space="preserve"><value>Enter a CSS selector.</value></data>
+  <data name="web.error.nomatch" xml:space="preserve"><value>No element matches that selector.</value></data>
+  <data name="web.error.empty" xml:space="preserve"><value>That element has no size to capture.</value></data>
+  <data name="web.error.timeout" xml:space="preserve"><value>The page did not load in time.</value></data>
+  <data name="web.error.unreachable" xml:space="preserve"><value>The page could not be opened.</value></data>
+  <data name="web.error.browser" xml:space="preserve"><value>No Edge or Chrome was found. Set WebCapture.BrowserPath in settings.json.</value></data>
+  <data name="web.error.failed" xml:space="preserve"><value>The browser could not capture that page. Try again.</value></data>
   <data name="unsupported.os" xml:space="preserve"><value>NoMercy Share does not support this operating system yet. Windows is first; other platforms follow.</value></data>
 </root>

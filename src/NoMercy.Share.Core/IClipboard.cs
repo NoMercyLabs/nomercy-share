@@ -5,6 +5,9 @@ public interface IClipboard
 {
     Task SetTextAsync(string text, CancellationToken cancellationToken = default);
 
+    /// <summary>The text on the clipboard, or null when it holds none.</summary>
+    Task<string?> GetTextAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Puts the picture in a PNG file on the clipboard, so it can be pasted into a chat or an editor.</summary>
     Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default);
 }

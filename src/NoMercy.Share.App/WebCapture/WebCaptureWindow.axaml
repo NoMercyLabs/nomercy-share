@@ -1,0 +1,70 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:NoMercy.Share.App"
+        xmlns:capture="using:NoMercy.Share.Core.Capture"
+        x:Class="NoMercy.Share.App.WebCaptureWindow" x:DataType="capture:WebCaptureViewModel" Classes="settings"
+        Title="{local:Loc web.title}" Width="480" SizeToContent="Height" CanResize="False" WindowStartupLocation="CenterScreen">
+  <DockPanel>
+    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,1,0,0"
+            Padding="{DynamicResource Nm-Space-6-Thickness}">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource Nm-Space-2}">
+        <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" />
+        <Button Classes="footer primary" Content="{local:Loc web.capture}" Click="OnCaptureClick" IsDefault="True" IsEnabled="{Binding !IsBusy}" />
+      </StackPanel>
+    </Border>
+    <StackPanel Grid.IsSharedSizeScope="True" Margin="{DynamicResource Nm-Space-6-Thickness}" Spacing="{DynamicResource Nm-Space-3}"
+                IsEnabled="{Binding !IsBusy}">
+      <TextBlock Classes="status" Text="{local:Loc web.hint}" />
+      <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Classes="field-label" Text="{local:Loc web.address}" />
+        <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+          <TextBox Name="AddressBox" Text="{Binding Address}" AutomationProperties.Name="{local:Loc web.address}" />
+          <TextBlock Classes="field-error" Text="{Binding AddressError}" IsVisible="{Binding AddressError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+      </Grid>
+      <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Classes="field-label" Text="{local:Loc web.mode}" />
+        <ComboBox Grid.Column="1" ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}" AutomationProperties.Name="{local:Loc web.mode}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="capture:WebModeChoice">
+              <TextBlock Text="{Binding Label}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </Grid>
+      <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding IsElementMode}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Classes="field-label" Text="{local:Loc web.selector}" />
+        <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+          <TextBox Text="{Binding Selector}" AutomationProperties.Name="{local:Loc web.selector}" />
+          <TextBlock Classes="field-error" Text="{Binding SelectorError}" IsVisible="{Binding SelectorError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+      </Grid>
+      <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Classes="field-label" Text="{local:Loc web.width}" />
+        <ComboBox Grid.Column="1" ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" AutomationProperties.Name="{local:Loc web.width}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="capture:WebDeviceChoice">
+              <TextBlock Text="{Binding Label}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </Grid>
+      <TextBlock Classes="field-error" Text="{Binding FailureText}" IsVisible="{Binding FailureText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+    </StackPanel>
+  </DockPanel>
+</Window>

@@ -2,7 +2,7 @@
 
 Capture something from the screen, upload it to a share host, and get the link in the clipboard. One click.
 
-Status: steps 1 to 4 are built. Step 4 is the viewer: the Cloudflare Worker in `host/` serves share.nomercy.tv. A browser or a chat app preview gets a branded page; `?raw=1` or any other client gets the file itself; an expired link answers 410 and a sidecar `.json` is never served. See `host/README.md`. Steps 1 to 3: The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Global hotkeys work on Windows (`Hotkeys` in settings.json; defaults Ctrl+PrintScreen region, PrintScreen full screen, Alt+PrintScreen window, Shift+PrintScreen record; an empty value turns one off). Not built yet: web page capture. The Web page button shows "Coming in a later step"; Settings opens the settings window (see Settings).
+Status: steps 1 to 4 are built. Step 4 is the viewer: the Cloudflare Worker in `host/` serves share.nomercy.tv. A browser or a chat app preview gets a branded page; `?raw=1` or any other client gets the file itself; an expired link answers 410 and a sidecar `.json` is never served. See `host/README.md`. Steps 1 to 3: The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Global hotkeys work on Windows (`Hotkeys` in settings.json; defaults Ctrl+PrintScreen region, PrintScreen full screen, Alt+PrintScreen window, Shift+PrintScreen record; an empty value turns one off). Web page capture works on Windows (see Web page capture). Settings opens the settings window (see Settings).
 
 ## Still capture (Windows)
 
@@ -15,6 +15,22 @@ The bar hides itself while the picture is taken (`Capture.HideDelayMilliseconds`
 | Region | One BitBlt freezes the virtual screen, one overlay per monitor shows it dimmed outside the selection. Drag to select, mouse-up or Enter confirms, Esc cancels | Each monitor keeps its own display scale; a selection stays on one monitor. |
 
 Files go to `Capture.Folder` (default: `NoMercy Share` under the user's Pictures folder) as `Capture.FileNamePattern` (default `nomercy-share-<UTC yyyyMMddTHHmmssfffZ>.png`, sortable). All four settings are in `settings.json`.
+
+## Web page capture (Windows)
+
+The Web page button opens a small window: the address (filled in when the clipboard holds an https address), the mode (Full page, Visible area, One element with a CSS selector) and the width (Desktop or Phone). Enter captures, Escape cancels. The picture is shared like any other capture.
+
+It runs Edge (else Chrome) headless with its own empty profile over the DevTools protocol, and stops it after each capture. Pages open signed out: the profile holds no cookies. Only http and https addresses are opened. Pictures are made at 2 pixels per CSS pixel.
+
+| Setting (`WebCapture`) | Default | What it does |
+| --- | --- | --- |
+| `BrowserPath` | blank | The browser file; blank finds Edge, then Chrome, in their standard folders. |
+| `DesktopWidth`, `PhoneWidth` | 1280, 390 | The page width in CSS pixels. |
+| `Height` | 800 | The height of the visible area. |
+| `ScaleFactor` | 2 | Picture pixels per CSS pixel. |
+| `LoadTimeoutSeconds` | 30 | How long a page gets to load. |
+| `SettleMilliseconds` | 500 | The wait after the load, for late layout. |
+| `MaxFullPageHeight` | 16384 | A taller page or element is cut off here. |
 
 ## Upload and expiry
 
@@ -58,7 +74,7 @@ Every action is an interface in `NoMercy.Share.Core`. Each platform registers it
 | Project | What it holds |
 | --- | --- |
 | `NoMercy.Share.Core` | The interfaces (`IScreenCapture`, `IScreenRecorder`, `IWebPageCapture`, `IShareUploader`, `IClipboard`), the settings, the bar view model. No UI toolkit, no OS code. |
-| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: screen capture and the credential store. There is no recorder or web page capture yet, so the bar is built without them. |
+| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: screen capture, recording, web page capture, hotkeys and the credential store. |
 | `NoMercy.Share.Storage.S3` | S3-compatible storage; Cloudflare R2 is the first provider (`AddS3Storage()` registers `r2` and `s3`). |
 | `NoMercy.Share.App` | The Avalonia app and the composition root. The clipboard lives here because it needs this UI toolkit. |
 

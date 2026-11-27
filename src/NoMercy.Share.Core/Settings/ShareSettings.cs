@@ -30,4 +30,6 @@ public sealed record ShareSettings
     public HotkeySettings Hotkeys { get; init; } = new();
 
     public RecentSettings Recent { get; init; } = new();
+
+    public WebCaptureSettings WebCapture { get; init; } = new();
 }

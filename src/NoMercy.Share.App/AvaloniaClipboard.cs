@@ -21,6 +21,9 @@ public sealed class AvaloniaClipboard(Func<TopLevel?> owner) : Core.IClipboard
         }
     }
 
+    public async Task<string?> GetTextAsync(CancellationToken cancellationToken = default) =>
+        owner()?.Clipboard is { } clipboard ? await clipboard.TryGetTextAsync() : null;
+
     public async Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default)
     {
         if (owner()?.Clipboard is { } clipboard)

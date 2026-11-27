@@ -14,6 +14,7 @@ public sealed class BarViewModel : ObservableObject
     private readonly ShareFlow _flow;
     private readonly IScreenRecorder? _recorder;
     private readonly IWebPageCapture? _web;
+    private readonly IWebCaptureDialog? _webDialog;
     private readonly Func<DateTimeOffset> _clock;
     private readonly RecentLinks? _recent;
     private readonly IUrlOpener? _opener;
@@ -34,8 +35,10 @@ public sealed class BarViewModel : ObservableObject
         Func<DateTimeOffset>? clock = null,
         RecentLinks? recent = null,
         IUrlOpener? opener = null,
-        IClipboard? clipboard = null)
+        IClipboard? clipboard = null,
+        IWebCaptureDialog? webDialog = null)
     {
+        _webDialog = webDialog;
         _capture = capture;
         _flow = flow;
         _recorder = recorder;
@@ -175,6 +178,10 @@ public sealed class BarViewModel : ObservableObject
         {
             Notice = Strings.Get("notice.recording.failed", error.Message);
         }
+        catch (WebCaptureException error)
+        {
+            Notice = error.Message;
+        }
         catch (Exception error)
         {
             Trace.TraceError("Bar action {0} failed: {1}", action, error);
@@ -295,7 +302,10 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
-        await ShareAsync(await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken), cancellationToken);
+        CaptureResult picture = _webDialog is null
+            ? await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken)
+            : await _webDialog.RunAsync(_web, cancellationToken);
+        await ShareAsync(picture, cancellationToken);
     }
 
     private async Task ToggleRecordingAsync(CancellationToken cancellationToken)

@@ -8,7 +8,7 @@ namespace NoMercy.Share.Platform.Windows;
 
 public static class WindowsPlatformExtensions
 {
-    /// <summary>Registers the Windows screen capture, screen recording, global hotkeys, https opener and credential store. Web page capture is not built.</summary>
+    /// <summary>Registers the Windows screen capture, screen recording, web page capture, global hotkeys, https opener and credential store.</summary>
     public static IServiceCollection AddWindowsPlatform(this IServiceCollection services)
     {
         services.AddSingleton<IScreenCapture>(sp => new WindowsScreenCapture(
@@ -16,6 +16,8 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IScreenRecorder>(sp => new FfmpegScreenRecorder(
             sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(),
             () => sp.GetRequiredService<LiveSettings>().Current.Recording));
+        services.AddSingleton<IWebPageCapture>(sp => new CdpWebPageCapture(
+            sp.GetRequiredService<CaptureFiles>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture));
         services.AddSingleton<ICredentialStore, WindowsCredentialStore>();
         services.AddSingleton<IGlobalHotkeys, Win32GlobalHotkeys>();
         services.AddSingleton<IUrlOpener>(new ShellUrlOpener());

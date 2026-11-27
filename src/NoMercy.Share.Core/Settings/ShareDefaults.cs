@@ -87,6 +87,22 @@ public static class ShareDefaults
 
     public const int RecentKeepExpiredDays = 7;
 
+    public const string WebCaptureBrowserPath = "";
+
+    public const int WebCaptureDesktopWidth = 1280;
+
+    public const int WebCapturePhoneWidth = 390;
+
+    public const int WebCaptureHeight = 800;
+
+    public const double WebCaptureScaleFactor = 2;
+
+    public const int WebCaptureLoadTimeoutSeconds = 30;
+
+    public const int WebCaptureSettleMilliseconds = 500;
+
+    public const int WebCaptureMaxFullPageHeight = 16384;
+
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
 }
