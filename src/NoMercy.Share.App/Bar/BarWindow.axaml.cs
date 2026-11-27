@@ -19,12 +19,14 @@ public partial class BarWindow : Window
     private readonly BarSettings _settings = new();
     private readonly DispatcherTimer _saveTimer = new() { Interval = PositionSaveDelay };
     private readonly DispatcherTimer _noticeTimer = new();
+    private readonly DispatcherTimer _elapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private bool _placed;
 
     public BarWindow()
     {
         InitializeComponent();
         Handle.PointerPressed += OnHandlePressed;
+        _elapsedTimer.Tick += (_, _) => (DataContext as BarViewModel)?.RefreshElapsed();
         _saveTimer.Tick += (_, _) => SavePosition();
         _noticeTimer.Tick += (_, _) =>
         {
@@ -101,6 +103,11 @@ public partial class BarWindow : Window
 
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(BarViewModel.IsRecording) && DataContext is BarViewModel bar)
+        {
+            _elapsedTimer.IsEnabled = bar.IsRecording;
+        }
+
         if (e.PropertyName == nameof(BarViewModel.Notice) && DataContext is BarViewModel { Notice: not null })
         {
             _noticeTimer.Stop();

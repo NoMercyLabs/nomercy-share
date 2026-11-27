@@ -28,9 +28,13 @@
           <icons:MoooomIcon Kind="monitor" />
         </Button>
         <Border Classes="separator" />
-        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecording}" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Record}"
-                ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}">
-          <icons:MoooomIcon Kind="webcam" />
+        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecording}" Classes.recording="{Binding IsRecording}" Command="{Binding ActionCommand}"
+                CommandParameter="{x:Static bar:BarAction.Record}" ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}" VerticalAlignment="Center">
+            <icons:MoooomIcon Kind="webcam" />
+            <Ellipse Classes="recording-dot" IsVisible="{Binding IsRecording}" />
+            <TextBlock Classes="recording-time" IsVisible="{Binding IsRecording}" Text="{Binding ElapsedText}" />
+          </StackPanel>
         </Button>
         <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.WebPage}" ToolTip.Tip="{local:Loc bar.webpage}" AutomationProperties.Name="{local:Loc bar.webpage}">
           <icons:MoooomIcon Kind="globe" />

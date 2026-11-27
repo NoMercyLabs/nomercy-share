@@ -91,6 +91,10 @@ internal static partial class NativeMethods
     [LibraryImport("user32.dll")]
     internal static partial nint MonitorFromPoint(Point point, uint flags);
 
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static unsafe partial bool EnumDisplayMonitors(nint dc, nint clip, delegate* unmanaged<nint, nint, Rect*, nint, int> callback, nint data);
+
     [LibraryImport("user32.dll", EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetMonitorInfo(nint monitor, ref MonitorInfo info);

@@ -7,11 +7,13 @@ namespace NoMercy.Share.Platform.Windows;
 
 public static class WindowsPlatformExtensions
 {
-    /// <summary>Registers the Windows screen capture and credential store. Recording and web page capture are not built.</summary>
+    /// <summary>Registers the Windows screen capture, screen recording and credential store. Web page capture is not built.</summary>
     public static IServiceCollection AddWindowsPlatform(this IServiceCollection services)
     {
         services.AddSingleton<IScreenCapture>(sp => new WindowsScreenCapture(
             sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(), sp.GetRequiredService<CaptureSettings>()));
+        services.AddSingleton<IScreenRecorder>(sp => new FfmpegScreenRecorder(
+            sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(), sp.GetRequiredService<RecordingSettings>()));
         services.AddSingleton<ICredentialStore, WindowsCredentialStore>();
         return services;
     }

@@ -10,6 +10,10 @@ public readonly record struct ClipboardPlan(bool Image, bool Text)
     /// <summary>With no share host there is no link, so only the picture is copied.</summary>
     public static ClipboardPlan LocalOnly => new(Image: true, Text: false);
 
+    /// <summary>With no share host a picture is copied as a picture; a video cannot be, so its file path is copied as text.</summary>
+    public static ClipboardPlan Local(string contentType) =>
+        contentType.StartsWith(ImageContentTypePrefix, StringComparison.Ordinal) ? LocalOnly : new ClipboardPlan(Image: false, Text: true);
+
     /// <summary>A video never goes on the clipboard as a picture, so its plan is the link alone.</summary>
     public static ClipboardPlan For(ClipboardContent content, string contentType)
     {

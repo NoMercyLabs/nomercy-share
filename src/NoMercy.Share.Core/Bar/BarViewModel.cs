@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows.Input;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Sharing;
@@ -12,16 +13,19 @@ public sealed class BarViewModel : ObservableObject
     private readonly ShareFlow _flow;
     private readonly IScreenRecorder? _recorder;
     private readonly IWebPageCapture? _web;
+    private readonly Func<DateTimeOffset> _clock;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _busy;
+    private DateTimeOffset? _recordingStartedAt;
 
-    public BarViewModel(CaptureFlow capture, ShareFlow flow, IScreenRecorder? recorder = null, IWebPageCapture? web = null)
+    public BarViewModel(CaptureFlow capture, ShareFlow flow, IScreenRecorder? recorder = null, IWebPageCapture? web = null, Func<DateTimeOffset>? clock = null)
     {
         _capture = capture;
         _flow = flow;
         _recorder = recorder;
         _web = web;
+        _clock = clock ?? (() => DateTimeOffset.UtcNow);
         _actions = new Dictionary<BarAction, Func<CancellationToken, Task>>
         {
             [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
@@ -50,6 +54,9 @@ public sealed class BarViewModel : ObservableObject
     /// <summary>The tooltip and screen-reader name of the record button: start, or stop while recording.</summary>
     public string RecordLabel => Strings.Get(IsRecording ? "bar.record.stop" : "bar.record");
 
+    /// <summary>How long the recording has run as mm:ss (minutes go past 59), or null when not recording.</summary>
+    public string? ElapsedText => IsRecording && _recordingStartedAt is { } started ? Minutes(_clock() - started) : null;
+
     /// <summary>A short message under the bar, or null. The window clears it after a few seconds.</summary>
     public string? Notice
     {
@@ -60,6 +67,9 @@ public sealed class BarViewModel : ObservableObject
     public event EventHandler? CloseRequested;
 
     public void ClearNotice() => Notice = null;
+
+    /// <summary>The window calls this each second while recording, so the timer redraws.</summary>
+    public void RefreshElapsed() => OnChanged(nameof(ElapsedText));
 
     /// <summary>Runs one button. Never throws: a failure becomes a notice.</summary>
     public async Task RunAsync(BarAction action, CancellationToken cancellationToken = default)
@@ -83,6 +93,10 @@ public sealed class BarViewModel : ObservableObject
         {
             Notice = Strings.Get("notice.upload.failed", error.Message);
         }
+        catch (RecordingException error)
+        {
+            Notice = Strings.Get("notice.recording.failed", error.Message);
+        }
         catch (Exception error)
         {
             Trace.TraceError("Bar action {0} failed: {1}", action, error);
@@ -93,6 +107,7 @@ public sealed class BarViewModel : ObservableObject
             _busy = false;
             OnChanged(nameof(IsRecording));
             OnChanged(nameof(RecordLabel));
+            OnChanged(nameof(ElapsedText));
         }
     }
 
@@ -132,13 +147,18 @@ public sealed class BarViewModel : ObservableObject
 
         if (_recorder.IsRecording)
         {
+            _recordingStartedAt = null;
             await ShareAsync(await _recorder.StopAsync(cancellationToken), cancellationToken);
             return;
         }
 
         await _recorder.StartAsync(new RecordingOptions(), cancellationToken);
+        _recordingStartedAt = _clock();
         await ShowNotice("notice.recording");
     }
+
+    private static string Minutes(TimeSpan elapsed) =>
+        string.Create(CultureInfo.InvariantCulture, $"{(int)Math.Max(0, elapsed.TotalMinutes):00}:{Math.Max(0, elapsed.Seconds):00}");
 
     private async Task ShareAsync(CaptureResult capture, CancellationToken cancellationToken)
     {

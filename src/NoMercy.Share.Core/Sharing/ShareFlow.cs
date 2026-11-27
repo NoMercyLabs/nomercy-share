@@ -11,8 +11,17 @@ public sealed class ShareFlow(IShareUploader uploader, IClipboard clipboard, Exp
     {
         if (!uploader.IsConfigured)
         {
-            await clipboard.SetImageAsync(capture.FilePath, cancellationToken);
-            return new ShareOutcome(null, ClipboardPlan.LocalOnly);
+            ClipboardPlan local = ClipboardPlan.Local(capture.ContentType);
+            if (local.Image)
+            {
+                await clipboard.SetImageAsync(capture.FilePath, cancellationToken);
+            }
+            else
+            {
+                await clipboard.SetTextAsync(capture.FilePath, cancellationToken);
+            }
+
+            return new ShareOutcome(null, local);
         }
 
         ShareLink link = await uploader.UploadAsync(capture.FilePath, expiry.Resolve(perUpload), cancellationToken);

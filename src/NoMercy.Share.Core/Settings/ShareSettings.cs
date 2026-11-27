@@ -24,4 +24,6 @@ public sealed record ShareSettings
     public BarSettings Bar { get; init; } = new();
 
     public CaptureSettings Capture { get; init; } = new();
+
+    public RecordingSettings Recording { get; init; } = new();
 }

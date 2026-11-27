@@ -45,9 +45,13 @@ public sealed class App : Application
         services.AddSingleton(settings.Expiry);
         services.AddSingleton(settings.Clipboard);
         services.AddSingleton(settings.Capture);
+        services.AddSingleton(settings.Recording);
         services.AddSingleton<BarPositionStore>();
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
-        services.AddSingleton<IRegionSelector>(new AvaloniaRegionSelector(owner));
+        services.AddSingleton<IRegionSelector>(
+            EnvironmentRegionSelector.FromEnvironment(Environment.GetEnvironmentVariable(EnvironmentRegionSelector.VariableName)) is { } fixedRegion
+                ? new EnvironmentRegionSelector(fixedRegion)
+                : new AvaloniaRegionSelector(owner));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));
         AddPlatform(services);
         services.AddS3Storage();

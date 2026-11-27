@@ -44,6 +44,27 @@ public static class ShareDefaults
     /// <summary>What a full-screen capture holds unless settings say otherwise.</summary>
     public const FullScreenArea FullScreenArea = Settings.FullScreenArea.CursorMonitor;
 
+    public const string RecordingFfmpegPath = "";
+
+    public const double RecordingMaxSizeMegabytes = 50;
+
+    /// <summary>Bamo's headroom idea: aim under the limit (he used 9.5 for a 10 MB limit, 95 percent).</summary>
+    public const double RecordingSizeHeadroom = 0.95;
+
+    public const double RecordingTargetBitsPerPixel = 0.05;
+
+    public const int RecordingFrameRate = 30;
+
+    public const int RecordingMaxWidth = 1920;
+
+    public const int RecordingMaxHeight = 1080;
+
+    public const int RecordingAudioBitrateKbps = 128;
+
+    public const int RecordingStopTimeoutSeconds = 15;
+
+    public const int RecordingCompressTimeoutSeconds = 600;
+
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
 }

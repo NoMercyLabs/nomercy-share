@@ -1,5 +1,4 @@
 using NoMercy.Share.Core.Capture;
-using NoMercy.Share.Core.Settings;
 
 namespace NoMercy.Share.Core.Tests;
 

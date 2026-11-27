@@ -24,6 +24,11 @@
   <data name="overlay.automation" xml:space="preserve"><value>Select a region of the screen</value></data>
   <data name="overlay.size" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="notice.recording" xml:space="preserve"><value>Recording started</value></data>
+  <data name="notice.recording.failed" xml:space="preserve"><value>Recording failed: {0}</value></data>
+  <data name="error.ffmpeg.missing" xml:space="preserve"><value>ffmpeg was not found. Set Recording.FfmpegPath in settings.json or put ffmpeg on the PATH.</value></data>
+  <data name="error.ffmpeg.exited" xml:space="preserve"><value>ffmpeg stopped with code {0}. {1}</value></data>
+  <data name="error.recording.region" xml:space="preserve"><value>The chosen region is not on a screen.</value></data>
+  <data name="error.ffmpeg.timeout" xml:space="preserve"><value>ffmpeg did not finish in time and was stopped.</value></data>
   <data name="error.provider.unknown" xml:space="preserve"><value>Unknown storage provider "{0}". Known providers: {1}.</value></data>
   <data name="notice.upload.failed" xml:space="preserve"><value>Upload failed: {0}. The file is kept.</value></data>
   <data name="error.setting.missing" xml:space="preserve"><value>Setting "{0}" is empty. Set it in settings.json.</value></data>

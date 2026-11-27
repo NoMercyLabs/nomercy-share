@@ -8,7 +8,7 @@ public sealed class WindowsScreenCapture(CaptureFiles files, IRegionSelector sel
 {
     public async Task<CaptureResult> CaptureRegionAsync(CancellationToken cancellationToken = default)
     {
-        ScreenFrame frozen = await Task.Run(() => Frozen(GdiScreen.VirtualScreen), cancellationToken);
+        ScreenFrame frozen = await Task.Run(FrozenVirtualScreen, cancellationToken);
         ScreenRect? chosen = await selector.SelectAsync(frozen, cancellationToken);
         if (chosen is not { IsEmpty: false } area)
         {
@@ -23,6 +23,9 @@ public sealed class WindowsScreenCapture(CaptureFiles files, IRegionSelector sel
 
     public Task<CaptureResult> CaptureFullScreenAsync(CancellationToken cancellationToken = default) =>
         Task.Run(() => SaveAsync(Frozen(FullScreenRect), cancellationToken), cancellationToken);
+
+    /// <summary>A still of every monitor together, for the region picker.</summary>
+    internal static ScreenFrame FrozenVirtualScreen() => Frozen(GdiScreen.VirtualScreen);
 
     /// <summary>Runs one capture step with this thread per-monitor DPI aware.</summary>
     private static ScreenFrame DpiAware(Func<ScreenFrame> take)
