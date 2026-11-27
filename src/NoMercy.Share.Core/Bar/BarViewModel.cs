@@ -71,6 +71,7 @@ public sealed class BarViewModel : ObservableObject
         }
 
         _busy = true;
+        ClearNotice();
         try
         {
             await DoAsync(action, cancellationToken);

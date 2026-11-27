@@ -119,6 +119,21 @@ public sealed class BarViewModelTests
     }
 
     [Fact]
+    public async Task TwoCapturesWithTheSameNoticeRaiseANoticeChangeEachTime()
+    {
+        BarViewModel bar = Bar();
+        int changes = 0;
+        bar.PropertyChanged += (_, e) => changes += e.PropertyName == nameof(BarViewModel.Notice) ? 1 : 0;
+
+        await bar.RunAsync(BarAction.Region);
+        string? first = bar.Notice;
+        await bar.RunAsync(BarAction.Region);
+
+        Assert.Equal(first, bar.Notice);
+        Assert.True(changes >= 2, $"the window restarts its hide timer on a Notice change, but only {changes} change was raised");
+    }
+
+    [Fact]
     public void TheCloseButtonAsksTheWindowToClose()
     {
         BarViewModel bar = Bar();
