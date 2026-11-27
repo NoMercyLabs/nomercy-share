@@ -80,6 +80,18 @@ public sealed class VideoBudgetTests
     }
 
     [Fact]
+    public void ABiggerAudioBitrateLeavesLessForTheVideoByTheSameAmount()
+    {
+        RecordingSettings quiet = Defaults with { AudioBitrateKbps = 64 };
+        RecordingSettings loud = Defaults with { AudioBitrateKbps = 192 };
+
+        int withLess = VideoBudget.Plan(900, 1920, 1080, quiet, includeAudio: true).VideoKbps;
+        int withMore = VideoBudget.Plan(900, 1920, 1080, loud, includeAudio: true).VideoKbps;
+
+        Assert.Equal(128, withLess - withMore);
+    }
+
+    [Fact]
     public void ChangingASettingChangesThePlan()
     {
         RecordingSettings small = Defaults with { MaxSizeMegabytes = 10, TargetBitsPerPixel = 0.1, FrameRate = 60, MaxWidth = 1280, MaxHeight = 720 };

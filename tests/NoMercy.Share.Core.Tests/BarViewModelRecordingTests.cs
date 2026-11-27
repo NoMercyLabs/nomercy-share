@@ -93,6 +93,18 @@ public sealed class BarViewModelRecordingTests
     }
 
     [Fact]
+    public async Task ADeviceTheRecorderDidWithoutIsToldRightAfterTheStartedNotice()
+    {
+        _recorder.StartNotice = "No microphone found; recording without it.";
+        BarViewModel bar = Bar();
+
+        await bar.RunAsync(BarAction.Record);
+
+        Assert.True(bar.IsRecording);
+        Assert.Equal("Recording started No microphone found; recording without it.", bar.Notice);
+    }
+
+    [Fact]
     public async Task AStartThatCannotBeginShowsTheReasonAndDoesNotCountTime()
     {
         _recorder.StartThrows = new RecordingException("ffmpeg was not found");

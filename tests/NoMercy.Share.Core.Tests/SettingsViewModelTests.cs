@@ -94,6 +94,24 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void TheSoundSwitchesShowTheSavedValuesAndSaveTheChange()
+    {
+        SettingsViewModel model = Open(SetUp() with { Recording = new RecordingSettings { Audio = new AudioSettings { Microphone = true } } });
+        Assert.False(model.RecordSystemSound);
+        Assert.True(model.RecordMicrophone);
+
+        model.RecordSystemSound = true;
+        model.RecordMicrophone = false;
+        FillValid(model);
+        model.Save();
+
+        AudioSettings saved = _file.Load().Recording.Audio;
+        Assert.True(saved.SystemSound);
+        Assert.False(saved.Microphone);
+        Assert.True(_live.Current.Recording.Audio.SystemSound);
+    }
+
+    [Fact]
     public void WithNothingSetUpTheStatusSaysCapturesStayOnThisPc()
     {
         SettingsViewModel model = Open();

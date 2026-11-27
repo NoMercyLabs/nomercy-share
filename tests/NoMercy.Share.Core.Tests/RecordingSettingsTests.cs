@@ -44,6 +44,41 @@ public sealed class RecordingSettingsTests : IDisposable
     }
 
     [Fact]
+    public void SoundIsOffByDefault()
+    {
+        AudioSettings audio = new ShareSettings().Recording.Audio;
+
+        Assert.False(audio.SystemSound);
+        Assert.False(audio.Microphone);
+    }
+
+    [Fact]
+    public void ASettingsFileFromBeforeSoundLoadsWithBothSwitchesOff()
+    {
+        Directory.CreateDirectory(_folder);
+        string path = Path.Combine(_folder, "settings.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(new { Recording = new { FrameRate = 24 } }));
+
+        RecordingSettings recording = new SettingsFile(path).Load().Recording;
+
+        Assert.Equal(24, recording.FrameRate);
+        Assert.Equal(new AudioSettings(), recording.Audio);
+    }
+
+    [Fact]
+    public void TheSoundSwitchesInTheFileAreRead()
+    {
+        Directory.CreateDirectory(_folder);
+        string path = Path.Combine(_folder, "settings.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(new { Recording = new { Audio = new { SystemSound = true, Microphone = true } } }));
+
+        AudioSettings audio = new SettingsFile(path).Load().Recording.Audio;
+
+        Assert.True(audio.SystemSound);
+        Assert.True(audio.Microphone);
+    }
+
+    [Fact]
     public void ARecordingFileNameCarriesItsOwnExtension()
     {
         Assert.Equal("nomercy-share-20261127T153045123Z.mkv",

@@ -50,6 +50,67 @@ public sealed class FfmpegArgumentsTests
     }
 
     [Fact]
+    public void WithNoSoundTheCompressPassIsTheVideoOnlyOneByteForByte()
+    {
+        VideoPlan plan = new(Width: 876, Height: 494, VideoKbps: 648);
+
+        IReadOnlyList<string> silent = FfmpegArguments.Compress("a.mkv", "a.mp4", plan);
+
+        Assert.Equal(silent, FfmpegArguments.Compress("a.mkv", "a.mp4", plan, [], 128));
+        Assert.Contains("-an", silent);
+        Assert.DoesNotContain("-c:a", silent);
+    }
+
+    [Fact]
+    public void OneSoundFileIsAnExtraInputShiftedByItsOffsetAndEncodedAsAac()
+    {
+        VideoPlan plan = new(Width: 876, Height: 494, VideoKbps: 648);
+
+        IReadOnlyList<string> args = FfmpegArguments.Compress("a.mkv", "a.mp4", plan, [new AudioTrack("a-system.wav", 0.1234)], 128);
+
+        Assert.Equal(
+        [
+            "-hide_banner", "-loglevel", "warning", "-nostats", "-nostdin",
+            "-i", "a.mkv",
+            "-itsoffset", "0.123", "-i", "a-system.wav",
+            "-vf", "scale=876:494:flags=lanczos",
+            "-c:v", "libx264", "-preset", "veryfast",
+            "-b:v", "648k", "-maxrate", "648k", "-bufsize", "1296k",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+            "-map", "0:v:0", "-map", "1:a:0", "-c:a", "aac", "-b:a", "128k",
+            "-y", "a.mp4"
+        ], args);
+        Assert.DoesNotContain("-an", args);
+        Assert.DoesNotContain("-filter_complex", args);
+    }
+
+    [Fact]
+    public void TwoSoundFilesAreMixedAtFullLevelAndTheFirstOneSetsTheLength()
+    {
+        VideoPlan plan = new(Width: 876, Height: 494, VideoKbps: 648);
+
+        IReadOnlyList<string> args = FfmpegArguments.Compress(
+            "a.mkv", "a.mp4", plan, [new AudioTrack("a-system.wav", 0.05), new AudioTrack("a-mic.wav", 0.2)], 96);
+
+        Assert.Equal(
+        [
+            "-hide_banner", "-loglevel", "warning", "-nostats", "-nostdin",
+            "-i", "a.mkv",
+            "-itsoffset", "0.050", "-i", "a-system.wav",
+            "-itsoffset", "0.200", "-i", "a-mic.wav",
+            "-vf", "scale=876:494:flags=lanczos",
+            "-filter_complex",
+            "[1:a]aresample=async=1:first_pts=0[s0];[2:a]aresample=async=1:first_pts=0[s1];[s0][s1]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[mix]",
+            "-c:v", "libx264", "-preset", "veryfast",
+            "-b:v", "648k", "-maxrate", "648k", "-bufsize", "1296k",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+            "-map", "0:v:0", "-map", "[mix]", "-c:a", "aac", "-b:a", "96k",
+            "-y", "a.mp4"
+        ], args);
+        Assert.DoesNotContain("-an", args);
+    }
+
+    [Fact]
     public void ANumberIsWrittenWithoutAThousandsSeparatorInAnyCulture()
     {
         IReadOnlyList<string> args = FfmpegArguments.Compress("in.mkv", "out.mp4", new VideoPlan(1920, 1080, 12345));

@@ -38,6 +38,8 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
 
     public CaptureResult Result { get; set; } = new("/tmp/recording.mp4", "video/mp4");
 
+    public string? StartNotice { get; set; }
+
     public event EventHandler<string>? Failed;
 
     /// <summary>Ends the recording the way a dying ffmpeg does: no stop call, only the event.</summary>
