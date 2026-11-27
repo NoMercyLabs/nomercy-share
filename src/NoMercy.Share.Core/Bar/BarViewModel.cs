@@ -148,7 +148,17 @@ public sealed class BarViewModel : ObservableObject
     private async Task ShareAsync(CaptureResult capture, CancellationToken cancellationToken)
     {
         ShareLink? link = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
-        Notice = Strings.Get(link is null ? "notice.clipboard.local" : _flow.PutsOnlyTheImage(capture) ? "notice.clipboard" : "notice.copied");
+        Notice = Strings.Get(NoticeAfterShare(link, capture));
+    }
+
+    private string NoticeAfterShare(ShareLink? link, CaptureResult capture)
+    {
+        if (link is null)
+        {
+            return "notice.clipboard.local";
+        }
+
+        return _flow.PutsOnlyTheImage(capture) ? "notice.clipboard" : "notice.copied";
     }
 }
 
