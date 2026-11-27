@@ -60,6 +60,51 @@ public sealed class SettingsWindowRenderTests
         }
     });
 
+    /// <summary>The bar's rules: no OS frame, one surface with the bar's fill, ring and shadow, no box inside a box, and no accent at rest.</summary>
+    [Theory]
+    [InlineData(SettingsSection.Sharing)]
+    [InlineData(SettingsSection.Links)]
+    [InlineData(SettingsSection.Hotkeys)]
+    [InlineData(SettingsSection.Recording)]
+    public void TheWindowFollowsTheBarsRules(SettingsSection section) => HeadlessApp.Run(() =>
+    {
+        (SettingsWindow window, string root) = Open(section, width: null);
+        try
+        {
+            Assert.Equal(Avalonia.Controls.WindowDecorations.None, window.WindowDecorations);
+            Border surface = window.GetVisualDescendants().OfType<Border>().First(border => border.Name == "Surface");
+            Assert.Equal(Color(window, "Share-Bar-Brush"), (surface.Background as Avalonia.Media.ISolidColorBrush)?.Color);
+            Assert.Equal(Color(window, "Share-Ring-Brush"), (surface.BorderBrush as Avalonia.Media.ISolidColorBrush)?.Color);
+            Assert.NotEqual(default, surface.BoxShadow);
+
+            List<string> boxes = [.. window.GetVisualDescendants().OfType<Border>().Where(border => border.IsEffectivelyVisible && border.Classes.Contains("card")).Select(border => border.Name ?? "card")];
+            Assert.True(boxes.Count == 0, $"box inside the surface: {string.Join(", ", boxes)}");
+
+            Avalonia.Media.Color accent = Color(window, "Nm-Accent-Brush");
+            List<string> lit = [.. window.GetVisualDescendants().OfType<Control>()
+                .Where(control => control.IsEffectivelyVisible && control is not ToggleSwitch && !control.GetVisualAncestors().OfType<ToggleSwitch>().Any())
+                .Where(control => Fill(control) is Avalonia.Media.ISolidColorBrush { } brush && brush.Color == accent)
+                .Select(control => $"{control.GetType().Name} {control.Name}")];
+            Assert.True(lit.Count == 0, $"accent at rest: {string.Join(", ", lit)}");
+        }
+        finally
+        {
+            window.Close();
+            Directory.Delete(root, recursive: true);
+        }
+    });
+
+    private static Avalonia.Media.Color Color(SettingsWindow window, string key) =>
+        ((Avalonia.Media.ISolidColorBrush)window.FindResource(window.ActualThemeVariant, key)!).Color;
+
+    private static Avalonia.Media.IBrush? Fill(Control control) => control switch
+    {
+        Border border => border.Background,
+        Avalonia.Controls.Presenters.ContentPresenter presenter => presenter.Background,
+        Panel panel => panel.Background,
+        _ => null
+    };
+
     private static (SettingsWindow Window, string Root) Open(SettingsSection section, double? width)
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;

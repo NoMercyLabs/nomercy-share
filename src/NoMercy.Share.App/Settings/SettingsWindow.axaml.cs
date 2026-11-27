@@ -17,6 +17,16 @@ public partial class SettingsWindow : Window
     {
         DataContext = viewModel;
         viewModel.CloseRequested += (_, _) => Close();
+        Handle.PointerPressed += OnHandlePressed;
+    }
+
+    /// <summary>The window has no OS frame, so the brand row moves it, as the bar's handle does.</summary>
+    private void OnHandlePressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            BeginMoveDrag(e);
+        }
     }
 
     protected override void OnClosed(EventArgs e)

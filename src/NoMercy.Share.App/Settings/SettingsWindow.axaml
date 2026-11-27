@@ -2,15 +2,19 @@
         xmlns:local="using:NoMercy.Share.App" xmlns:icons="using:NoMercy.Share.App.Icons"
         xmlns:settings="using:NoMercy.Share.Core.Settings"
         x:Class="NoMercy.Share.App.SettingsWindow" x:DataType="settings:SettingsViewModel" Classes="settings"
-        Title="{local:Loc settings.title}" Width="720" Height="640" MinWidth="600" MinHeight="460" WindowStartupLocation="CenterScreen">
+        Title="{local:Loc settings.title}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        CanResize="False" Width="768" Height="688" WindowStartupLocation="CenterScreen">
+  <!-- The bar's own surface, ring and shadow; the margin holds the shadow, as on the bar. No OS frame: the brand row drags, the cross and Escape cancel. -->
+  <Border x:Name="Surface" Classes="surface">
+  <Panel>
   <DockPanel>
-    <!-- Fixed under the content: Cancel is quiet, Save is the one accent; a failure that belongs to no field shows here, so scrolling never hides it. -->
+    <!-- Fixed under the content: Cancel and Save are bar pills, the accent only on focus; a failure that belongs to no field shows here, so scrolling never hides it. -->
     <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,1,0,0"
-            Padding="{DynamicResource Nm-Space-4-Thickness}">
+            Padding="{DynamicResource Nm-Space-3-Thickness}">
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource Nm-Space-4}">
         <TextBlock Classes="save-error" Text="{Binding SaveError}" VerticalAlignment="Center" />
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
-          <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" />
+          <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" IsCancel="True" />
           <Button Classes="footer primary" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
         </StackPanel>
       </Grid>
@@ -19,10 +23,13 @@
     <Grid ColumnDefinitions="200,*">
       <Border BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,0,1,0">
         <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}" Spacing="{DynamicResource Nm-Space-3}">
-          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}" Margin="{DynamicResource Nm-Space-3-Thickness}">
-            <local:NoMercyMark Width="20" Height="20" VerticalAlignment="Center" />
-            <TextBlock Classes="brand-name" Text="{local:Loc app.name}" />
-          </StackPanel>
+          <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="{DynamicResource Nm-Space-3-Thickness}"
+                  ToolTip.Tip="{local:Loc bar.drag}" AutomationProperties.Name="{local:Loc bar.drag}">
+            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
+              <local:NoMercyMark Width="20" Height="20" VerticalAlignment="Center" />
+              <TextBlock Classes="brand-name" Text="{local:Loc app.name}" />
+            </StackPanel>
+          </Border>
           <ListBox Classes="rail" SelectedIndex="{Binding SelectedSectionIndex, Mode=TwoWay}" AutomationProperties.Name="{local:Loc settings.sections}">
             <ListBoxItem AutomationProperties.Name="{local:Loc settings.section.sharing}">
               <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
@@ -75,7 +82,7 @@
               </ListBox.ItemTemplate>
             </ListBox>
 
-            <Border Classes="card form" IsVisible="{Binding ShowsStorageFields}">
+            <Border Classes="group" IsVisible="{Binding ShowsStorageFields}">
               <StackPanel Spacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.endpoint}" />
@@ -102,7 +109,7 @@
               </StackPanel>
             </Border>
 
-            <Border Classes="card form" IsVisible="{Binding ShowsStorageFields}">
+            <Border Classes="group" IsVisible="{Binding ShowsStorageFields}">
               <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.keyid}" />
@@ -117,7 +124,7 @@
               </Grid>
             </Border>
 
-            <Border Classes="card" IsVisible="{Binding IsDiscord}">
+            <Border Classes="group" IsVisible="{Binding IsDiscord}">
               <StackPanel Classes="field">
                 <TextBlock Classes="field-label" Text="{local:Loc settings.discord.webhook}" />
                 <TextBox PasswordChar="•" Text="{Binding DiscordWebhook}" PlaceholderText="{Binding DiscordWebhookPlaceholder}"
@@ -130,7 +137,7 @@
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsLinks}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.links}" />
-            <Border Classes="card">
+            <Border Classes="group">
               <StackPanel Classes="field">
                 <TextBlock Classes="field-label" Text="{local:Loc settings.expiry}" />
                 <ComboBox ItemsSource="{Binding ExpiryChoices}" SelectedItem="{Binding SelectedExpiry}" IsVisible="{Binding ShowsStorageFields}"
@@ -148,7 +155,7 @@
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsHotkeys}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.hotkeys}" />
-            <Border Classes="card form">
+            <Border Classes="group">
               <ItemsControl ItemsSource="{Binding Hotkeys}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
@@ -197,7 +204,7 @@
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsRecording}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.recording}" />
-            <Border Classes="card form">
+            <Border Classes="group">
               <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.recording.size}" />
@@ -219,7 +226,7 @@
                 </StackPanel>
               </Grid>
             </Border>
-            <Border Classes="card">
+            <Border Classes="group">
               <StackPanel>
                 <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
                   <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.systemsound}" />
@@ -239,4 +246,9 @@
       </ScrollViewer>
     </Grid>
   </DockPanel>
+  <Button Classes="bar close" Click="OnCancelClick" ToolTip.Tip="{local:Loc bar.close}" AutomationProperties.Name="{local:Loc bar.close}">
+    <icons:MoooomIcon Kind="cross" />
+  </Button>
+  </Panel>
+  </Border>
 </Window>
