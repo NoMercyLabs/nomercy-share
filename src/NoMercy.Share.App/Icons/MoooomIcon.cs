@@ -17,10 +17,26 @@ public sealed class MoooomIcon : Avalonia.Controls.Shapes.Path
 
     public MoooomIcon()
     {
-        Stretch = Stretch.Uniform;
+        // Stretch.Uniform would scale every path to its own bounds (a gear and a cross would fill the box differently),
+        // so the path keeps its 24-unit coordinates and the whole box is scaled by size / 24.
+        Stretch = Stretch.None;
+        RenderTransformOrigin = RelativePoint.TopLeft;
         StrokeThickness = 1.5;
         StrokeLineCap = PenLineCap.Round;
         StrokeJoin = PenLineJoin.Round;
+    }
+
+    /// <summary>The side of the square view box the icon paths are drawn in.</summary>
+    private const double ViewBox = 24;
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == BoundsProperty && Bounds.Width > 0)
+        {
+            double scale = Bounds.Width / ViewBox;
+            RenderTransform = new ScaleTransform(scale, scale);
+        }
     }
 
     /// <summary>Every icon name this build can draw.</summary>

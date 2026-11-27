@@ -3,17 +3,17 @@
         xmlns:bar="using:NoMercy.Share.Core.Bar"
         x:Class="NoMercy.Share.App.BarWindow" x:DataType="bar:BarViewModel"
         Title="{local:Loc app.name}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
-        Topmost="True" ShowInTaskbar="False" CanResize="False" SizeToContent="WidthAndHeight" WindowStartupLocation="Manual">
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False" CanResize="False" SizeToContent="WidthAndHeight" WindowStartupLocation="Manual">
   <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}">
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
             Padding="{DynamicResource Nm-Space-1-Thickness}" HorizontalAlignment="Left"
             AutomationProperties.Name="{local:Loc bar.automation}">
       <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}">
-        <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="{DynamicResource Nm-Space-2-Thickness}"
+        <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="{DynamicResource Nm-Space-3-Thickness}"
                 ToolTip.Tip="{local:Loc bar.drag}" AutomationProperties.Name="{local:Loc bar.drag}">
-          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-1}">
-            <icons:MoooomIcon Kind="nomercy" />
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}" VerticalAlignment="Center">
+            <local:NoMercyMark Width="20" Height="20" />
             <icons:MoooomIcon Kind="grabDots" />
           </StackPanel>
         </Border>
