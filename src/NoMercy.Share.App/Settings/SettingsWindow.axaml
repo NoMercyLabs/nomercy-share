@@ -8,7 +8,7 @@
     <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,1,0,0"
             Padding="{DynamicResource Nm-Space-4-Thickness}">
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource Nm-Space-4}">
-        <TextBlock Classes="field-error" Text="{Binding SaveError}" VerticalAlignment="Center" />
+        <TextBlock Classes="save-error" Text="{Binding SaveError}" VerticalAlignment="Center" />
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
           <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" />
           <Button Classes="footer primary" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
@@ -75,7 +75,7 @@
             </ListBox>
 
             <Border Classes="card" IsVisible="{Binding ShowsStorageFields}">
-              <StackPanel>
+              <StackPanel Spacing="{DynamicResource Nm-Space-6}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.endpoint}" />
                   <TextBox Text="{Binding Endpoint}" AutomationProperties.Name="{local:Loc settings.endpoint}" />
@@ -151,7 +151,7 @@
               <ItemsControl ItemsSource="{Binding Hotkeys}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
-                    <StackPanel />
+                    <StackPanel Spacing="{DynamicResource Nm-Space-6}" />
                   </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>

@@ -87,13 +87,13 @@
     <Setter Property="BorderThickness" Value="2" />
   </Style>
 
-  <!-- Groups of related fields: the card is the 16 corner, its 8 padding and the 8 corner of the inputs nest. -->
+  <!-- Groups of related fields: the card's 24 corner, its 16 padding and the 8 corner of the inputs nest; the padding also holds the last error line. -->
   <Style Selector="Border.card">
     <Setter Property="Background" Value="{DynamicResource Nm-Surface-Hover-Brush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Share-Separator-Brush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-2Xl-Corner}" />
-    <Setter Property="Padding" Value="{DynamicResource Nm-Space-2-Thickness}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-3Xl-Corner}" />
+    <Setter Property="Padding" Value="{DynamicResource Nm-Space-4-Thickness}" />
   </Style>
   <Style Selector="Border.note">
     <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
@@ -120,13 +120,19 @@
   <Style Selector="Border.note TextBlock.status">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
   </Style>
-  <!-- The line is always there, so an error appearing moves nothing. -->
+  <!-- Takes no height: the error is drawn under its input, in the gap between field groups, so showing it moves nothing. -->
   <Style Selector="TextBlock.field-error">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Red-11-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
     <Setter Property="TextWrapping" Value="Wrap" />
-    <Setter Property="MinHeight" Value="14" />
-    <Setter Property="Margin" Value="4,0,0,0" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="4,-2,0,-16" />
+    <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+  </Style>
+  <Style Selector="TextBlock.save-error">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Red-11-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
   </Style>
 
