@@ -1,4 +1,4 @@
-<!-- The look of the floating bar: round icon buttons, hover tint, a focus ring inside the button edge (an outer ring is clipped by the button's square bounds), accent only on focus and while active. -->
+<!-- The look of the floating bar: round icon buttons, hover tint, a focus ring on the button edge (an outer ring is clipped by the button's square bounds), accent only on focus and while active. -->
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:icons="using:NoMercy.Share.App.Icons">
   <Style Selector="Button.bar">
@@ -27,8 +27,13 @@
   <Style Selector="Button.bar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
   </Style>
+  <!-- The ring is a 2 px border in the accent token, so each theme's own accent step sets its contrast. -->
   <Style Selector="Button.bar:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="BoxShadow" Value="{DynamicResource Share-Shadow-Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Button.bar:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
   </Style>
   <Style Selector="Button.bar:pressed">
     <Setter Property="RenderTransform" Value="translateY(1px)" />

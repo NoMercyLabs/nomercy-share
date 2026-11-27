@@ -1,9 +1,11 @@
 <!-- NoMercy Share's look on top of the NM tokens (dark): the bar, its ring, one soft shadow and the focus ring. -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <SolidColorBrush x:Key="Share-Bar-Brush" Color="#161616" />
-  <SolidColorBrush x:Key="Share-Ring-Brush" Color="#26FFFFFF" />
+  <!-- The bar is the only chrome on screen: its edge must read over a dark desktop too. -->
+  <SolidColorBrush x:Key="Share-Ring-Brush" Color="#40FFFFFF" />
   <SolidColorBrush x:Key="Share-Hover-Brush" Color="#1FFFFFFF" />
+  <SolidColorBrush x:Key="Share-Pressed-Brush" Color="#33FFFFFF" />
   <SolidColorBrush x:Key="Share-Separator-Brush" Color="#2EFFFFFF" />
-  <BoxShadows x:Key="Share-Shadow-Bar">0 6 20 0 #66000000</BoxShadows>
-  <BoxShadows x:Key="Share-Shadow-Focus">inset 0 0 0 2 #0BD8B6</BoxShadows>
+  <!-- Fits inside the window margin (Nm-Space-6, 24): offset 4 + blur 12 stays within it. -->
+  <BoxShadows x:Key="Share-Shadow-Bar">0 4 12 0 #66000000</BoxShadows>
 </ResourceDictionary>

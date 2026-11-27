@@ -4,13 +4,13 @@
         x:Class="NoMercy.Share.App.BarWindow" x:DataType="bar:BarViewModel"
         Title="{local:Loc app.name}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" CanResize="False" SizeToContent="WidthAndHeight" WindowStartupLocation="Manual">
-  <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}">
+  <StackPanel Margin="{DynamicResource Nm-Space-6-Thickness}">
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
             Padding="{DynamicResource Nm-Space-1-Thickness}" HorizontalAlignment="Left"
             AutomationProperties.Name="{local:Loc bar.automation}">
       <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}">
-        <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="{DynamicResource Nm-Space-3-Thickness}"
+        <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="{DynamicResource Nm-Space-2-Thickness}"
                 ToolTip.Tip="{local:Loc bar.drag}" AutomationProperties.Name="{local:Loc bar.drag}">
           <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}" VerticalAlignment="Center">
             <local:NoMercyMark Width="20" Height="20" />
@@ -32,7 +32,6 @@
                 ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}">
           <icons:MoooomIcon Kind="webcam" />
         </Button>
-        <Border Classes="separator" />
         <Button Classes="bar" Command="{Binding WebPageCommand}" ToolTip.Tip="{local:Loc bar.webpage}" AutomationProperties.Name="{local:Loc bar.webpage}">
           <icons:MoooomIcon Kind="globe" />
         </Button>
@@ -43,6 +42,7 @@
         <Button Classes="bar" Command="{Binding SettingsCommand}" ToolTip.Tip="{local:Loc bar.settings}" AutomationProperties.Name="{local:Loc bar.settings}">
           <icons:MoooomIcon Kind="settings" />
         </Button>
+        <Border Classes="separator" />
         <Button Classes="bar" Command="{Binding CloseCommand}" ToolTip.Tip="{local:Loc bar.close}" AutomationProperties.Name="{local:Loc bar.close}">
           <icons:MoooomIcon Kind="cross" />
         </Button>
@@ -50,7 +50,7 @@
     </Border>
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
-            Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
+            BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
             IsVisible="{Binding Notice, Converter={x:Static ObjectConverters.IsNotNull}}">
       <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
                  AutomationProperties.LiveSetting="Polite" />
