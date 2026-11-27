@@ -25,10 +25,9 @@ public interface IRegionSelector
     Task<PixelRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default);
 }
 
-/// <summary>A still capture: hide the bar, take the picture (which saves the PNG), bring the bar back, put the image on the clipboard.</summary>
+/// <summary>A still capture: hide the bar, take the picture (which saves the PNG), bring the bar back. Sharing it is the share flow's job.</summary>
 public sealed class CaptureFlow(
     IScreenCapture screen,
-    IClipboard clipboard,
     ICaptureHost host,
     CaptureSettings settings,
     Func<TimeSpan, CancellationToken, Task>? delay = null)
@@ -38,20 +37,16 @@ public sealed class CaptureFlow(
     /// <summary>Runs one capture. A cancelled capture throws <see cref="OperationCanceledException"/> and touches nothing else.</summary>
     public async Task<CaptureResult> RunAsync(CaptureKind kind, CancellationToken cancellationToken = default)
     {
-        CaptureResult result;
         await host.HideAsync(cancellationToken);
         try
         {
             await _delay(TimeSpan.FromMilliseconds(settings.HideDelayMilliseconds), cancellationToken);
-            result = await CaptureAsync(kind, cancellationToken);
+            return await CaptureAsync(kind, cancellationToken);
         }
         finally
         {
             await host.ShowAsync(CancellationToken.None);
         }
-
-        await clipboard.SetImageAsync(result.FilePath, cancellationToken);
-        return result;
     }
 
     private Task<CaptureResult> CaptureAsync(CaptureKind kind, CancellationToken cancellationToken) => kind switch

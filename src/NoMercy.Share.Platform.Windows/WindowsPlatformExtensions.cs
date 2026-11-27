@@ -15,6 +15,7 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IScreenRecorder, WindowsScreenRecorder>();
         services.AddSingleton<IWebPageCapture, WindowsWebPageCapture>();
         services.AddSingleton<IGlobalHotkeys, WindowsGlobalHotkeys>();
+        services.AddSingleton<ICredentialStore, WindowsCredentialStore>();
         return services;
     }
 }

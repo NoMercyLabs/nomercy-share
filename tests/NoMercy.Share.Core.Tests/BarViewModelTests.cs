@@ -14,17 +14,18 @@ public sealed class BarViewModelTests
     private readonly FakeClipboard _clipboard = new();
 
     private BarViewModel Bar() => new(
-        new CaptureFlow(_screen, _clipboard, new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
-        _recorder, _web, new ShareFlow(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }));
+        new CaptureFlow(_screen, new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
+        _recorder, _web, new ShareFlow(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }, new ClipboardSettings()));
 
     [Fact]
-    public void TheRegionButtonCapturesARegionAndPutsTheImageOnTheClipboardWithoutUploading()
+    public void TheRegionButtonCapturesARegionUploadsItAndPutsTheLinkOnTheClipboard()
     {
         Bar().RegionCommand.Execute(null);
 
         Assert.Equal(["region"], _screen.Calls);
-        Assert.Equal(["/tmp/region.png"], _clipboard.Images);
-        Assert.Empty(_uploader.Uploads);
+        Assert.Equal("/tmp/region.png", Assert.Single(_uploader.Uploads).File);
+        Assert.Equal(["https://share.example.test/abc"], _clipboard.Texts);
+        Assert.Empty(_clipboard.Images);
     }
 
     [Fact]
@@ -132,7 +133,7 @@ public sealed class BarViewModelTests
     [Fact]
     public async Task ShareFlowUsesAnUploadsOwnExpiryWhenGiven()
     {
-        ShareFlow flow = new(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 });
+        ShareFlow flow = new(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }, new ClipboardSettings());
 
         await flow.ShareAsync(new CaptureResult("/tmp/a.png", "image/png"), Expiry.Never);
 

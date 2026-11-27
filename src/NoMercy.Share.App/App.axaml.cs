@@ -43,13 +43,14 @@ public sealed class App : Application
         services.AddSingleton(settings);
         services.AddSingleton(settings.Storage);
         services.AddSingleton(settings.Expiry);
+        services.AddSingleton(settings.Clipboard);
         services.AddSingleton(settings.Capture);
         services.AddSingleton<BarPositionStore>();
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
         services.AddSingleton<IRegionSelector>(new AvaloniaRegionSelector(owner));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));
         AddPlatform(services);
-        services.AddR2Storage();
+        services.AddS3Storage();
         services.AddShareCore();
         return services.BuildServiceProvider();
     }

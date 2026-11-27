@@ -2,7 +2,7 @@
 
 Capture something from the screen, upload it to a share host, and get the link in the clipboard. One click.
 
-Status: step 2 of the build. The floating bar is movable, and Region, Window and Full screen take a still picture on Windows: a PNG file in the captures folder and the image on the clipboard ("Copied to clipboard"). Upload, recording and web page capture are not built yet; those buttons show "Coming in a later step".
+Status: step 3 of the build. Region, Window and Full screen take a still picture on Windows, upload it to an S3-compatible host (Cloudflare R2 first) and put the share link on the clipboard. Recording and web page capture are not built yet; those buttons show "Coming in a later step".
 
 ## Still capture (Windows)
 
@@ -15,6 +15,31 @@ The bar hides itself while the picture is taken (`Capture.HideDelayMilliseconds`
 | Region | One BitBlt freezes the virtual screen, one overlay per monitor shows it dimmed outside the selection. Drag to select, mouse-up or Enter confirms, Esc cancels | Each monitor keeps its own display scale; a selection stays on one monitor. |
 
 Files go to `Capture.Folder` (default: `NoMercy Share` under the user's Pictures folder) as `Capture.FileNamePattern` (default `nomercy-share-<UTC yyyyMMddTHHmmssfffZ>.png`, sortable). All four settings are in `settings.json`.
+
+## Upload and expiry
+
+`Storage.Provider` is `r2` or `s3` (the same S3 client; R2 is the default). It uses the AWS SDK for .NET with a custom `Storage.Endpoint` and path-style addressing: the SDK already signs, retries and reads S3 errors, so a hand-written SigV4 client would be more code to keep correct. R2 needs `Storage.Region` = `auto` (the default).
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `Storage.Endpoint`, `Storage.Bucket`, `Storage.PublicBaseUrl`, `Storage.CredentialName` | empty | Required. A missing one fails the upload with a notice that names it, for example `Storage.Bucket`. |
+| `Storage.KeyLength` | 10 | Length of the random id in the object key (letters and digits). The key never holds the local file name. |
+| `Storage.ExpiryBucketDays` | `[1, 7, 30, 90]` | The lifetimes that have a prefix on the host. |
+| `Storage.ExpiryPrefixPattern`, `Storage.KeepPrefix`, `Storage.SidecarSuffix` | `exp-{0}d`, `keep`, `.json` | Folder names and the sidecar suffix. |
+| `Expiry.DefaultDays` | 30 (null = never) | The lifetime of an upload that names none. |
+| `Clipboard.Content` | `Link` | `Link`, `Image` or `Both` after a capture is shared. |
+
+The link is `Storage.PublicBaseUrl` + `/` + the key, for example `https://share.example.test/exp-7d/aB3dE5gH7j.png`.
+
+Expiry: the host deletes, the app does not. An upload goes under the smallest prefix that covers its lifetime (`exp-7d/` for 2 to 7 days; longer than the largest goes under the largest) and `never` goes under `keep/`. The object carries the metadata `x-amz-meta-expires-at` (UTC, `2026-12-04T10:00:00Z`, or `never`) and a sidecar `<key>.json` with the key, upload time, expiry, content type and size. The link's expiry is the prefix's deletion time, so it is never earlier than asked. The host needs one lifecycle rule per prefix: on R2, "delete objects after N days" with the prefix `exp-1d/`, `exp-7d/`, `exp-30d/` and `exp-90d/` (N matching the days in the name). Nothing deletes `keep/`.
+
+Credentials: `Storage.CredentialName` names a generic credential in the Windows Credential Manager. The user name is the access key id, the password is the secret:
+
+```
+cmdkey /generic:NAME /user:ACCESS_KEY_ID /pass:SECRET
+```
+
+A failed upload keeps the PNG, shows `Upload failed: <reason>. The file is kept.` on the bar and leaves the clipboard as it was. The reason is the service's error code or "could not be reached"; no secret is in any message.
 
 ## The bar
 
@@ -29,11 +54,11 @@ Every action is an interface in `NoMercy.Share.Core`. Each platform registers it
 | Project | What it holds |
 | --- | --- |
 | `NoMercy.Share.Core` | The interfaces (`IScreenCapture`, `IScreenRecorder`, `IWebPageCapture`, `IShareUploader`, `IClipboard`, `IGlobalHotkeys`), the settings, the bar view model. No UI toolkit, no OS code. |
-| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: the Windows implementations (screen capture built; recording, web page and hotkeys are stubs). |
-| `NoMercy.Share.Storage.S3` | S3-compatible storage; Cloudflare R2 is the first provider (a stub in step 1). |
+| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: the Windows implementations (screen capture and the credential store built; recording, web page and hotkeys are stubs). |
+| `NoMercy.Share.Storage.S3` | S3-compatible storage; Cloudflare R2 is the first provider (`AddS3Storage()` registers `r2` and `s3`). |
 | `NoMercy.Share.App` | The Avalonia app and the composition root. The clipboard lives here because it needs this UI toolkit. |
 
-Storage is configurable: the provider is chosen by name in settings (`Storage.Provider`, default `r2`), so another host is one more registered uploader. Credentials are named in settings and never stored in the file. Links can expire: `Expiry.DefaultDays` (default 30, null means never), and an upload can override it.
+Storage is configurable: the provider is chosen by name in settings (`Storage.Provider`, default `r2`), so another host is one more registered uploader. Credentials are named in settings and never stored in the file.
 
 ## Build and run
 

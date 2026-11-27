@@ -92,7 +92,8 @@ public sealed class SettingsTests
     {
         ShareSettings read = new SettingsFile(Path.Combine(Path.GetTempPath(), $"share-none-{Guid.NewGuid():N}.json")).Load();
 
-        Assert.Equal(new ShareSettings().Storage, read.Storage);
+        Assert.Equal(new ShareSettings().Storage with { ExpiryBucketDays = read.Storage.ExpiryBucketDays }, read.Storage);
+        Assert.Equal(ShareDefaults.ExpiryBucketDays, read.Storage.ExpiryBucketDays);
         Assert.Equal(30, read.Expiry.DefaultDays);
     }
 }

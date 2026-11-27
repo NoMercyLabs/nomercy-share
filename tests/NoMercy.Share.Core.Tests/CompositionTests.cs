@@ -13,6 +13,7 @@ public sealed class CompositionTests
         ServiceCollection services = new();
         services.AddSingleton(settings.Storage);
         services.AddSingleton(settings.Expiry);
+        services.AddSingleton(settings.Clipboard);
         services.AddSingleton(settings.Capture with { HideDelayMilliseconds = 0 });
         services.AddSingleton<ICaptureHost>(new FakeCaptureHost());
         services.AddSingleton<IScreenCapture>(new FakeScreenCapture());

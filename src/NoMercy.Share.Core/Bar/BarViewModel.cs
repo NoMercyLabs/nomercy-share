@@ -83,6 +83,10 @@ public sealed class BarViewModel : ObservableObject
         {
             // The user backed out of the capture; nothing to say.
         }
+        catch (ShareUploadException error)
+        {
+            Notice = Strings.Get("notice.upload.failed", error.Message);
+        }
         catch (Exception)
         {
             Notice = Strings.Get("notice.failed");
@@ -126,12 +130,8 @@ public sealed class BarViewModel : ObservableObject
         }
     }
 
-    /// <summary>A still capture ends on the clipboard; sharing it is a later step.</summary>
-    private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken)
-    {
-        await _capture.RunAsync(kind, cancellationToken);
-        Notice = Strings.Get("notice.clipboard");
-    }
+    private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken) =>
+        await ShareAsync(await _capture.RunAsync(kind, cancellationToken), cancellationToken);
 
     private async Task ToggleRecordingAsync(CancellationToken cancellationToken)
     {
@@ -148,7 +148,7 @@ public sealed class BarViewModel : ObservableObject
     private async Task ShareAsync(CaptureResult capture, CancellationToken cancellationToken)
     {
         await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
-        Notice = Strings.Get("notice.copied");
+        Notice = Strings.Get(_flow.PutsOnlyTheImage(capture) ? "notice.clipboard" : "notice.copied");
     }
 }
 

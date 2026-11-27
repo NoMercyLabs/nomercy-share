@@ -24,5 +24,15 @@
   <data name="overlay.size" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="notice.recording" xml:space="preserve"><value>Recording started</value></data>
   <data name="error.provider.unknown" xml:space="preserve"><value>Unknown storage provider "{0}". Known providers: {1}.</value></data>
+  <data name="notice.upload.failed" xml:space="preserve"><value>Upload failed: {0}. The file is kept.</value></data>
+  <data name="error.setting.missing" xml:space="preserve"><value>Setting "{0}" is empty. Set it in settings.json.</value></data>
+  <data name="error.setting.invalid" xml:space="preserve"><value>Setting "{0}" cannot be used: {1}</value></data>
+  <data name="error.setting.range" xml:space="preserve"><value>it must be between {0} and {1}.</value></data>
+  <data name="error.setting.days" xml:space="preserve"><value>it must list one or more whole numbers of days, each at least 1.</value></data>
+  <data name="error.setting.address" xml:space="preserve"><value>it must be a full http or https address.</value></data>
+  <data name="error.credential.missing" xml:space="preserve"><value>no stored credential named "{0}"</value></data>
+  <data name="error.upload.file" xml:space="preserve"><value>the captured file is gone</value></data>
+  <data name="error.upload.service" xml:space="preserve"><value>the storage service refused it ({0})</value></data>
+  <data name="error.upload.network" xml:space="preserve"><value>the storage service could not be reached</value></data>
   <data name="unsupported.os" xml:space="preserve"><value>NoMercy Share does not support this operating system yet. Windows is first; other platforms follow.</value></data>
 </root>

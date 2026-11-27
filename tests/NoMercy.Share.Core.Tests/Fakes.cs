@@ -70,8 +70,25 @@ internal sealed class FakeUploader(string name = "r2") : IShareUploader
 
     public List<(string File, Expiry Expiry)> Uploads { get; } = [];
 
+    public Exception? Throws { get; set; }
+
+    public Exception? ValidateThrows { get; set; }
+
+    public void Validate()
+    {
+        if (ValidateThrows is not null)
+        {
+            throw ValidateThrows;
+        }
+    }
+
     public Task<ShareLink> UploadAsync(string filePath, Expiry expiry, CancellationToken cancellationToken = default)
     {
+        if (Throws is not null)
+        {
+            return Task.FromException<ShareLink>(Throws);
+        }
+
         Uploads.Add((filePath, expiry));
         return Task.FromResult(new ShareLink(new Uri("https://share.example.test/abc"), null));
     }
@@ -83,15 +100,19 @@ internal sealed class FakeClipboard : IClipboard
 
     public List<string> Images { get; } = [];
 
+    public List<string> Order { get; } = [];
+
     public Task SetTextAsync(string text, CancellationToken cancellationToken = default)
     {
         Texts.Add(text);
+        Order.Add("text");
         return Task.CompletedTask;
     }
 
     public Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default)
     {
         Images.Add(pngFilePath);
+        Order.Add("image");
         return Task.CompletedTask;
     }
 }

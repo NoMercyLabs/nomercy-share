@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- S3-compatible storage (Cloudflare R2 first). Step 1 holds the registered stub; no S3 client yet. -->
+  <!-- S3-compatible storage (Cloudflare R2 first), through the AWS SDK with a custom service URL and path-style addressing. -->
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
   <ItemGroup>

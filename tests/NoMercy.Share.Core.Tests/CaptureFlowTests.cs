@@ -12,26 +12,26 @@ public sealed class CaptureFlowTests
     private readonly FakeCaptureHost _host = new();
     private readonly List<TimeSpan> _delays = [];
 
-    private CaptureFlow Flow(int hideDelay = 150) => new(_screen, _clipboard, _host, new CaptureSettings { HideDelayMilliseconds = hideDelay }, (span, _) =>
+    private CaptureFlow Flow(int hideDelay = 150) => new(_screen, _host, new CaptureSettings { HideDelayMilliseconds = hideDelay }, (span, _) =>
     {
         _delays.Add(span);
         return Task.CompletedTask;
     });
 
-    private BarViewModel Bar() => new(Flow(), new FakeScreenRecorder(), new FakeWebPageCapture(),
-        new ShareFlow(new FakeUploader(), _clipboard, new ExpirySettings()));
+    private BarViewModel Bar(ClipboardContent content = ClipboardContent.Image) => new(Flow(), new FakeScreenRecorder(), new FakeWebPageCapture(),
+        new ShareFlow(new FakeUploader(), _clipboard, new ExpirySettings(), new ClipboardSettings { Content = content }));
 
     [Theory]
     [InlineData(CaptureKind.Region, "region")]
     [InlineData(CaptureKind.Window, "window")]
     [InlineData(CaptureKind.FullScreen, "fullscreen")]
-    public async Task EachKindCapturesThenPutsTheImageOnTheClipboard(CaptureKind kind, string call)
+    public async Task EachKindCapturesAndLeavesTheClipboardToTheShareFlow(CaptureKind kind, string call)
     {
         CaptureResult result = await Flow().RunAsync(kind);
 
         Assert.Equal([call], _screen.Calls);
-        Assert.Equal([$"/tmp/{call}.png"], _clipboard.Images);
         Assert.Equal($"/tmp/{call}.png", result.FilePath);
+        Assert.Empty(_clipboard.Images);
         Assert.Empty(_clipboard.Texts);
     }
 
@@ -82,9 +82,9 @@ public sealed class CaptureFlowTests
     [InlineData(BarAction.Region, "region")]
     [InlineData(BarAction.Window, "window")]
     [InlineData(BarAction.FullScreen, "fullscreen")]
-    public async Task TheButtonCapturesPutsTheImageOnTheClipboardAndShowsTheNotice(BarAction action, string call)
+    public async Task TheButtonCapturesPutsTheImageOnTheClipboardAndShowsTheNoticeWhenTheSettingIsImage(BarAction action, string call)
     {
-        BarViewModel bar = Bar();
+        BarViewModel bar = Bar(ClipboardContent.Image);
 
         await bar.RunAsync(action);
 

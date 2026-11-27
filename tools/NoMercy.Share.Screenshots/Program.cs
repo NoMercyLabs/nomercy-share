@@ -104,8 +104,8 @@ public static class Program
 
     private static BarWindow Open(BarPositionStore store)
     {
-        ShareFlow flow = new(new NoUpload(), new NoClipboard(), new ExpirySettings());
-        CaptureFlow capture = new(new NotBuiltCapture(), new NoClipboard(), new NoHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
+        ShareFlow flow = new(new NoUpload(), new NoClipboard(), new ExpirySettings(), new ClipboardSettings());
+        CaptureFlow capture = new(new NotBuiltCapture(), new NoHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
         BarViewModel model = new(capture, new NotBuiltRecorder(), new NotBuiltWeb(), flow);
         BarWindow window = new(model, store, new BarSettings());
         window.Show();
