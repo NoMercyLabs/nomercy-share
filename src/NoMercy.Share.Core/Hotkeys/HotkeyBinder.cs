@@ -45,6 +45,9 @@ public sealed class HotkeyBinder(IGlobalHotkeys hotkeys, BarViewModel bar, Hotke
         Start();
     }
 
+    /// <summary>Turns the global hotkeys off until the handle is disposed, so a field can record a chord the app itself serves.</summary>
+    public IDisposable Pause() => hotkeys.Pause();
+
     public void Dispose()
     {
         hotkeys.Pressed -= OnPressed;

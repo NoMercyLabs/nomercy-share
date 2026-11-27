@@ -10,4 +10,7 @@ public interface IGlobalHotkeys : IDisposable
 
     /// <summary>Registers the chords, replacing any from an earlier call. A chord that cannot be had is reported, never thrown.</summary>
     IReadOnlyList<HotkeyRegistration> Register(IReadOnlyDictionary<BarAction, HotkeyChord> chords);
+
+    /// <summary>Turns the hotkeys off until the handle is disposed: nothing is raised and every key goes on. Pauses nest; Register during one applies at the resume.</summary>
+    IDisposable Pause();
 }

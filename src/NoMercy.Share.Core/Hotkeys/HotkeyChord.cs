@@ -11,6 +11,8 @@ public sealed record HotkeyChord(HotkeyModifiers Modifiers, string Key)
         ("Shift", HotkeyModifiers.Shift), ("Win", HotkeyModifiers.Win), ("Windows", HotkeyModifiers.Win)
     ];
 
+    private static readonly HotkeyModifiers[] TextOrder = [HotkeyModifiers.Win, HotkeyModifiers.Ctrl, HotkeyModifiers.Alt, HotkeyModifiers.Shift];
+
     /// <summary>Reads "Ctrl+Shift+PrintScreen". Case, spaces and the order of the modifiers do not matter.</summary>
     public static HotkeyChord Parse(string text) =>
         TryParse(text, out HotkeyChord? chord, out string? error) ? chord : throw new FormatException(error);
@@ -55,11 +57,11 @@ public sealed record HotkeyChord(HotkeyModifiers Modifiers, string Key)
         return true;
     }
 
-    /// <summary>The text that <see cref="Parse"/> reads back: Ctrl, Alt, Shift, Win, then the key.</summary>
+    /// <summary>The text that <see cref="Parse"/> reads back, in the order Windows writes it: Win, Ctrl, Alt, Shift, then the key.</summary>
     public sealed override string ToString()
     {
-        IEnumerable<string> held = Enum.GetValues<HotkeyModifiers>()
-            .Where(modifier => modifier != HotkeyModifiers.None && Modifiers.HasFlag(modifier))
+        IEnumerable<string> held = TextOrder
+            .Where(modifier => Modifiers.HasFlag(modifier))
             .Select(modifier => modifier.ToString());
         return string.Join('+', held.Append(Key));
     }

@@ -19,6 +19,16 @@ public partial class SettingsWindow : Window
         viewModel.CloseRequested += (_, _) => Close();
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        (DataContext as SettingsViewModel)?.ReleaseHotkeys(); // whichever way the window closed, the hotkeys come back
+        base.OnClosed(e);
+    }
+
+    private void OnChordGotFocus(object? sender, RoutedEventArgs e) => (DataContext as SettingsViewModel)?.HotkeyFieldFocused();
+
+    private void OnChordLostFocus(object? sender, RoutedEventArgs e) => (DataContext as SettingsViewModel)?.HotkeyFieldLeft();
+
     private void OnSaveClick(object? sender, RoutedEventArgs e) => (DataContext as SettingsViewModel)?.Save();
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => (DataContext as SettingsViewModel)?.Cancel();

@@ -19,7 +19,9 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
 
     private readonly nint _window;
     private readonly Dictionary<int, BarAction> _registered = [];
+    private Dictionary<BarAction, HotkeyChord> _wanted = [];
     private KeyboardHook? _hook;
+    private int _pauses;
     private bool _disposed;
 
     public Win32GlobalHotkeys()
@@ -44,6 +46,24 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         Release();
+        _wanted = new Dictionary<BarAction, HotkeyChord>(chords);
+        return _pauses > 0 ? [.. chords.Select(pair => new HotkeyRegistration(pair.Key, pair.Value, true))] : Bind(chords);
+    }
+
+    /// <summary>Takes the chords and the keyboard hook off until the handle is disposed; the chords come back at the resume.</summary>
+    public IDisposable Pause()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (++_pauses == 1)
+        {
+            Release();
+        }
+
+        return new PauseHandle(this);
+    }
+
+    private IReadOnlyList<HotkeyRegistration> Bind(IReadOnlyDictionary<BarAction, HotkeyChord> chords)
+    {
         List<HotkeyRegistration> results = [];
         Dictionary<BarAction, HotkeyChord> hooked = [];
         int id = 0;
@@ -86,6 +106,28 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
         }
 
         NativeMethods.DestroyWindow(_window);
+    }
+
+    private void Resume()
+    {
+        if (!_disposed && --_pauses == 0)
+        {
+            Bind(_wanted);
+        }
+    }
+
+    private sealed class PauseHandle(Win32GlobalHotkeys owner) : IDisposable
+    {
+        private bool _released;
+
+        public void Dispose()
+        {
+            if (!_released)
+            {
+                _released = true;
+                owner.Resume();
+            }
+        }
     }
 
     private bool InstallHook(Dictionary<BarAction, HotkeyChord> hooked)

@@ -24,6 +24,7 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly ICredentialStore _credentials;
     private readonly HotkeyBinder _binder;
     private readonly bool _discordStored;
+    private IDisposable? _hotkeyPause;
     private string _provider;
     private string _endpoint;
     private string _bucket;
@@ -325,13 +326,30 @@ public sealed class SettingsViewModel : ObservableObject
         }
 
         _live.Replace(next);
+        ReleaseHotkeys();
         _binder.Apply(next.Hotkeys);
         Saved = true;
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Closes the window and writes nothing.</summary>
-    public void Cancel() => CloseRequested?.Invoke(this, EventArgs.Empty);
+    public void Cancel()
+    {
+        ReleaseHotkeys();
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>A hotkey field got focus: the global hotkeys go off so the field sees every chord, including the ones the app serves.</summary>
+    public void HotkeyFieldFocused() => _hotkeyPause ??= _binder.Pause();
+
+    public void HotkeyFieldLeft() => ReleaseHotkeys();
+
+    /// <summary>Turns the global hotkeys back on. Safe to call at any time and more than once; the window calls it when it closes.</summary>
+    public void ReleaseHotkeys()
+    {
+        _hotkeyPause?.Dispose();
+        _hotkeyPause = null;
+    }
 
     private bool HasErrors =>
         new[] { EndpointError, BucketError, RegionError, PublicBaseUrlError, CredentialError, DiscordWebhookError, MaxSizeError, FrameRateError }.Any(error => error is not null)

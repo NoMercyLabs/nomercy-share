@@ -214,17 +214,24 @@ public sealed partial class Win32GlobalHotkeysHookTests
         Pump(TimeSpan.FromSeconds(1.5));
 
         nint[] snipping = SnippingWindows();
+        string front = ForegroundProcessName();
         foreach (nint window in snipping)
         {
             PostMessage(window, WmKeyDown, VkEscape, 0); // to that window only, so no other app gets the key
             PostMessage(window, WmKeyUp, VkEscape, 0);
         }
 
-        Pump(TimeSpan.FromSeconds(1.5));
+        Pump(TimeSpan.FromSeconds(1));
+        if (ForegroundProcessName() is "ScreenClippingHost" or "SnippingTool")
+        {
+            SendKeys((VkEscape, false), (VkEscape, true)); // the overlay ignores a posted key; the foreground key goes only to it
+            Pump(TimeSpan.FromSeconds(1));
+        }
+
         nint[] stillOpen = [.. SnippingWindows().Intersect(snipping)];
 
         Assert.Empty(raised);
-        Assert.NotEmpty(snipping); // the shell got the chord, so its clipping window opened
+        Assert.True(snipping.Length > 0, $"The shell did not open its clipping window (foreground: {front}).");
         Assert.Empty(stillOpen);
     }
 
@@ -232,6 +239,13 @@ public sealed partial class Win32GlobalHotkeysHookTests
     {
         HashSet<uint> ids = [.. new[] { "ScreenClippingHost", "SnippingTool" }.SelectMany(Process.GetProcessesByName).Select(process => (uint)process.Id)];
         List<nint> found = [];
+        nint foreground = GetForegroundWindow(); // the clipping overlay is the foreground window but not a visible top-level one
+        GetWindowThreadProcessId(foreground, out uint front);
+        if (ids.Contains(front))
+        {
+            found.Add(foreground);
+        }
+
         EnumWindows((window, _) =>
         {
             GetWindowThreadProcessId(window, out uint owner);
@@ -242,7 +256,7 @@ public sealed partial class Win32GlobalHotkeysHookTests
 
             return true;
         }, 0);
-        return [.. found];
+        return [.. found.Distinct()];
     }
 
     private delegate bool EnumWindowsProc(nint window, nint parameter);
