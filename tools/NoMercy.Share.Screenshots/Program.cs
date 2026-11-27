@@ -49,6 +49,10 @@ public static class Program
             Application.Current!.RequestedThemeVariant = theme;
             SettingsViewModel model = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
             SaveSettings(Path.Combine(folder, $"share-settings-{name}.png"), model);
+            SettingsViewModel sound = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
+            sound.RecordSystemSound = true;
+            sound.RecordMicrophone = true;
+            SaveSettings(Path.Combine(folder, $"share-settings-audio-{name}.png"), sound);
             model.Endpoint = "not an address";
             model.Bucket = "";
             model.Hotkeys[2].Chord = "Ctrl+Nonsense";

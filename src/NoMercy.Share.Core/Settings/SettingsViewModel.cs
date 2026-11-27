@@ -36,6 +36,8 @@ public sealed class SettingsViewModel : ObservableObject
     private string? _discordWebhookError;
     private string _maxSizeMegabytes;
     private string _frameRate;
+    private bool _recordSystemSound;
+    private bool _recordMicrophone;
     private string? _endpointError;
     private string? _bucketError;
     private string? _regionError;
@@ -69,6 +71,8 @@ public sealed class SettingsViewModel : ObservableObject
         Hotkeys = [.. HotkeyActions.Select(action => new HotkeyRow(action, current.Hotkeys.Chords().GetValueOrDefault(action, string.Empty)))];
         _maxSizeMegabytes = current.Recording.MaxSizeMegabytes.ToString(CultureInfo.InvariantCulture);
         _frameRate = current.Recording.FrameRate.ToString(CultureInfo.InvariantCulture);
+        _recordSystemSound = current.Recording.Audio.SystemSound;
+        _recordMicrophone = current.Recording.Audio.Microphone;
     }
 
     /// <summary>Raised after a save or a cancel; the window closes.</summary>
@@ -189,6 +193,18 @@ public sealed class SettingsViewModel : ObservableObject
     {
         get => _frameRate;
         set => Set(ref _frameRate, value);
+    }
+
+    public bool RecordSystemSound
+    {
+        get => _recordSystemSound;
+        set => Set(ref _recordSystemSound, value);
+    }
+
+    public bool RecordMicrophone
+    {
+        get => _recordMicrophone;
+        set => Set(ref _recordMicrophone, value);
     }
 
     /// <summary>Whether links will be made, from what is typed now.</summary>
@@ -481,7 +497,8 @@ public sealed class SettingsViewModel : ObservableObject
         bool rateOk = int.TryParse(FrameRate, NumberStyles.Integer, CultureInfo.InvariantCulture, out int rate) && rate > 0;
         MaxSizeError = sizeOk ? null : Strings.Get("error.setting.positive", Strings.Get("settings.recording.size"));
         FrameRateError = rateOk ? null : Strings.Get("error.setting.positive", Strings.Get("settings.recording.fps"));
-        return sizeOk && rateOk ? current with { MaxSizeMegabytes = size, FrameRate = rate } : current;
+        AudioSettings audio = current.Audio with { SystemSound = RecordSystemSound, Microphone = RecordMicrophone };
+        return sizeOk && rateOk ? current with { MaxSizeMegabytes = size, FrameRate = rate, Audio = audio } : current;
     }
 
     private HotkeySettings PlanHotkeys(HotkeySettings current)

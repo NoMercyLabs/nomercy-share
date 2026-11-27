@@ -60,6 +60,8 @@
   <data name="settings.error.missing.publicbase" xml:space="preserve"><value>Enter the public link base URL.</value></data>
   <data name="settings.recording.size" xml:space="preserve"><value>Max size (MB)</value></data>
   <data name="settings.recording.fps" xml:space="preserve"><value>Frame rate (fps)</value></data>
+  <data name="settings.recording.systemsound" xml:space="preserve"><value>Record system sound</value></data>
+  <data name="settings.recording.microphone" xml:space="preserve"><value>Record microphone</value></data>
   <data name="settings.save" xml:space="preserve"><value>Save</value></data>
   <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="settings.save.failed" xml:space="preserve"><value>The settings were not saved: {0}</value></data>
@@ -73,6 +75,8 @@
   <data name="overlay.automation" xml:space="preserve"><value>Select a region of the screen</value></data>
   <data name="overlay.size" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="notice.recording" xml:space="preserve"><value>Recording started</value></data>
+  <data name="notice.recording.nomic" xml:space="preserve"><value>No microphone found; recording without it.</value></data>
+  <data name="notice.recording.nooutput" xml:space="preserve"><value>No sound output found; recording without system sound.</value></data>
   <data name="notice.recording.failed" xml:space="preserve"><value>Recording failed: {0}</value></data>
   <data name="notice.recording.overcap" xml:space="preserve"><value>The video is {0} MB, over the {1} MB limit.</value></data>
   <data name="error.ffmpeg.missing" xml:space="preserve"><value>ffmpeg was not found. Set Recording.FfmpegPath in settings.json or put ffmpeg on the PATH.</value></data>

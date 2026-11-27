@@ -8,6 +8,7 @@ using NAudio.Wave.SampleProviders;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Platform.Windows;
+using Xunit.Abstractions;
 
 namespace NoMercy.Share.Windows.Tests;
 
@@ -49,7 +50,7 @@ public sealed class SystemSoundFactAttribute : FactAttribute
 }
 
 /// <summary>A recording fact that also needs a default microphone and a machine that is not CI.</summary>
-public sealed class MicrophoneFactAttribute : FactAttribute
+public class MicrophoneFactAttribute : FactAttribute
 {
     public MicrophoneFactAttribute()
     {
@@ -72,7 +73,19 @@ public sealed class MicrophoneFactAttribute : FactAttribute
     }
 }
 
-public sealed class SoundRecordingTests : IDisposable
+/// <summary>A microphone fact that also needs a default sound output, for the recording that mixes both.</summary>
+public sealed class MicrophoneAndSystemSoundFactAttribute : MicrophoneFactAttribute
+{
+    public MicrophoneAndSystemSoundFactAttribute()
+    {
+        if (Skip is null && !SoundDevices.Has(DataFlow.Render))
+        {
+            Skip = "No default sound output on this machine.";
+        }
+    }
+}
+
+public sealed class SoundRecordingTests(ITestOutputHelper output) : IDisposable
 {
     private const double ToneGain = 0.05; // low on purpose: a person may be in the room
     private const double SilenceFloorDb = -60;
@@ -104,13 +117,16 @@ public sealed class SoundRecordingTests : IDisposable
         }
 
         Assert.Null(recorder.StartNotice);
+        Assert.InRange(Assert.Single(recorder.SoundTracks).OffsetSeconds, 0, 1);
         Assert.Equal([result.FilePath], Directory.GetFiles(_folder));
         using JsonDocument probe = JsonDocument.Parse(Probe(result.FilePath));
         string[] kinds = [.. probe.RootElement.GetProperty("streams").EnumerateArray().Select(stream => stream.GetProperty("codec_name").GetString()!)];
         Assert.Equal(["h264", "aac"], kinds);
         double seconds = double.Parse(probe.RootElement.GetProperty("format").GetProperty("duration").GetString()!, CultureInfo.InvariantCulture);
         Assert.InRange(seconds, 1.5, 3);
-        Assert.True(MeanVolumeDb(result.FilePath) > SilenceFloorDb, $"mean volume {MeanVolumeDb(result.FilePath)} dB");
+        double mean = MeanVolumeDb(result.FilePath);
+        output.WriteLine($"sound offset {recorder.SoundTracks.Single().OffsetSeconds:F3} s, duration {seconds:F2} s, mean volume {mean} dB, streams {string.Join(",", kinds)}");
+        Assert.True(mean > SilenceFloorDb, $"mean volume {mean} dB");
     }
 
     [MicrophoneFact]
@@ -127,6 +143,33 @@ public sealed class SoundRecordingTests : IDisposable
         using JsonDocument probe = JsonDocument.Parse(Probe(result.FilePath));
         string[] kinds = [.. probe.RootElement.GetProperty("streams").EnumerateArray().Select(stream => stream.GetProperty("codec_name").GetString()!)];
         Assert.Equal(["h264", "aac"], kinds);
+    }
+
+    [MicrophoneAndSystemSoundFact]
+    public async Task BothSoundsAreMixedIntoOneAacStreamWithTheTone()
+    {
+        FfmpegScreenRecorder recorder = Recorder(new AudioSettings { SystemSound = true, Microphone = true });
+
+        await recorder.StartAsync(new RecordingOptions());
+        CaptureResult result;
+        using (WaveOutEvent output = new())
+        {
+            SignalGenerator tone = new(44100, 1) { Type = SignalGeneratorType.Sin, Frequency = 440, Gain = ToneGain };
+            output.Init(new SampleToWaveProvider16(new OffsetSampleProvider(tone) { Take = TimeSpan.FromSeconds(2) }));
+            output.Play();
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            result = await recorder.StopAsync();
+        }
+
+        Assert.Null(recorder.StartNotice);
+        Assert.Equal(2, recorder.SoundTracks.Count);
+        Assert.Equal([result.FilePath], Directory.GetFiles(_folder));
+        using JsonDocument probe = JsonDocument.Parse(Probe(result.FilePath));
+        string[] kinds = [.. probe.RootElement.GetProperty("streams").EnumerateArray().Select(stream => stream.GetProperty("codec_name").GetString()!)];
+        Assert.Equal(["h264", "aac"], kinds);
+        double seconds = double.Parse(probe.RootElement.GetProperty("format").GetProperty("duration").GetString()!, CultureInfo.InvariantCulture);
+        Assert.InRange(seconds, 1.5, 3);
+        Assert.True(MeanVolumeDb(result.FilePath) > SilenceFloorDb);
     }
 
     [RecordingFact]

@@ -22,6 +22,15 @@ public sealed class FfmpegArgumentsTests
     }
 
     [Fact]
+    public void ARecordPassThatTimesTheSoundWritesEachPacketAtOnceSoTheFileShowsTheFirstFrame()
+    {
+        IReadOnlyList<string> args = FfmpegArguments.Record(new RecordingTarget(0, 0, 0, 2, 2), 30, "a.mkv", flushEachPacket: true);
+
+        Assert.Equal(["-flush_packets", "1", "-y", "a.mkv"], args.Skip(args.Count - 4));
+        Assert.DoesNotContain("-flush_packets", FfmpegArguments.Record(new RecordingTarget(0, 0, 0, 2, 2), 30, "a.mkv"));
+    }
+
+    [Fact]
     public void ThePathStaysOneArgumentEvenWithSpacesAndQuotes()
     {
         IReadOnlyList<string> args = FfmpegArguments.Record(new RecordingTarget(0, 0, 0, 2, 2), 30, "C:/my caps/it's \"a\".mkv");

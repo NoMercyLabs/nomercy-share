@@ -73,6 +73,13 @@ public static class ShareDefaults
 
     public const int RecordingAudioBitrateKbps = 128;
 
+    public const bool RecordingSystemSound = false;
+
+    public const bool RecordingMicrophone = false;
+
+    /// <summary>How long a recording with sound waits for the first video frame before the sound starts anyway.</summary>
+    public const int RecordingFirstFrameWaitMilliseconds = 3000;
+
     public const int RecordingStopTimeoutSeconds = 15;
 
     public const int RecordingCompressTimeoutSeconds = 600;

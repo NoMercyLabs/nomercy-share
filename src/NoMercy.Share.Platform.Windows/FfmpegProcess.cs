@@ -15,6 +15,8 @@ internal sealed class FfmpegProcess : IDisposable
 
     private FfmpegProcess(Process process) => _process = process;
 
+    public bool HasExited => _process.HasExited;
+
     /// <summary>The last non-blank line ffmpeg wrote to its error output.</summary>
     public string LastLine => Volatile.Read(ref _lastLine);
 

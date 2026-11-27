@@ -21,8 +21,14 @@ public sealed record RecordingSettings
 
     public int MaxHeight { get; init; } = ShareDefaults.RecordingMaxHeight;
 
-    /// <summary>The audio bitrate, taken off the size budget when a recording has sound (a later step).</summary>
+    /// <summary>The audio bitrate, taken off the size budget when a recording has sound.</summary>
     public int AudioBitrateKbps { get; init; } = ShareDefaults.RecordingAudioBitrateKbps;
+
+    /// <summary>Which sound goes into a recording.</summary>
+    public AudioSettings Audio { get; init; } = new();
+
+    /// <summary>How long a recording with sound waits for the first video frame before the sound starts anyway.</summary>
+    public int FirstFrameWaitMilliseconds { get; init; } = ShareDefaults.RecordingFirstFrameWaitMilliseconds;
 
     /// <summary>How long ffmpeg gets to close the recording file after the stop before it is killed.</summary>
     public int StopTimeoutSeconds { get; init; } = ShareDefaults.RecordingStopTimeoutSeconds;

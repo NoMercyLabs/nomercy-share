@@ -326,6 +326,10 @@ public sealed class BarViewModel : ObservableObject
         await _recorder.StartAsync(new RecordingOptions(), cancellationToken);
         _recordingStartedAt = _clock();
         await ShowNotice("notice.recording");
+        if (_recorder.StartNotice is { } without)
+        {
+            Notice += " " + without;
+        }
     }
 
     private static string Minutes(TimeSpan elapsed) =>

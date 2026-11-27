@@ -192,6 +192,24 @@
               <TextBlock Classes="field-error" Text="{Binding FrameRateError}" IsVisible="{Binding FrameRateError, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </StackPanel>
           </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.recording.systemsound}" />
+            <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordSystemSound}" OnContent="" OffContent="" MinWidth="0"
+                          AutomationProperties.Name="{local:Loc settings.recording.systemsound}" />
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.recording.microphone}" />
+            <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordMicrophone}" OnContent="" OffContent="" MinWidth="0"
+                          AutomationProperties.Name="{local:Loc settings.recording.microphone}" />
+          </Grid>
         </StackPanel>
 
         <TextBlock Classes="field-error" Text="{Binding SaveError}" IsVisible="{Binding SaveError, Converter={x:Static ObjectConverters.IsNotNull}}" />
