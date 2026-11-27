@@ -7,9 +7,18 @@ public sealed class SettingsFile(string path)
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
-    /// <summary>The settings file of the current user: the app-data folder of the platform, then "NoMercy Share".</summary>
-    public static string DefaultPath() =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NoMercy Share", "settings.json");
+    /// <summary>Names a folder that holds settings.json and recent.json instead of the user's own (a portable copy or a test run).</summary>
+    public const string DataFolderVariable = "NOMERCY_SHARE_DATA";
+
+    /// <summary>The settings file of the current user, or of the folder in NOMERCY_SHARE_DATA when it is set.</summary>
+    public static string DefaultPath() => DefaultPath(Environment.GetEnvironmentVariable(DataFolderVariable));
+
+    /// <summary>settings.json in the given data folder; with none, the app-data folder of the platform, then "NoMercy Share".</summary>
+    public static string DefaultPath(string? dataFolder) =>
+        Path.Combine(string.IsNullOrWhiteSpace(dataFolder) ? UserDataFolder() : dataFolder, "settings.json");
+
+    private static string UserDataFolder() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NoMercy Share");
 
     public ShareSettings Load()
     {

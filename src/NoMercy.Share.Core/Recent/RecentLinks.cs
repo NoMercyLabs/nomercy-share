@@ -18,7 +18,12 @@ public sealed class RecentLinks(string path, RecentSettings settings, Func<DateT
     private readonly Lock _gate = new();
 
     /// <summary>The recent.json of the current user, in the folder of settings.json.</summary>
-    public static string DefaultPath() => Path.Combine(Path.GetDirectoryName(SettingsFile.DefaultPath())!, "recent.json");
+    public static string DefaultPath() => InFolderOf(SettingsFile.DefaultPath());
+
+    /// <summary>recent.json next to the settings.json of the given data folder.</summary>
+    public static string DefaultPath(string? dataFolder) => InFolderOf(SettingsFile.DefaultPath(dataFolder));
+
+    private static string InFolderOf(string settingsPath) => Path.Combine(Path.GetDirectoryName(settingsPath)!, "recent.json");
 
     /// <summary>The kept links, newest first. A missing file is an empty list; a corrupt one is copied to recent.json.bak first.</summary>
     public IReadOnlyList<RecentLink> Load()
