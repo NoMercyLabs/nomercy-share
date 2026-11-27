@@ -11,8 +11,7 @@ public sealed class CompositionTests
     private static ServiceProvider Build(ShareSettings settings, params IShareUploader[] uploaders)
     {
         ServiceCollection services = new();
-        services.AddSingleton(settings.Storage);
-        services.AddSingleton(settings.Expiry);
+        services.AddSingleton(new LiveSettings(settings));
         services.AddSingleton(settings.Clipboard);
         services.AddSingleton(settings.Capture with { HideDelayMilliseconds = 0 });
         services.AddSingleton<ICaptureHost>(new FakeCaptureHost());
@@ -41,6 +40,40 @@ public sealed class CompositionTests
 
         Assert.Empty(r2.Uploads);
         Assert.Single(other.Uploads);
+    }
+
+    [Fact]
+    public async Task NewStorageAndExpirySettingsAreUsedByTheNextShare()
+    {
+        FakeUploader r2 = new("r2");
+        FakeUploader other = new("minio");
+        using ServiceProvider provider = Build(new ShareSettings { Expiry = new ExpirySettings { DefaultDays = 7 } }, r2, other);
+        BarViewModel bar = provider.GetRequiredService<BarViewModel>();
+        await bar.RunAsync(BarAction.WebPage);
+
+        provider.GetRequiredService<LiveSettings>().Replace(new ShareSettings
+        {
+            Storage = new StorageSettings { Provider = "minio" },
+            Expiry = new ExpirySettings { DefaultDays = null }
+        });
+        await bar.RunAsync(BarAction.WebPage);
+
+        Assert.Equal(7, Assert.Single(r2.Uploads).Expiry.Lifetime?.TotalDays);
+        Assert.Null(Assert.Single(other.Uploads).Expiry.Lifetime);
+    }
+
+    [Fact]
+    public async Task TheSettingsButtonAsksTheWindowToOpenAndNeverShowsTheLaterNotice()
+    {
+        using ServiceProvider provider = Build(new ShareSettings(), new FakeUploader());
+        BarViewModel bar = provider.GetRequiredService<BarViewModel>();
+        int requests = 0;
+        bar.SettingsRequested += (_, _) => requests++;
+
+        await bar.RunAsync(BarAction.Settings);
+
+        Assert.Equal(1, requests);
+        Assert.Null(bar.Notice);
     }
 
     [Fact]

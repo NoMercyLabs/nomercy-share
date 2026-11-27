@@ -18,6 +18,8 @@ internal sealed class FakeCredentialStore(StoredCredential? credential) : ICrede
         AskedFor = name;
         return credential;
     }
+
+    public void Write(string name, StoredCredential credential) => throw new NotSupportedException();
 }
 
 public sealed class S3PutRequestsTests

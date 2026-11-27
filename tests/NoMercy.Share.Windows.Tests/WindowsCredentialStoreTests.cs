@@ -31,6 +31,30 @@ public sealed class WindowsCredentialStoreTests
     }
 
     [Fact]
+    public void AWrittenCredentialIsReadBackAndAnotherWriteReplacesIt()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        string name = $"nomercy-share-test-{Guid.NewGuid():N}";
+        WindowsCredentialStore store = new();
+        try
+        {
+            store.Write(name, new StoredCredential("made-up-access-key", "made-up-secret-value"));
+            Assert.Equal(new StoredCredential("made-up-access-key", "made-up-secret-value"), store.Read(name));
+
+            store.Write(name, new StoredCredential("another-made-up-key", "another-made-up-secret"));
+            Assert.Equal(new StoredCredential("another-made-up-key", "another-made-up-secret"), store.Read(name));
+        }
+        finally
+        {
+            CmdKey($"/delete:{name}");
+        }
+    }
+
+    [Fact]
     public void AStoredCredentialIsReadBackAndItsToStringHidesTheSecret()
     {
         if (!OperatingSystem.IsWindows())

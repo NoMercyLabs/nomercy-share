@@ -161,6 +161,28 @@ internal sealed class FakeCaptureHost : ICaptureHost
     }
 }
 
+internal sealed class FakeCredentialStore : ICredentialStore
+{
+    public Dictionary<string, StoredCredential> Stored { get; } = [];
+
+    public List<(string Name, StoredCredential Credential)> Writes { get; } = [];
+
+    public Exception? WriteThrows { get; set; }
+
+    public StoredCredential? Read(string name) => Stored.GetValueOrDefault(name);
+
+    public void Write(string name, StoredCredential credential)
+    {
+        if (WriteThrows is not null)
+        {
+            throw WriteThrows;
+        }
+
+        Writes.Add((name, credential));
+        Stored[name] = credential;
+    }
+}
+
 internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
 {
     private EventHandler<BarAction>? _pressed;
@@ -171,6 +193,8 @@ internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
     public HashSet<HotkeyChord> Taken { get; } = [];
 
     public bool Disposed { get; private set; }
+
+    public int RegisterCalls { get; private set; }
 
     public int PressedSubscribers => _pressed?.GetInvocationList().Length ?? 0;
 
@@ -184,6 +208,8 @@ internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
 
     public IReadOnlyList<HotkeyRegistration> Register(IReadOnlyDictionary<BarAction, HotkeyChord> chords)
     {
+        RegisterCalls++;
+        Registered.Clear();
         List<HotkeyRegistration> results = [];
         foreach ((BarAction action, HotkeyChord chord) in chords)
         {
