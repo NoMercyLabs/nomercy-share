@@ -34,6 +34,17 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
 
     public Exception? StopThrows { get; set; }
 
+    public CaptureResult Result { get; set; } = new("/tmp/recording.mp4", "video/mp4");
+
+    public event EventHandler<string>? Failed;
+
+    /// <summary>Ends the recording the way a dying ffmpeg does: no stop call, only the event.</summary>
+    public void Fail(string message)
+    {
+        IsRecording = false;
+        Failed?.Invoke(this, message);
+    }
+
     public Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
         if (StartThrows is not null)
@@ -49,7 +60,7 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
     {
         IsRecording = false;
         return StopThrows is null
-            ? Task.FromResult(new CaptureResult("/tmp/recording.mp4", "video/mp4"))
+            ? Task.FromResult(Result)
             : Task.FromException<CaptureResult>(StopThrows);
     }
 }

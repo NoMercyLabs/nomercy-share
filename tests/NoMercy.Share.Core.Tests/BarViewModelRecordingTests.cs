@@ -106,6 +106,56 @@ public sealed class BarViewModelRecordingTests
     }
 
     [Fact]
+    public async Task WhenFfmpegDiesDuringARecordingTheBarLeavesTheRecordingStateAtOnceAndShowsTheReason()
+    {
+        BarViewModel bar = Bar();
+        await bar.RunAsync(BarAction.Record);
+        List<string?> changed = [];
+        bar.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        _recorder.Fail("Error opening output: disk full");
+
+        Assert.False(bar.IsRecording);
+        Assert.Equal("Record the screen", bar.RecordLabel);
+        Assert.Null(bar.ElapsedText);
+        Assert.Equal("Recording failed: Error opening output: disk full", bar.Notice);
+        Assert.Contains(nameof(BarViewModel.IsRecording), changed);
+        Assert.Contains(nameof(BarViewModel.RecordLabel), changed);
+        Assert.Empty(_uploader.Uploads);
+
+        await bar.RunAsync(BarAction.Record);
+        Assert.True(bar.IsRecording);
+    }
+
+    [Fact]
+    public async Task AVideoOverTheCapIsSharedAndTheNoticeNamesBothSizesInMegabytes()
+    {
+        const long megabyte = 1024 * 1024;
+        _recorder.Result = new CaptureResult("/tmp/recording.mp4", "video/mp4", 640, 360, SizeBytes: 63 * megabyte + megabyte / 2, SizeCapBytes: 50 * megabyte);
+        BarViewModel bar = Bar();
+        await bar.RunAsync(BarAction.Record);
+
+        await bar.RunAsync(BarAction.Record);
+
+        Assert.Equal("/tmp/recording.mp4", Assert.Single(_uploader.Uploads).File);
+        Assert.Contains("63.5 MB", bar.Notice, StringComparison.Ordinal);
+        Assert.Contains("50 MB", bar.Notice, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AVideoUnderTheCapGetsTheUsualNoticeOnly()
+    {
+        const long megabyte = 1024 * 1024;
+        _recorder.Result = new CaptureResult("/tmp/recording.mp4", "video/mp4", 640, 360, SizeBytes: 10 * megabyte, SizeCapBytes: 50 * megabyte);
+        BarViewModel bar = Bar();
+        await bar.RunAsync(BarAction.Record);
+
+        await bar.RunAsync(BarAction.Record);
+
+        Assert.DoesNotContain("MB", bar.Notice, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ACancelledRegionStartsNothingAndSaysNothing()
     {
         _recorder.StartThrows = new OperationCanceledException();

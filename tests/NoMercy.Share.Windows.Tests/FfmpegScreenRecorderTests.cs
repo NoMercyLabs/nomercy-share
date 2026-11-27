@@ -98,6 +98,82 @@ public sealed class FfmpegScreenRecorderTests : IDisposable
         Assert.False(recorder.IsRecording);
     }
 
+    [DesktopFact]
+    public async Task AnFfmpegThatExitsAtOnceMakesTheStartThrowWithItsLastErrorLineAndLeavesNoFile()
+    {
+        FfmpegScreenRecorder recorder = FakeFfmpegRecorder(startupMilliseconds: 3000, script: "echo ignored first line 1>&2\r\necho boom: bad input 1>&2\r\nexit /b 2");
+
+        RecordingException error = await Assert.ThrowsAsync<RecordingException>(() => recorder.StartAsync(new RecordingOptions()));
+
+        Assert.Contains("boom: bad input", error.Message, StringComparison.Ordinal);
+        Assert.False(recorder.IsRecording);
+        Assert.Empty(Directory.GetFiles(Path.Combine(_folder, "out")));
+    }
+
+    [RecordingFact]
+    public async Task RealFfmpegWithAnImpossibleFrameRateMakesTheStartThrow()
+    {
+        CaptureSettings capture = new() { Folder = _folder };
+        ScreenRect screen = Desktop.VirtualScreen();
+        FfmpegScreenRecorder recorder = new(
+            new CaptureFiles(capture, "unused", () => DateTimeOffset.UtcNow), new FixedRegion(new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)),
+            new RecordingSettings { FfmpegPath = FfmpegTools.Ffmpeg()!, FrameRate = -1, StartupCheckMilliseconds = 5000 });
+
+        RecordingException error = await Assert.ThrowsAsync<RecordingException>(() => recorder.StartAsync(new RecordingOptions()));
+
+        Assert.False(string.IsNullOrWhiteSpace(error.Message));
+        Assert.False(recorder.IsRecording);
+        Assert.Empty(Directory.GetFiles(_folder));
+    }
+
+    [DesktopFact]
+    public async Task AnFfmpegThatDiesMidRecordingRaisesFailedWithItsLastLineAndTheHalfWrittenFileIsDeleted()
+    {
+        FfmpegScreenRecorder recorder = FakeFfmpegRecorder(startupMilliseconds: 200, script: "echo partial> \"%last%\"\r\necho boom: disk full 1>&2\r\nping -n 3 127.0.0.1 >nul\r\nexit /b 3");
+        TaskCompletionSource<string> failed = new();
+        recorder.Failed += (_, message) => failed.TrySetResult(message);
+
+        await recorder.StartAsync(new RecordingOptions());
+        string message = await failed.Task.WaitAsync(TimeSpan.FromSeconds(15));
+
+        Assert.Contains("boom: disk full", message, StringComparison.Ordinal);
+        Assert.False(recorder.IsRecording);
+        Assert.Empty(Directory.GetFiles(Path.Combine(_folder, "out")));
+    }
+
+    [RecordingFact]
+    public async Task AFileThatStaysOverTheCapGetsTheRetriesAndThenIsKeptAndSharedAsOverTheCap()
+    {
+        ScreenRect screen = Desktop.VirtualScreen();
+        RecordingSettings recording = new() { FfmpegPath = FfmpegTools.Ffmpeg()!, MaxSizeMegabytes = 0.001, MaxCompressAttempts = 1 };
+        FfmpegScreenRecorder recorder = new(
+            new CaptureFiles(new CaptureSettings { Folder = _folder }, "unused", () => DateTimeOffset.UtcNow),
+            new FixedRegion(new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)), recording);
+
+        await recorder.StartAsync(new RecordingOptions());
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        CaptureResult result = await recorder.StopAsync();
+
+        Assert.Equal([result.FilePath], Directory.GetFiles(_folder));
+        Assert.Equal(new FileInfo(result.FilePath).Length, result.SizeBytes);
+        Assert.Equal((long)(0.001 * 1024 * 1024), result.SizeCapBytes);
+        Assert.True(result.SizeBytes > result.SizeCapBytes);
+    }
+
+    /// <summary>A .cmd file stands in for ffmpeg. <c>%last%</c> in the script is the output path, the last argument.</summary>
+    private FfmpegScreenRecorder FakeFfmpegRecorder(int startupMilliseconds, string script)
+    {
+        Directory.CreateDirectory(_folder);
+        string fake = Path.Combine(_folder, "fake-ffmpeg.cmd");
+        File.WriteAllText(fake, "@echo off\r\nfor %%a in (%*) do set \"last=%%~a\"\r\n" + script + "\r\n");
+        ScreenRect screen = Desktop.VirtualScreen();
+        CaptureSettings capture = new() { Folder = Path.Combine(_folder, "out") };
+        Directory.CreateDirectory(capture.Folder);
+        return new FfmpegScreenRecorder(
+            new CaptureFiles(capture, "unused", () => DateTimeOffset.UtcNow), new FixedRegion(new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)),
+            new RecordingSettings { FfmpegPath = fake, StartupCheckMilliseconds = startupMilliseconds });
+    }
+
     private static string Probe(string file)
     {
         ProcessStartInfo start = new(FfmpegTools.Ffprobe()!) { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
