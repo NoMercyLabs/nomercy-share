@@ -125,157 +125,127 @@ public sealed partial class Win32GlobalHotkeysHookTests
     }
 
     [DesktopFact]
-    public void WhilePausedTheHookIsGoneAndResumingBringsItBack()
+    public void RecordingInstallsTheHookEvenWhenNoChordNeedsItAndTheEndRemovesIt()
+    {
+        using Win32GlobalHotkeys hotkeys = new();
+        hotkeys.Register(Chords(Free));
+        Assert.False(hotkeys.HookInstalled);
+
+        IDisposable recording = hotkeys.Record(_ => { });
+        Assert.True(hotkeys.HookInstalled);
+
+        recording.Dispose();
+        Assert.False(hotkeys.HookInstalled);
+    }
+
+    [DesktopFact]
+    public void TheEndOfARecordingBringsBackTheHookOfAWinChord()
     {
         using Win32GlobalHotkeys hotkeys = new();
         hotkeys.Register(Chords(WinShiftS));
-        Assert.True(hotkeys.HookInstalled);
+        IDisposable recording = hotkeys.Record(_ => { });
 
-        IDisposable pause = hotkeys.Pause();
-        Assert.False(hotkeys.HookInstalled);
+        recording.Dispose();
 
-        pause.Dispose();
         Assert.True(hotkeys.HookInstalled);
     }
 
     [DesktopFact]
-    public void ARegisteredChordIsFreeWhilePausedAndTakenAgainAfterTheResume()
+    public void ARegisteredChordIsFreeWhileRecordingAndTakenAgainAfterwards()
     {
         using Win32GlobalHotkeys hotkeys = new();
         hotkeys.Register(Chords(Free));
-        IDisposable pause = hotkeys.Pause();
+        IDisposable recording = hotkeys.Record(_ => { });
 
-        bool freeWhilePaused = RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79); // Ctrl+Alt+Shift+F10
-        if (freeWhilePaused)
+        bool freeWhileRecording = RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79); // Ctrl+Alt+Shift+F10
+        if (freeWhileRecording)
         {
             UnregisterHotKey(0, 1);
         }
 
-        pause.Dispose();
-        bool takenAfterResume = !RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79);
+        recording.Dispose();
+        bool takenAfterwards = !RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79);
 
-        Assert.True(freeWhilePaused);
-        Assert.True(takenAfterResume);
+        Assert.True(freeWhileRecording);
+        Assert.True(takenAfterwards);
     }
 
     [DesktopFact]
-    public void TwoPausesResumeOnlyWhenBothAreReleased()
+    public void TwoRecordingsEndOnlyWhenBothAreDisposedAndADoubleDisposeCountsOnce()
     {
         using Win32GlobalHotkeys hotkeys = new();
-        hotkeys.Register(Chords(WinShiftS));
-        IDisposable first = hotkeys.Pause();
-        IDisposable second = hotkeys.Pause();
+        hotkeys.Register(Chords(Free));
+        IDisposable first = hotkeys.Record(_ => { });
+        IDisposable second = hotkeys.Record(_ => { });
 
         first.Dispose();
-        first.Dispose(); // releasing the same pause twice must not release the other one
-        Assert.False(hotkeys.HookInstalled);
+        first.Dispose();
+        Assert.True(hotkeys.HookInstalled);
 
         second.Dispose();
-        Assert.True(hotkeys.HookInstalled);
+        Assert.False(hotkeys.HookInstalled);
     }
 
     [DesktopFact]
-    public void ARegisterWhilePausedTakesEffectAtTheResume()
+    public void ARegisterWhileRecordingTakesEffectWhenTheRecordingEnds()
     {
         using Win32GlobalHotkeys hotkeys = new();
-        IDisposable pause = hotkeys.Pause();
+        IDisposable recording = hotkeys.Record(_ => { });
 
-        HotkeyRegistration result = Assert.Single(hotkeys.Register(Chords(WinShiftS)));
-        Assert.False(hotkeys.HookInstalled);
+        HotkeyRegistration result = Assert.Single(hotkeys.Register(Chords(Free)));
         Assert.True(result.Registered);
+        bool freeWhileRecording = RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79);
+        if (freeWhileRecording)
+        {
+            UnregisterHotKey(0, 1);
+        }
 
-        pause.Dispose();
-        Assert.True(hotkeys.HookInstalled);
+        recording.Dispose();
+
+        Assert.True(freeWhileRecording);
+        Assert.False(RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79));
     }
 
     [DesktopFact]
-    public void ResumingAfterTheOwnerWasDisposedDoesNothing()
+    public void EndingARecordingAfterTheOwnerWasDisposedDoesNothing()
     {
         Win32GlobalHotkeys hotkeys = new();
-        hotkeys.Register(Chords(WinShiftS));
-        IDisposable pause = hotkeys.Pause();
+        IDisposable recording = hotkeys.Record(_ => { });
         hotkeys.Dispose();
 
-        pause.Dispose();
+        recording.Dispose();
 
         Assert.False(hotkeys.HookInstalled);
     }
 
     [InputInjectionFact]
-    public void WhilePausedWinShiftSGoesOnToTheShellAndRaisesNothing()
+    public void WhileRecordingWinShiftSIsHandedToTheCallbackOnceAndTheShellNeverSeesIt()
     {
         using Win32GlobalHotkeys hotkeys = new();
         List<BarAction> raised = [];
+        List<HotkeyChord> recorded = [];
         hotkeys.Pressed += (_, action) => raised.Add(action);
         hotkeys.Register(Chords(WinShiftS));
-        using IDisposable pause = hotkeys.Pause();
+        using IDisposable recording = hotkeys.Record(recorded.Add);
+        HashSet<int> before = SnippingProcessIds();
 
         SendKeys((VkLeftWin, false), (VkShift, false), ((ushort)KeyS, false), ((ushort)KeyS, true), (VkShift, true), (VkLeftWin, true));
-        Pump(TimeSpan.FromSeconds(1.5));
-
-        nint[] snipping = SnippingWindows();
-        string front = ForegroundProcessName();
-        foreach (nint window in snipping)
-        {
-            PostMessage(window, WmKeyDown, VkEscape, 0); // to that window only, so no other app gets the key
-            PostMessage(window, WmKeyUp, VkEscape, 0);
-        }
-
         Pump(TimeSpan.FromSeconds(1));
-        if (ForegroundProcessName() is "ScreenClippingHost" or "SnippingTool")
+
+        string front = ForegroundProcessName();
+        bool overlayOpen = front is "ScreenClippingHost" or "SnippingTool";
+        int[] opened = [.. SnippingProcessIds().Except(before)];
+        if (overlayOpen)
         {
-            SendKeys((VkEscape, false), (VkEscape, true)); // the overlay ignores a posted key; the foreground key goes only to it
+            SendKeys((VkEscape, false), (VkEscape, true)); // only while the overlay is in front, so the key goes to it alone
             Pump(TimeSpan.FromSeconds(1));
         }
 
-        nint[] stillOpen = [.. SnippingWindows().Intersect(snipping)];
-
+        Assert.Equal([WinShiftS], recorded);
         Assert.Empty(raised);
-        Assert.True(snipping.Length > 0, $"The shell did not open its clipping window (foreground: {front}).");
-        Assert.Empty(stillOpen);
+        Assert.False(overlayOpen, $"The shell opened its clipping overlay (foreground: {front}).");
+        Assert.Empty(opened);
     }
-
-    private static nint[] SnippingWindows()
-    {
-        HashSet<uint> ids = [.. new[] { "ScreenClippingHost", "SnippingTool" }.SelectMany(Process.GetProcessesByName).Select(process => (uint)process.Id)];
-        List<nint> found = [];
-        nint foreground = GetForegroundWindow(); // the clipping overlay is the foreground window but not a visible top-level one
-        GetWindowThreadProcessId(foreground, out uint front);
-        if (ids.Contains(front))
-        {
-            found.Add(foreground);
-        }
-
-        EnumWindows((window, _) =>
-        {
-            GetWindowThreadProcessId(window, out uint owner);
-            if (ids.Contains(owner) && IsWindowVisible(window))
-            {
-                found.Add(window);
-            }
-
-            return true;
-        }, 0);
-        return [.. found.Distinct()];
-    }
-
-    private delegate bool EnumWindowsProc(nint window, nint parameter);
-
-    private const uint WmKeyDown = 0x0100;
-
-    private const uint WmKeyUp = 0x0101;
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool EnumWindows(EnumWindowsProc callback, nint parameter);
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool IsWindowVisible(nint window);
-
-    [LibraryImport("user32.dll", EntryPoint = "PostMessageW")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool PostMessage(nint window, uint message, nint wParam, nint lParam);
 
     private static string ForegroundProcessName()
     {

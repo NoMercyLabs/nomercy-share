@@ -117,6 +117,69 @@ public sealed class HookChordMatcherTests
     }
 
     [Fact]
+    public void RecordingSwallowsAWinChordAndHandsItOverWithoutRaisingAnAction()
+    {
+        HookDecision decision = HookChordMatcher.ForRecording().Decide(KeyS, keyUp: false, WinShift);
+
+        Assert.True(decision.Swallow);
+        Assert.Null(decision.Action);
+        Assert.Equal(HotkeyChord.Parse("Win+Shift+S"), decision.Recorded);
+    }
+
+    [Fact]
+    public void RecordingSwallowsTheKeyUpAndTheKeyRepeatButHandsOverOnlyOnce()
+    {
+        HookChordMatcher matcher = HookChordMatcher.ForRecording();
+        matcher.Decide(KeyS, keyUp: false, WinShift);
+
+        HookDecision repeat = matcher.Decide(KeyS, keyUp: false, WinShift);
+        HookDecision up = matcher.Decide(KeyS, keyUp: true, HotkeyModifiers.Win);
+
+        Assert.True(repeat.Swallow);
+        Assert.Null(repeat.Recorded);
+        Assert.True(up.Swallow);
+        Assert.Null(up.Recorded);
+    }
+
+    [Fact]
+    public void RecordingLetsTheWinKeyUpAndTheModifiersThemselvesPass()
+    {
+        HookChordMatcher matcher = HookChordMatcher.ForRecording();
+        matcher.Decide(KeyS, keyUp: false, WinShift);
+        matcher.Decide(KeyS, keyUp: true, WinShift);
+
+        Assert.False(matcher.Decide(KeyLeftWin, keyUp: true, HotkeyModifiers.None).Swallow);
+        Assert.False(matcher.Decide(KeyLeftWin, keyUp: false, HotkeyModifiers.Win).Swallow);
+        Assert.False(matcher.Decide(0xA0, keyUp: false, WinShift).Swallow);
+    }
+
+    [Fact]
+    public void RecordingLetsAKeyWithoutWinPassUntouched()
+    {
+        HookChordMatcher matcher = HookChordMatcher.ForRecording();
+
+        HookDecision decision = matcher.Decide(KeyS, keyUp: false, HotkeyModifiers.Shift);
+
+        Assert.False(decision.Swallow);
+        Assert.Null(decision.Recorded);
+        Assert.False(matcher.Decide(KeyS, keyUp: true, HotkeyModifiers.Shift).Swallow);
+    }
+
+    [Fact]
+    public void RecordingKeepsTheCtrlAndAltThatAreHeldInTheChord()
+    {
+        HookDecision decision = HookChordMatcher.ForRecording().Decide(KeyA, keyUp: false, HotkeyModifiers.Win | HotkeyModifiers.Ctrl | HotkeyModifiers.Alt);
+
+        Assert.Equal(HotkeyChord.Parse("Win+Ctrl+Alt+A"), decision.Recorded);
+    }
+
+    [Fact]
+    public void ANormalMatcherNeverRecords()
+    {
+        Assert.Null(Matcher().Decide(KeyA, keyUp: false, WinShift).Recorded);
+    }
+
+    [Fact]
     public void ANoModifierChordIsNeverServedByTheHook()
     {
         HookChordMatcher matcher = new(new Dictionary<BarAction, HotkeyChord> { [BarAction.FullScreen] = HotkeyChord.Parse("PrintScreen") });

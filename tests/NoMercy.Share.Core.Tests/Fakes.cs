@@ -206,33 +206,29 @@ internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
 
     public int PressedSubscribers => _pressed?.GetInvocationList().Length ?? 0;
 
-    /// <summary>How many pauses are held right now; hotkeys are off while it is above zero.</summary>
-    public int PausesHeld { get; private set; }
+    /// <summary>How many recordings are active right now.</summary>
+    public int RecordingsHeld => _recorders.Count;
 
-    public int PauseCalls { get; private set; }
+    public int RecordCalls { get; private set; }
 
     /// <summary>Runs at the start of each Register, so a test can see what state the caller is in then.</summary>
     public Action? OnRegister { get; set; }
 
-    public IDisposable Pause()
+    private readonly List<Action<HotkeyChord>> _recorders = [];
+
+    /// <summary>What the keyboard hook does when a chord is pressed while recording: it goes to the newest recording.</summary>
+    public void Deliver(HotkeyChord chord) => _recorders.LastOrDefault()?.Invoke(chord);
+
+    public IDisposable Record(Action<HotkeyChord> onChord)
     {
-        PauseCalls++;
-        PausesHeld++;
-        return new PauseHandle(this);
+        RecordCalls++;
+        _recorders.Add(onChord);
+        return new RecordHandle(this, onChord);
     }
 
-    private sealed class PauseHandle(FakeGlobalHotkeys owner) : IDisposable
+    private sealed class RecordHandle(FakeGlobalHotkeys owner, Action<HotkeyChord> onChord) : IDisposable
     {
-        private bool _released;
-
-        public void Dispose()
-        {
-            if (!_released)
-            {
-                _released = true;
-                owner.PausesHeld--;
-            }
-        }
+        public void Dispose() => owner._recorders.Remove(onChord);
     }
 
     public event EventHandler<BarAction>? Pressed
