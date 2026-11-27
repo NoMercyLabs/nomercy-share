@@ -95,10 +95,10 @@ public sealed class App : Application
         services.AddSingleton<BarPositionStore>();
         services.AddSingleton(new RecentLinks(RecentLinks.DefaultPath(), settings.Recent));
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
-        services.AddSingleton<IRegionSelector>(
+        services.AddSingleton<IRegionSelector>(sp =>
             EnvironmentRegionSelector.FromEnvironment(Environment.GetEnvironmentVariable(EnvironmentRegionSelector.VariableName)) is { } fixedRegion
                 ? new EnvironmentRegionSelector(fixedRegion)
-                : new AvaloniaRegionSelector(owner));
+                : new AvaloniaRegionSelector(owner, sp.GetService<IForegroundGrant>() ?? new NoForegroundGrant()));
         services.AddSingleton<IWebCaptureDialog>(sp => new WebCaptureDialog(
             sp.GetRequiredService<Core.IClipboard>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));

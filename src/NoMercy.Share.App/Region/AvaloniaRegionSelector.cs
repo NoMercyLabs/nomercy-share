@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using NoMercy.Share.Core;
 using NoMercy.Share.Core.Capture;
 
 namespace NoMercy.Share.App;
@@ -10,7 +11,7 @@ namespace NoMercy.Share.App;
 /// Shows the frozen screen as one overlay per monitor, so every monitor keeps its own display scale. A selection stays on the monitor
 /// it started on. It lives in the app because it needs this UI toolkit.
 /// </summary>
-public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner) : IRegionSelector
+public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner, IForegroundGrant foreground) : IRegionSelector
 {
     public async Task<ScreenRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default)
     {
@@ -40,7 +41,7 @@ public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner) : IRegionSelec
                 continue;
             }
 
-            RegionOverlayWindow overlay = new(frozen.Crop(area), screen.Scaling);
+            RegionOverlayWindow overlay = new(frozen.Crop(area), screen.Scaling, foreground);
             overlay.Confirmed += (_, selection) => done.TrySetResult(selection);
             overlay.Cancelled += (_, _) => done.TrySetResult(null);
             overlays.Add(overlay);

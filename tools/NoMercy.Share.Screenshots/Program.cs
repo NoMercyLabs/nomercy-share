@@ -254,7 +254,7 @@ public static class Program
         const int width = 1280;
         const int height = 720;
         Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
-        RegionOverlayWindow overlay = new(SampleScreen(width, height), 1);
+        RegionOverlayWindow overlay = new(SampleScreen(width, height), 1, new NoForegroundGrant());
         overlay.Show();
         overlay.SetSelection(new Point(320, 180), new Point(900, 520));
         Dispatcher.UIThread.RunJobs();

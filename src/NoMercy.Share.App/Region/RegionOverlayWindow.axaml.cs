@@ -25,7 +25,8 @@ public partial class RegionOverlayWindow : Window
 
     /// <param name="monitorFrame">The frozen picture of this monitor, placed on the virtual screen.</param>
     /// <param name="scale">The monitor's display scale: physical pixels per device-independent unit.</param>
-    public RegionOverlayWindow(ScreenFrame monitorFrame, double scale) : this()
+    /// <param name="foreground">Takes keyboard focus for this window when it opens, so Esc reaches it.</param>
+    public RegionOverlayWindow(ScreenFrame monitorFrame, double scale, IForegroundGrant foreground) : this()
     {
         _monitor = monitorFrame.Bounds;
         _scale = scale;
@@ -34,7 +35,11 @@ public partial class RegionOverlayWindow : Window
         Height = monitorFrame.Height / scale;
         Position = new PixelPoint(monitorFrame.X, monitorFrame.Y);
         Dim.Data = DimGeometry(null);
-        Opened += (_, _) => Activate();
+        Opened += (_, _) =>
+        {
+            Activate();
+            foreground.BringToForeground(TryGetPlatformHandle()?.Handle ?? 0);
+        };
     }
 
     /// <summary>The user dragged a selection and confirmed it; the rectangle is in virtual screen pixels.</summary>

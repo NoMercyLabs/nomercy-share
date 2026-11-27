@@ -103,6 +103,21 @@ internal static partial class NativeMethods
     internal static partial nint GetForegroundWindow();
 
     [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool SetForegroundWindow(nint window);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool BringWindowToTop(nint window);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool AttachThreadInput(uint thread, uint attachTo, [MarshalAs(UnmanagedType.Bool)] bool attach);
+
+    [LibraryImport("kernel32.dll")]
+    internal static partial uint GetCurrentThreadId();
+
+    [LibraryImport("user32.dll")]
     internal static partial nint WindowFromPoint(Point point);
 
     [LibraryImport("user32.dll")]
