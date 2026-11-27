@@ -9,11 +9,25 @@ public sealed class HotkeyChordTests
     [InlineData("Shift+PrintScreen")]
     [InlineData("PrintScreen")]
     [InlineData("Ctrl+Alt+Shift+F12")]
-    [InlineData("Ctrl+Alt+Shift+Win+K")]
+    [InlineData("Win+Ctrl+Alt+Shift+K")]
     [InlineData("Alt+PageDown")]
+    [InlineData("Win+Shift+S")]
+    [InlineData("Ctrl+Alt+PrintScreen")]
     public void AChordWrittenAsTextReadsBackAsTheSameText(string text)
     {
         Assert.Equal(text, HotkeyChord.Parse(text).ToString());
+    }
+
+    [Theory]
+    [InlineData("Shift+Win+S", "Win+Shift+S")]
+    [InlineData("Shift+Alt+Ctrl+Win+K", "Win+Ctrl+Alt+Shift+K")]
+    [InlineData("Alt+Ctrl+PrintScreen", "Ctrl+Alt+PrintScreen")]
+    public void TheTextIsWrittenInTheOrderWindowsUsesWhateverOrderWasRead(string written, string expected)
+    {
+        HotkeyChord chord = HotkeyChord.Parse(written);
+
+        Assert.Equal(expected, chord.ToString());
+        Assert.Equal(HotkeyChord.Parse(expected), chord);
     }
 
     [Fact]

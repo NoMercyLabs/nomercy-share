@@ -124,6 +124,145 @@ public sealed partial class Win32GlobalHotkeysHookTests
         Assert.False(startOpened, $"The Start menu opened after the chord (foreground: {front}).");
     }
 
+    [DesktopFact]
+    public void WhilePausedTheHookIsGoneAndResumingBringsItBack()
+    {
+        using Win32GlobalHotkeys hotkeys = new();
+        hotkeys.Register(Chords(WinShiftS));
+        Assert.True(hotkeys.HookInstalled);
+
+        IDisposable pause = hotkeys.Pause();
+        Assert.False(hotkeys.HookInstalled);
+
+        pause.Dispose();
+        Assert.True(hotkeys.HookInstalled);
+    }
+
+    [DesktopFact]
+    public void ARegisteredChordIsFreeWhilePausedAndTakenAgainAfterTheResume()
+    {
+        using Win32GlobalHotkeys hotkeys = new();
+        hotkeys.Register(Chords(Free));
+        IDisposable pause = hotkeys.Pause();
+
+        bool freeWhilePaused = RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79); // Ctrl+Alt+Shift+F10
+        if (freeWhilePaused)
+        {
+            UnregisterHotKey(0, 1);
+        }
+
+        pause.Dispose();
+        bool takenAfterResume = !RegisterHotKey(0, 1, 0x4000 | 0x1 | 0x2 | 0x4, 0x79);
+
+        Assert.True(freeWhilePaused);
+        Assert.True(takenAfterResume);
+    }
+
+    [DesktopFact]
+    public void TwoPausesResumeOnlyWhenBothAreReleased()
+    {
+        using Win32GlobalHotkeys hotkeys = new();
+        hotkeys.Register(Chords(WinShiftS));
+        IDisposable first = hotkeys.Pause();
+        IDisposable second = hotkeys.Pause();
+
+        first.Dispose();
+        first.Dispose(); // releasing the same pause twice must not release the other one
+        Assert.False(hotkeys.HookInstalled);
+
+        second.Dispose();
+        Assert.True(hotkeys.HookInstalled);
+    }
+
+    [DesktopFact]
+    public void ARegisterWhilePausedTakesEffectAtTheResume()
+    {
+        using Win32GlobalHotkeys hotkeys = new();
+        IDisposable pause = hotkeys.Pause();
+
+        HotkeyRegistration result = Assert.Single(hotkeys.Register(Chords(WinShiftS)));
+        Assert.False(hotkeys.HookInstalled);
+        Assert.True(result.Registered);
+
+        pause.Dispose();
+        Assert.True(hotkeys.HookInstalled);
+    }
+
+    [DesktopFact]
+    public void ResumingAfterTheOwnerWasDisposedDoesNothing()
+    {
+        Win32GlobalHotkeys hotkeys = new();
+        hotkeys.Register(Chords(WinShiftS));
+        IDisposable pause = hotkeys.Pause();
+        hotkeys.Dispose();
+
+        pause.Dispose();
+
+        Assert.False(hotkeys.HookInstalled);
+    }
+
+    [InputInjectionFact]
+    public void WhilePausedWinShiftSGoesOnToTheShellAndRaisesNothing()
+    {
+        using Win32GlobalHotkeys hotkeys = new();
+        List<BarAction> raised = [];
+        hotkeys.Pressed += (_, action) => raised.Add(action);
+        hotkeys.Register(Chords(WinShiftS));
+        using IDisposable pause = hotkeys.Pause();
+
+        SendKeys((VkLeftWin, false), (VkShift, false), ((ushort)KeyS, false), ((ushort)KeyS, true), (VkShift, true), (VkLeftWin, true));
+        Pump(TimeSpan.FromSeconds(1.5));
+
+        nint[] snipping = SnippingWindows();
+        foreach (nint window in snipping)
+        {
+            PostMessage(window, WmKeyDown, VkEscape, 0); // to that window only, so no other app gets the key
+            PostMessage(window, WmKeyUp, VkEscape, 0);
+        }
+
+        Pump(TimeSpan.FromSeconds(1.5));
+        nint[] stillOpen = [.. SnippingWindows().Intersect(snipping)];
+
+        Assert.Empty(raised);
+        Assert.NotEmpty(snipping); // the shell got the chord, so its clipping window opened
+        Assert.Empty(stillOpen);
+    }
+
+    private static nint[] SnippingWindows()
+    {
+        HashSet<uint> ids = [.. new[] { "ScreenClippingHost", "SnippingTool" }.SelectMany(Process.GetProcessesByName).Select(process => (uint)process.Id)];
+        List<nint> found = [];
+        EnumWindows((window, _) =>
+        {
+            GetWindowThreadProcessId(window, out uint owner);
+            if (ids.Contains(owner) && IsWindowVisible(window))
+            {
+                found.Add(window);
+            }
+
+            return true;
+        }, 0);
+        return [.. found];
+    }
+
+    private delegate bool EnumWindowsProc(nint window, nint parameter);
+
+    private const uint WmKeyDown = 0x0100;
+
+    private const uint WmKeyUp = 0x0101;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool EnumWindows(EnumWindowsProc callback, nint parameter);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindowVisible(nint window);
+
+    [LibraryImport("user32.dll", EntryPoint = "PostMessageW")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool PostMessage(nint window, uint message, nint wParam, nint lParam);
+
     private static string ForegroundProcessName()
     {
         GetWindowThreadProcessId(GetForegroundWindow(), out uint processId);

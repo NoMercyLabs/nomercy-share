@@ -206,6 +206,35 @@ internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
 
     public int PressedSubscribers => _pressed?.GetInvocationList().Length ?? 0;
 
+    /// <summary>How many pauses are held right now; hotkeys are off while it is above zero.</summary>
+    public int PausesHeld { get; private set; }
+
+    public int PauseCalls { get; private set; }
+
+    /// <summary>Runs at the start of each Register, so a test can see what state the caller is in then.</summary>
+    public Action? OnRegister { get; set; }
+
+    public IDisposable Pause()
+    {
+        PauseCalls++;
+        PausesHeld++;
+        return new PauseHandle(this);
+    }
+
+    private sealed class PauseHandle(FakeGlobalHotkeys owner) : IDisposable
+    {
+        private bool _released;
+
+        public void Dispose()
+        {
+            if (!_released)
+            {
+                _released = true;
+                owner.PausesHeld--;
+            }
+        }
+    }
+
     public event EventHandler<BarAction>? Pressed
     {
         add => _pressed += value;
@@ -217,6 +246,7 @@ internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
     public IReadOnlyList<HotkeyRegistration> Register(IReadOnlyDictionary<BarAction, HotkeyChord> chords)
     {
         RegisterCalls++;
+        OnRegister?.Invoke();
         Registered.Clear();
         List<HotkeyRegistration> results = [];
         foreach ((BarAction action, HotkeyChord chord) in chords)
