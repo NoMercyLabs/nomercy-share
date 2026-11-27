@@ -2,7 +2,7 @@
 
 Capture something from the screen, upload it to a share host, and get the link in the clipboard. One click.
 
-Status: steps 1 to 4 are built. Step 4 is the viewer: the Cloudflare Worker in `host/` serves share.nomercy.tv. A browser or a chat app preview gets a branded page; `?raw=1` or any other client gets the file itself; an expired link answers 410 and a sidecar `.json` is never served. See `host/README.md`. Steps 1 to 3: The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Global hotkeys work on Windows (`Hotkeys` in settings.json; defaults Ctrl+PrintScreen region, PrintScreen full screen, Alt+PrintScreen window, Shift+PrintScreen record; an empty value turns one off). Not built yet: web page capture. The Record, Web page, Recent and Settings buttons show "Coming in a later step".
+Status: steps 1 to 4 are built. Step 4 is the viewer: the Cloudflare Worker in `host/` serves share.nomercy.tv. A browser or a chat app preview gets a branded page; `?raw=1` or any other client gets the file itself; an expired link answers 410 and a sidecar `.json` is never served. See `host/README.md`. Steps 1 to 3: The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Global hotkeys work on Windows (`Hotkeys` in settings.json; defaults Ctrl+PrintScreen region, PrintScreen full screen, Alt+PrintScreen window, Shift+PrintScreen record; an empty value turns one off). Not built yet: web page capture. The Web page button shows "Coming in a later step"; Settings opens the settings window (see Settings).
 
 ## Still capture (Windows)
 
@@ -46,6 +46,10 @@ A failed upload keeps the PNG, shows `Upload failed: <reason>. The file is kept.
 A small borderless, always-on-top pill. Drag it by the handle at the left edge; it remembers its position in `settings.json` in the user's app-data folder (`NoMercy Share`) and comes back on a visible screen.
 
 Buttons: region, window, full screen, record, web page, recent links, settings, close. Icons are the Moooom set; colors, radii and spacing come from the NM design tokens. Every button has a tooltip and an accessible name, and Tab and Enter work.
+
+## Settings
+
+The bar's Settings button opens one window with four sections: Sharing (provider, endpoint, bucket, region, public link base URL, access key id, secret access key), Links (default expiry: never, 1, 7, 30 or 90 days), Hotkeys (click a field and press the keys; the cross turns a hotkey off) and Recording (max size in MB, frame rate). Save checks every field, writes `settings.json` and the access key to the credential store (default name `nomercy-share`), and applies it: the next share uses the new host and expiry, the next recording the new limits, and the hotkeys register again. The secret is never shown or loaded back; an empty secret box keeps the stored one. Cancel writes nothing. Set `NOMERCY_SHARE_DATA` to a folder to keep `settings.json` and `recent.json` there instead of the user's app-data folder, for a portable or test copy.
 
 ## Architecture
 

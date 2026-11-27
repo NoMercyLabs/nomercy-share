@@ -14,8 +14,18 @@ public class ShareUploadException : Exception
     }
 }
 
+/// <summary>Why a storage setting cannot work; the settings window words each one for its own field.</summary>
+public enum StorageProblem
+{
+    Other,
+    Missing,
+    Address
+}
+
 /// <summary>A storage setting that is missing or cannot work. <see cref="Setting"/> is its name, for example "Storage.Bucket".</summary>
-public sealed class InvalidStorageSettingsException(string setting, string message) : ShareUploadException(message)
+public sealed class InvalidStorageSettingsException(string setting, string message, StorageProblem problem = StorageProblem.Other) : ShareUploadException(message)
 {
     public string Setting { get; } = setting;
+
+    public StorageProblem Problem { get; } = problem;
 }

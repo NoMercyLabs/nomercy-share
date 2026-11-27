@@ -8,7 +8,7 @@
             Padding="{DynamicResource Nm-Space-6-Thickness}">
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource Nm-Space-2}">
         <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" />
-        <Button Classes="footer accent" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
+        <Button Classes="footer primary" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
       </StackPanel>
     </Border>
     <ScrollViewer>
@@ -24,7 +24,14 @@
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock Classes="field-label" Text="{local:Loc settings.provider}" />
-            <ComboBox Grid.Column="1" ItemsSource="{Binding Providers}" SelectedItem="{Binding Provider}" AutomationProperties.Name="{local:Loc settings.provider}" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding Providers}" SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Provider}"
+                      AutomationProperties.Name="{local:Loc settings.provider}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="settings:ProviderChoice">
+                  <TextBlock Text="{Binding Label}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
           </Grid>
           <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
             <Grid.ColumnDefinitions>
@@ -128,14 +135,15 @@
                   </Grid.ColumnDefinitions>
                   <TextBlock Classes="field-label" Text="{Binding Label}" />
                   <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource Nm-Space-1}">
-                      <TextBox IsReadOnly="True" Text="{Binding Chord}" PlaceholderText="{local:Loc settings.hotkey.off}" KeyDown="OnChordKeyDown"
-                               AutomationProperties.Name="{Binding Label}" />
-                      <Button Grid.Column="1" Classes="bar small" VerticalAlignment="Top" Margin="0,4,0,0" Click="OnClearClick"
-                              ToolTip.Tip="{local:Loc settings.hotkey.clear}" AutomationProperties.Name="{local:Loc settings.hotkey.clear}">
-                        <icons:MoooomIcon Kind="cross" />
-                      </Button>
-                    </Grid>
+                    <TextBox IsReadOnly="True" Text="{Binding Chord}" PlaceholderText="{local:Loc settings.hotkey.off}" KeyDown="OnChordKeyDown"
+                             AutomationProperties.Name="{Binding Label}">
+                      <TextBox.InnerRightContent>
+                        <Button Classes="bar small" Click="OnClearClick" ToolTip.Tip="{local:Loc settings.hotkey.clear}"
+                                AutomationProperties.Name="{local:Loc settings.hotkey.clear}">
+                          <icons:MoooomIcon Kind="cross" />
+                        </Button>
+                      </TextBox.InnerRightContent>
+                    </TextBox>
                     <TextBlock Classes="field-error" Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}" />
                   </StackPanel>
                 </Grid>

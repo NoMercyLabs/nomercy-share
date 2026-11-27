@@ -46,12 +46,20 @@
     <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
   </Style>
-  <Style Selector="Window.settings Button.footer.accent">
+  <!-- Not named "accent": that class is Fluent's own and paints the system blue. -->
+  <Style Selector="Window.settings Button.footer.primary /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Contrast-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Fg-Brush}" />
   </Style>
-  <Style Selector="Window.settings Button.footer.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Window.settings Button.footer.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Nm-Accent-Hover-Brush}" />
-    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Contrast-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Fg-Brush}" />
+  </Style>
+  <Style Selector="Window.settings Button.footer.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Nm-Accent-9-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Fg-Brush}" />
+  </Style>
+  <Style Selector="Window.settings TextBox Button.bar">
+    <Setter Property="Margin" Value="0,0,2,0" />
   </Style>
 </Styles>

@@ -126,7 +126,7 @@ public sealed class SettingsViewModelTests : IDisposable
 
         Assert.False(closed);
         Assert.False(model.Saved);
-        Assert.Contains("Storage.Endpoint", model.EndpointError);
+        Assert.Equal("Enter a full https:// address.", model.EndpointError);
         Assert.Null(model.BucketError);
         Assert.False(File.Exists(SettingsFile.DefaultPath(_folder)));
         Assert.Empty(_credentials.Writes);
@@ -143,9 +143,58 @@ public sealed class SettingsViewModelTests : IDisposable
 
         model.Save();
 
-        Assert.Contains("Storage.Endpoint", model.EndpointError);
-        Assert.Contains("Storage.Bucket", model.BucketError);
-        Assert.Contains("Storage.PublicBaseUrl", model.PublicBaseUrlError);
+        Assert.Equal("Enter a full https:// address.", model.EndpointError);
+        Assert.Equal("Enter the bucket name.", model.BucketError);
+        Assert.Equal("Enter a full https:// address.", model.PublicBaseUrlError);
+    }
+
+    [Fact]
+    public void FieldErrorsAreWindowTextNotTheSettingsJsonMessage()
+    {
+        SettingsViewModel model = Open();
+        FillValid(model);
+        model.Endpoint = "not an address";
+        model.Bucket = "";
+        model.Region = "";
+        model.PublicBaseUrl = "";
+
+        model.Save();
+
+        Assert.Equal("Enter a full https:// address.", model.EndpointError);
+        Assert.Equal("Enter the bucket name.", model.BucketError);
+        Assert.Equal("Enter the region.", model.RegionError);
+        Assert.Equal("Enter the public link base URL.", model.PublicBaseUrlError);
+        Assert.DoesNotContain("settings.json", string.Concat(model.EndpointError, model.BucketError, model.RegionError, model.PublicBaseUrlError));
+    }
+
+    [Fact]
+    public void EveryWindowErrorEndsWithAFullStop()
+    {
+        SettingsViewModel model = Open();
+        model.Bucket = "made-up-bucket";
+        model.Endpoint = "x";
+        model.MaxSizeMegabytes = "abc";
+        model.FrameRate = "0";
+
+        model.Save();
+
+        Assert.EndsWith(".", model.MaxSizeError);
+        Assert.EndsWith(".", model.FrameRateError);
+        Assert.EndsWith(".", model.CredentialError);
+        Assert.EndsWith(".", model.EndpointError);
+    }
+
+    [Fact]
+    public void TheProviderIsShownByItsNameAndStoredByItsValue()
+    {
+        SettingsViewModel model = Open();
+
+        Assert.Equal(["Cloudflare R2", "S3-compatible"], model.Providers.Select(provider => provider.Label));
+        Assert.Equal(["r2", "s3"], model.Providers.Select(provider => provider.Value));
+        model.Provider = "s3";
+        FillValid(model);
+        model.Save();
+        Assert.Equal("s3", _file.Load().Storage.Provider);
     }
 
     [Fact]

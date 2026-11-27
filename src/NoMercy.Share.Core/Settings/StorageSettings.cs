@@ -92,7 +92,7 @@ public sealed record StorageSettings
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            throw new InvalidStorageSettingsException($"Storage.{name}", Strings.Get("error.setting.missing", $"Storage.{name}"));
+            throw new InvalidStorageSettingsException($"Storage.{name}", Strings.Get("error.setting.missing", $"Storage.{name}"), StorageProblem.Missing);
         }
     }
 
@@ -100,7 +100,8 @@ public sealed record StorageSettings
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) || uri.Scheme is not (HttpScheme or HttpsScheme))
         {
-            throw Fail(name, Strings.Get("error.setting.address"));
+            throw new InvalidStorageSettingsException(
+                $"Storage.{name}", Strings.Get("error.setting.invalid", $"Storage.{name}", Strings.Get("error.setting.address")), StorageProblem.Address);
         }
     }
 }

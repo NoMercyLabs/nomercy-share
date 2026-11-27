@@ -47,7 +47,7 @@ public sealed class SettingsViewModel : ObservableObject
         _live = live;
         _credentials = credentials;
         _binder = binder;
-        Providers = providers;
+        Providers = [.. providers.Select(value => new ProviderChoice(value))];
         ShareSettings current = file.Load();
         StorageSettings storage = current.Storage;
         _provider = storage.Provider;
@@ -68,7 +68,7 @@ public sealed class SettingsViewModel : ObservableObject
     /// <summary>Raised after a save or a cancel; the window closes.</summary>
     public event EventHandler? CloseRequested;
 
-    public IReadOnlyList<string> Providers { get; }
+    public IReadOnlyList<ProviderChoice> Providers { get; }
 
     public IReadOnlyList<ExpiryChoice> ExpiryChoices { get; }
 
@@ -331,19 +331,19 @@ public sealed class SettingsViewModel : ObservableObject
                 switch (error.Setting)
                 {
                     case "Storage.Endpoint":
-                        EndpointError = error.Message;
+                        EndpointError = FieldText(error, "endpoint");
                         checking = checking with { Endpoint = ValidAddress };
                         break;
                     case "Storage.Bucket":
-                        BucketError = error.Message;
+                        BucketError = FieldText(error, "bucket");
                         checking = checking with { Bucket = ValidText };
                         break;
                     case "Storage.Region":
-                        RegionError = error.Message;
+                        RegionError = FieldText(error, "region");
                         checking = checking with { Region = ValidText };
                         break;
                     case "Storage.PublicBaseUrl":
-                        PublicBaseUrlError = error.Message;
+                        PublicBaseUrlError = FieldText(error, "publicbase");
                         checking = checking with { PublicBaseUrl = ValidAddress };
                         break;
                     default:
@@ -353,6 +353,14 @@ public sealed class SettingsViewModel : ObservableObject
             }
         }
     }
+
+    /// <summary>The window's own words for a field; the settings.json wording of the exception stays for the bar notice.</summary>
+    private static string FieldText(InvalidStorageSettingsException error, string field) => error.Problem switch
+    {
+        StorageProblem.Missing => Strings.Get($"settings.error.missing.{field}"),
+        StorageProblem.Address => Strings.Get("settings.error.address"),
+        _ => error.Message
+    };
 
     private CredentialPlan PlanCredential(string name)
     {

@@ -38,15 +38,22 @@
   <data name="settings.expiry.day" xml:space="preserve"><value>{0} day</value></data>
   <data name="settings.expiry.days" xml:space="preserve"><value>{0} days</value></data>
   <data name="settings.hotkey.off" xml:space="preserve"><value>Off</value></data>
-  <data name="settings.hotkey.clear" xml:space="preserve"><value>Turn this hotkey off</value></data>
+  <data name="settings.hotkey.clear" xml:space="preserve"><value>Turn off</value></data>
+  <data name="settings.provider.r2" xml:space="preserve"><value>Cloudflare R2</value></data>
+  <data name="settings.provider.s3" xml:space="preserve"><value>S3-compatible</value></data>
+  <data name="settings.error.address" xml:space="preserve"><value>Enter a full https:// address.</value></data>
+  <data name="settings.error.missing.endpoint" xml:space="preserve"><value>Enter the endpoint address.</value></data>
+  <data name="settings.error.missing.bucket" xml:space="preserve"><value>Enter the bucket name.</value></data>
+  <data name="settings.error.missing.region" xml:space="preserve"><value>Enter the region.</value></data>
+  <data name="settings.error.missing.publicbase" xml:space="preserve"><value>Enter the public link base URL.</value></data>
   <data name="settings.recording.size" xml:space="preserve"><value>Max size (MB)</value></data>
   <data name="settings.recording.fps" xml:space="preserve"><value>Frame rate (fps)</value></data>
   <data name="settings.save" xml:space="preserve"><value>Save</value></data>
   <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="settings.save.failed" xml:space="preserve"><value>The settings were not saved: {0}</value></data>
-  <data name="error.setting.positive" xml:space="preserve"><value>{0} must be a number above 0</value></data>
-  <data name="error.credential.needed" xml:space="preserve"><value>Enter the access key id and the secret access key</value></data>
-  <data name="error.credential.secret" xml:space="preserve"><value>Enter the secret access key again for this key id</value></data>
+  <data name="error.setting.positive" xml:space="preserve"><value>{0} must be a number above 0.</value></data>
+  <data name="error.credential.needed" xml:space="preserve"><value>Enter the access key id and the secret access key.</value></data>
+  <data name="error.credential.secret" xml:space="preserve"><value>Enter the secret access key again for this key id.</value></data>
   <data name="notice.failed" xml:space="preserve"><value>That did not work. Try again.</value></data>
   <data name="notice.copied" xml:space="preserve"><value>Link copied</value></data>
   <data name="notice.clipboard" xml:space="preserve"><value>Copied to clipboard</value></data>
