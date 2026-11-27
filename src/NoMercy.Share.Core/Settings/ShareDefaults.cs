@@ -1,6 +1,6 @@
 namespace NoMercy.Share.Core.Settings;
 
-/// <summary>The default of every policy value. A user changes each one in settings.json; none of them is a literal in logic.</summary>
+/// <summary>The default of every setting a user can change in settings.json. Rules that are not settings live next to the code that uses them.</summary>
 public static class ShareDefaults
 {
     /// <summary>The storage provider used when settings name none. R2 is the first provider.</summary>
@@ -17,13 +17,6 @@ public static class ShareDefaults
     /// <summary>The length of the random object id. 62^10 is about 8e17 ids, so a link cannot be guessed.</summary>
     public const int KeyLength = 10;
 
-    public const int MinKeyLength = 8;
-
-    public const int MaxKeyLength = 64;
-
-    /// <summary>URL-safe: letters and digits only.</summary>
-    public const string KeyAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
     /// <summary>The lifetimes that have an expiry prefix, in days. The host needs one lifecycle rule per prefix.</summary>
     public static readonly int[] ExpiryBucketDays = [1, 7, 30, 90];
 
@@ -32,9 +25,6 @@ public static class ShareDefaults
     public const string KeepPrefix = "keep";
 
     public const string SidecarSuffix = ".json";
-
-    /// <summary>The longest file extension an object key keeps, dot included.</summary>
-    public const int MaxExtensionLength = 8;
 
     /// <summary>How many days a link lives unless the upload says otherwise. Null in the settings means never.</summary>
     public const int ExpiryDays = 30;

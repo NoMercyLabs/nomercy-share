@@ -88,14 +88,14 @@ internal sealed class Dib : IDisposable
 internal static class GdiScreen
 {
     /// <summary>All monitors together; X and Y are negative when a monitor sits left of or above the main one.</summary>
-    public static PixelRect VirtualScreen() => new(
+    public static ScreenRect VirtualScreen() => new(
         NativeMethods.GetSystemMetrics(NativeMethods.VirtualScreenLeft),
         NativeMethods.GetSystemMetrics(NativeMethods.VirtualScreenTop),
         NativeMethods.GetSystemMetrics(NativeMethods.VirtualScreenWidth),
         NativeMethods.GetSystemMetrics(NativeMethods.VirtualScreenHeight));
 
     /// <summary>The monitor the mouse cursor is on, or the nearest one.</summary>
-    public static PixelRect CursorMonitor()
+    public static ScreenRect CursorMonitor()
     {
         NativeMethods.GetCursorPos(out NativeMethods.Point cursor);
         nint monitor = NativeMethods.MonitorFromPoint(cursor, NativeMethods.MonitorDefaultToNearest);
@@ -105,11 +105,11 @@ internal static class GdiScreen
             return VirtualScreen();
         }
 
-        return new PixelRect(info.Monitor.Left, info.Monitor.Top, info.Monitor.Right - info.Monitor.Left, info.Monitor.Bottom - info.Monitor.Top);
+        return new ScreenRect(info.Monitor.Left, info.Monitor.Top, info.Monitor.Right - info.Monitor.Left, info.Monitor.Bottom - info.Monitor.Top);
     }
 
     /// <summary>Copies a rectangle of the screen (virtual screen coordinates) with BitBlt from the screen's device context.</summary>
-    public static ScreenFrame Capture(PixelRect area)
+    public static ScreenFrame Capture(ScreenRect area)
     {
         using Dib dib = Dib.Create(area.Width, area.Height);
         nint screen = NativeMethods.GetDC(0);

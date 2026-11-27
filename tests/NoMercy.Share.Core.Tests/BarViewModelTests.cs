@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Settings;
@@ -13,14 +14,16 @@ public sealed class BarViewModelTests
     private readonly FakeUploader _uploader = new();
     private readonly FakeClipboard _clipboard = new();
 
-    private BarViewModel Bar() => new(
+    private BarViewModel Bar(bool withRecordingAndWeb = true) => new(
         new CaptureFlow(_screen, new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
-        _recorder, _web, new ShareFlow(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }, new ClipboardSettings()));
+        new ShareFlow(_uploader, _clipboard, new ExpirySettings { DefaultDays = 7 }, new ClipboardSettings()),
+        withRecordingAndWeb ? _recorder : null,
+        withRecordingAndWeb ? _web : null);
 
     [Fact]
-    public void TheRegionButtonCapturesARegionUploadsItAndPutsTheLinkOnTheClipboard()
+    public async Task TheRegionButtonCapturesARegionUploadsItAndPutsTheLinkOnTheClipboard()
     {
-        Bar().RegionCommand.Execute(null);
+        await Bar().RunAsync(BarAction.Region);
 
         Assert.Equal(["region"], _screen.Calls);
         Assert.Equal("/tmp/region.png", Assert.Single(_uploader.Uploads).File);
@@ -29,25 +32,25 @@ public sealed class BarViewModelTests
     }
 
     [Fact]
-    public void TheWindowButtonCapturesAWindow()
+    public async Task TheWindowButtonCapturesAWindow()
     {
-        Bar().WindowCommand.Execute(null);
+        await Bar().RunAsync(BarAction.Window);
 
         Assert.Equal(["window"], _screen.Calls);
     }
 
     [Fact]
-    public void TheFullScreenButtonCapturesTheFullScreen()
+    public async Task TheFullScreenButtonCapturesTheFullScreen()
     {
-        Bar().FullScreenCommand.Execute(null);
+        await Bar().RunAsync(BarAction.FullScreen);
 
         Assert.Equal(["fullscreen"], _screen.Calls);
     }
 
     [Fact]
-    public void TheWebPageButtonAsksTheWebCaptureForAFullPageOfTheOpenBrowserPage()
+    public async Task TheWebPageButtonAsksTheWebCaptureForAFullPageOfTheOpenBrowserPage()
     {
-        Bar().WebPageCommand.Execute(null);
+        await Bar().RunAsync(BarAction.WebPage);
 
         WebCaptureRequest request = Assert.Single(_web.Requests);
         Assert.Null(request.Page);
@@ -55,66 +58,76 @@ public sealed class BarViewModelTests
     }
 
     [Fact]
-    public void TheRecordButtonStartsAndThenStopsAndSharesTheVideo()
+    public async Task TheRecordButtonStartsAndThenStopsAndSharesTheVideo()
     {
         BarViewModel bar = Bar();
 
-        bar.RecordCommand.Execute(null);
+        await bar.RunAsync(BarAction.Record);
         Assert.True(bar.IsRecording);
         Assert.Empty(_uploader.Uploads);
 
-        bar.RecordCommand.Execute(null);
+        await bar.RunAsync(BarAction.Record);
         Assert.False(bar.IsRecording);
         Assert.Equal("/tmp/recording.mp4", Assert.Single(_uploader.Uploads).File);
     }
 
     [Fact]
-    public void AnActionThatIsNotBuiltYetShowsAShortNoticeInsteadOfCrashing()
+    public void TheButtonCommandRunsTheActionInItsParameter()
     {
-        _screen.Throws = new NotImplementedException("later");
-        BarViewModel bar = Bar();
+        Bar().ActionCommand.Execute(BarAction.Window);
 
-        bar.RegionCommand.Execute(null);
+        Assert.Equal(["window"], _screen.Calls);
+    }
+
+    [Theory]
+    [InlineData(BarAction.Record)]
+    [InlineData(BarAction.WebPage)]
+    public async Task AButtonWhoseFeatureIsNotBuiltSaysSoAndDoesNothingElse(BarAction action)
+    {
+        BarViewModel bar = Bar(withRecordingAndWeb: false);
+
+        await bar.RunAsync(action);
 
         Assert.Equal("Coming in a later step", bar.Notice);
+        Assert.False(bar.IsRecording);
         Assert.Empty(_uploader.Uploads);
     }
 
     [Fact]
-    public void ARecorderThatCannotStartLeavesTheBarNotRecording()
-    {
-        _recorder.StartThrows = new NotImplementedException("later");
-        BarViewModel bar = Bar();
-
-        bar.RecordCommand.Execute(null);
-
-        Assert.False(bar.IsRecording);
-        Assert.Equal("Coming in a later step", bar.Notice);
-    }
-
-    [Fact]
-    public void AnUnexpectedFailureShowsAPlainNoticeAndKeepsTheBarAlive()
+    public async Task AnUnexpectedFailureShowsAPlainNoticeLogsTheExceptionAndKeepsTheBarAlive()
     {
         _screen.Throws = new InvalidOperationException("boom");
         BarViewModel bar = Bar();
+        StringWriter log = new();
+        using TextWriterTraceListener listener = new(log);
+        Trace.Listeners.Add(listener);
 
-        bar.RegionCommand.Execute(null);
+        try
+        {
+            await bar.RunAsync(BarAction.Region);
+        }
+        finally
+        {
+            Trace.Listeners.Remove(listener);
+        }
 
+        listener.Flush();
         Assert.Equal("That did not work. Try again.", bar.Notice);
+        Assert.Contains("boom", log.ToString());
     }
 
     [Fact]
-    public void RecentLinksAndSettingsAreNotBuiltYetAndSaySo()
+    public async Task RecentLinksAndSettingsAreNotBuiltYetAndSaySo()
     {
         BarViewModel bar = Bar();
 
-        bar.RecentCommand.Execute(null);
+        await bar.RunAsync(BarAction.Recent);
         Assert.Equal("Coming in a later step", bar.Notice);
 
         bar.ClearNotice();
         Assert.Null(bar.Notice);
 
-        bar.SettingsCommand.Execute(null);
+        await bar.RunAsync(BarAction.Settings);
         Assert.Equal("Coming in a later step", bar.Notice);
     }
 
@@ -134,13 +147,13 @@ public sealed class BarViewModelTests
     }
 
     [Fact]
-    public void TheCloseButtonAsksTheWindowToClose()
+    public async Task TheCloseButtonAsksTheWindowToClose()
     {
         BarViewModel bar = Bar();
         int closes = 0;
         bar.CloseRequested += (_, _) => closes++;
 
-        bar.CloseCommand.Execute(null);
+        await bar.RunAsync(BarAction.Close);
 
         Assert.Equal(1, closes);
     }

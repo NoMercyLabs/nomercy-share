@@ -8,10 +8,10 @@ public sealed record ScreenFrame(int X, int Y, int Width, int Height, byte[] Bgr
 {
     public const int BytesPerPixel = 4;
 
-    public PixelRect Bounds => new(X, Y, Width, Height);
+    public ScreenRect Bounds => new(X, Y, Width, Height);
 
     /// <summary>The part inside <paramref name="area"/>, given in virtual screen coordinates.</summary>
-    public ScreenFrame Crop(PixelRect area)
+    public ScreenFrame Crop(ScreenRect area)
     {
         if (area.IsEmpty || area.X < X || area.Y < Y || area.Right > X + Width || area.Bottom > Y + Height)
         {

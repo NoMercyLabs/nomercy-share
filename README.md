@@ -2,7 +2,7 @@
 
 Capture something from the screen, upload it to a share host, and get the link in the clipboard. One click.
 
-Status: step 3 of the build. Region, Window and Full screen take a still picture on Windows, upload it to an S3-compatible host (Cloudflare R2 first) and put the share link on the clipboard. Recording and web page capture are not built yet; those buttons show "Coming in a later step".
+Status: steps 1 to 3 are built. The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Not built yet: screen recording, web page capture, global hotkeys and the viewer page. The Record, Web page, Recent and Settings buttons show "Coming in a later step".
 
 ## Still capture (Windows)
 
@@ -53,8 +53,8 @@ Every action is an interface in `NoMercy.Share.Core`. Each platform registers it
 
 | Project | What it holds |
 | --- | --- |
-| `NoMercy.Share.Core` | The interfaces (`IScreenCapture`, `IScreenRecorder`, `IWebPageCapture`, `IShareUploader`, `IClipboard`, `IGlobalHotkeys`), the settings, the bar view model. No UI toolkit, no OS code. |
-| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: the Windows implementations (screen capture and the credential store built; recording, web page and hotkeys are stubs). |
+| `NoMercy.Share.Core` | The interfaces (`IScreenCapture`, `IScreenRecorder`, `IWebPageCapture`, `IShareUploader`, `IClipboard`), the settings, the bar view model. No UI toolkit, no OS code. |
+| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: screen capture and the credential store. There is no recorder or web page capture yet, so the bar is built without them. |
 | `NoMercy.Share.Storage.S3` | S3-compatible storage; Cloudflare R2 is the first provider (`AddS3Storage()` registers `r2` and `s3`). |
 | `NoMercy.Share.App` | The Avalonia app and the composition root. The clipboard lives here because it needs this UI toolkit. |
 

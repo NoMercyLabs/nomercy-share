@@ -9,7 +9,7 @@ public sealed class WindowsScreenCapture(CaptureFiles files, IRegionSelector sel
     public async Task<CaptureResult> CaptureRegionAsync(CancellationToken cancellationToken = default)
     {
         ScreenFrame frozen = await Task.Run(() => Frozen(GdiScreen.VirtualScreen), cancellationToken);
-        PixelRect? chosen = await selector.SelectAsync(frozen, cancellationToken);
+        ScreenRect? chosen = await selector.SelectAsync(frozen, cancellationToken);
         if (chosen is not { IsEmpty: false } area)
         {
             throw new OperationCanceledException("The region selection was cancelled.");
@@ -31,31 +31,23 @@ public sealed class WindowsScreenCapture(CaptureFiles files, IRegionSelector sel
         return take();
     }
 
-    private static ScreenFrame Frozen(Func<PixelRect> area) => DpiAware(() => GdiScreen.Capture(area()));
+    private static ScreenFrame Frozen(Func<ScreenRect> area) => DpiAware(() => GdiScreen.Capture(area()));
 
-    private PixelRect FullScreenRect() =>
+    private ScreenRect FullScreenRect() =>
         settings.FullScreenArea == FullScreenArea.VirtualScreen ? GdiScreen.VirtualScreen() : GdiScreen.CursorMonitor();
 
     private static ScreenFrame WindowFrame()
     {
         nint window = WindowFinder.FindTarget();
-        PixelRect outer = WindowFinder.OuterBounds(window);
-        PixelRect visible = WindowFinder.VisibleBounds(window, outer);
+        ScreenRect outer = WindowFinder.OuterBounds(window);
+        ScreenRect visible = WindowFinder.VisibleBounds(window, outer);
         using Dib dib = Dib.Create(outer.Width, outer.Height);
         if (!NativeMethods.PrintWindow(window, dib.Context, NativeMethods.PrintWindowRenderFullContent))
         {
             return GdiScreen.Capture(visible);
         }
 
-        return new ScreenFrame(outer.X, outer.Y, outer.Width, outer.Height, dib.ReadOpaque()).Crop(Inside(visible, outer));
-    }
-
-    /// <summary>The part of <paramref name="area"/> that lies inside <paramref name="bounds"/>.</summary>
-    private static PixelRect Inside(PixelRect area, PixelRect bounds)
-    {
-        int left = Math.Max(area.X, bounds.X);
-        int top = Math.Max(area.Y, bounds.Y);
-        return new PixelRect(left, top, Math.Min(area.Right, bounds.Right) - left, Math.Min(area.Bottom, bounds.Bottom) - top);
+        return new ScreenFrame(outer.X, outer.Y, outer.Width, outer.Height, dib.ReadOpaque()).Crop(visible.Intersect(outer));
     }
 
     private async Task<CaptureResult> SaveAsync(ScreenFrame frame, CancellationToken cancellationToken)

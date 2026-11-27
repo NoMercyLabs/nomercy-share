@@ -1,9 +1,9 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -13,7 +13,7 @@ using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
-using PixelRect = Avalonia.PixelRect;
+using NoMercy.Share.Core.Tests;
 
 namespace NoMercy.Share.Screenshots;
 
@@ -28,30 +28,44 @@ public static class Program
         string settings = Path.Combine(Path.GetTempPath(), $"share-shots-{Guid.NewGuid():N}", "settings.json");
         BarPositionStore store = new(new SettingsFile(settings));
 
+        RenderBar(folder, store);
+        bool remembered = CheckPositionRemembered(folder, store);
+        RenderRegionOverlay(folder);
+        return remembered ? 0 : 1;
+    }
+
+    /// <summary>The bar in the dark theme: default, zoomed ends, hover, focus and a notice.</summary>
+    private static void RenderBar(string folder, BarPositionStore store)
+    {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
         BarWindow window = Open(store);
-        Save(window, Path.Combine(folder, "share-bar-v2-default.png"));
-        window.CaptureRenderedFrame()?.Save(Path.Combine(folder, "share-bar-v2-frame.png"));
-        SaveCrop(window, Path.Combine(folder, "share-bar-v2-zoom-left.png"), 0, 64);
-        SaveCrop(window, Path.Combine(folder, "share-bar-v2-zoom-right.png"), window.Bounds.Width - 64, 64);
-        Button[] buttons = [.. window.GetVisualDescendants().OfType<Button>()];
-        ((IPseudoClasses)buttons[3].Classes).Set(":pointerover", true);
-        Save(window, Path.Combine(folder, "share-bar-v2-hover.png"));
-        ((IPseudoClasses)buttons[3].Classes).Set(":pointerover", false);
-        buttons[0].Focus(NavigationMethod.Tab);
-        Save(window, Path.Combine(folder, "share-bar-v2-focus.png"));
-        ((BarViewModel)window.DataContext!).RegionCommand.Execute(null);
-        Save(window, Path.Combine(folder, "share-bar-v2-notice.png"));
+        Save(window, Path.Combine(folder, "share-bar-default.png"));
+        window.CaptureRenderedFrame()?.Save(Path.Combine(folder, "share-bar-frame.png"));
+        SaveCrop(window, Path.Combine(folder, "share-bar-zoom-left.png"), 0, 64);
+        SaveCrop(window, Path.Combine(folder, "share-bar-zoom-right.png"), window.Bounds.Width - 64, 64);
+        IPseudoClasses recordClasses = Named<Button>(window, "RecordButton").Classes;
+        recordClasses.Set(":pointerover", true);
+        Save(window, Path.Combine(folder, "share-bar-hover.png"));
+        recordClasses.Set(":pointerover", false);
+        Named<Button>(window, "RegionButton").Focus(NavigationMethod.Tab);
+        Save(window, Path.Combine(folder, "share-bar-focus.png"));
+        ((BarViewModel)window.DataContext!).ActionCommand.Execute(BarAction.Recent);
+        Save(window, Path.Combine(folder, "share-bar-notice.png"));
+        window.Close();
+    }
 
+    /// <summary>Moves a bar, closes it, opens another and checks it comes back where it was left; also renders the light theme.</summary>
+    private static bool CheckPositionRemembered(string folder, BarPositionStore store)
+    {
+        BarWindow window = Open(store);
         window.Position = new PixelPoint(300, 200);
         window.Close();
         BarWindow reopened = Open(store);
         Console.WriteLine($"saved position {store.Load()}; reopened at {reopened.Position}");
-        Application.Current.RequestedThemeVariant = ThemeVariant.Light;
-        Save(reopened, Path.Combine(folder, "share-bar-v2-light.png"));
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        Save(reopened, Path.Combine(folder, "share-bar-light.png"));
         reopened.Close();
-        RenderRegionOverlay(folder);
-        return store.Load() == new BarPosition(300, 200) ? 0 : 1;
+        return store.Load() == new BarPosition(300, 200);
     }
 
     /// <summary>The region overlay on a made-up frozen screen with a selection drawn: full size, and a zoom on both ends of the selection.</summary>
@@ -102,18 +116,21 @@ public static class Program
         return new ScreenFrame(0, 0, width, height, pixels);
     }
 
+    private static T Named<T>(Window window, string name) where T : Control =>
+        window.GetVisualDescendants().OfType<T>().First(control => control.Name == name);
+
     private static BarWindow Open(BarPositionStore store)
     {
-        ShareFlow flow = new(new NoUpload(), new NoClipboard(), new ExpirySettings(), new ClipboardSettings());
-        CaptureFlow capture = new(new NotBuiltCapture(), new NoHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
-        BarViewModel model = new(capture, new NotBuiltRecorder(), new NotBuiltWeb(), flow);
+        ShareFlow flow = new(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings());
+        CaptureFlow capture = new(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
+        BarViewModel model = new(capture, flow, new FakeScreenRecorder(), new FakeWebPageCapture());
         BarWindow window = new(model, store, new BarSettings());
         window.Show();
         Dispatcher.UIThread.RunJobs();
         return window;
     }
 
-    /// <summary>Renders the window at 2x with its alpha kept (the area outside the pill stays transparent).</summary>
+    /// <summary>Renders the window at 1x with its alpha kept (the area outside the pill stays transparent).</summary>
     private static void Save(Window window, string file)
     {
         Dispatcher.UIThread.RunJobs();
@@ -154,49 +171,5 @@ public static class Program
         {
             Marshal.FreeHGlobal(pixel);
         }
-    }
-
-    private sealed class NotBuiltCapture : IScreenCapture
-    {
-        public Task<CaptureResult> CaptureRegionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-
-        public Task<CaptureResult> CaptureWindowAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-
-        public Task<CaptureResult> CaptureFullScreenAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
-
-    private sealed class NotBuiltRecorder : IScreenRecorder
-    {
-        public bool IsRecording => false;
-
-        public Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-
-        public Task<CaptureResult> StopAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
-
-    private sealed class NotBuiltWeb : IWebPageCapture
-    {
-        public Task<CaptureResult> CaptureAsync(WebCaptureRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
-
-    private sealed class NoUpload : IShareUploader
-    {
-        public string ProviderName => "r2";
-
-        public Task<ShareLink> UploadAsync(string filePath, Expiry expiry, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-    }
-
-    private sealed class NoClipboard : NoMercy.Share.Core.IClipboard
-    {
-        public Task SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-        public Task SetImageAsync(string pngFilePath, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    }
-
-    private sealed class NoHost : ICaptureHost
-    {
-        public Task HideAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-        public Task ShowAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

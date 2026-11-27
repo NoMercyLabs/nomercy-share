@@ -31,12 +31,12 @@ internal static partial class Desktop
     private static partial int GetSystemMetrics(int index);
 
     /// <summary>The virtual screen from its own Win32 calls, apart from the code under test.</summary>
-    public static PixelRect VirtualScreen()
+    public static ScreenRect VirtualScreen()
     {
         nint previous = SetThreadDpiAwarenessContext(PerMonitorAwareV2);
         try
         {
-            return new PixelRect(GetSystemMetrics(VirtualLeft), GetSystemMetrics(VirtualLeft + 1), GetSystemMetrics(VirtualLeft + 2), GetSystemMetrics(VirtualLeft + 3));
+            return new ScreenRect(GetSystemMetrics(VirtualLeft), GetSystemMetrics(VirtualLeft + 1), GetSystemMetrics(VirtualLeft + 2), GetSystemMetrics(VirtualLeft + 3));
         }
         finally
         {
@@ -66,7 +66,7 @@ public sealed class WindowsScreenCaptureTests : IDisposable
     [DesktopFact]
     public async Task TheFullVirtualScreenIsSavedAsAPngOfTheScreenSize()
     {
-        PixelRect screen = Desktop.VirtualScreen();
+        ScreenRect screen = Desktop.VirtualScreen();
 
         CaptureResult result = await Capture(new PickRegion(null)).CaptureFullScreenAsync();
 
@@ -82,7 +82,7 @@ public sealed class WindowsScreenCaptureTests : IDisposable
     [DesktopFact]
     public async Task AMonitorCaptureIsNoLargerThanTheVirtualScreen()
     {
-        PixelRect screen = Desktop.VirtualScreen();
+        ScreenRect screen = Desktop.VirtualScreen();
 
         CaptureResult result = await Capture(new PickRegion(null), FullScreenArea.CursorMonitor).CaptureFullScreenAsync();
 
@@ -93,8 +93,8 @@ public sealed class WindowsScreenCaptureTests : IDisposable
     [DesktopFact]
     public async Task ARegionIsCutFromTheFrozenScreenAtTheChosenSize()
     {
-        PixelRect screen = Desktop.VirtualScreen();
-        PixelRect chosen = new(screen.X + 10, screen.Y + 20, 120, 60);
+        ScreenRect screen = Desktop.VirtualScreen();
+        ScreenRect chosen = new(screen.X + 10, screen.Y + 20, 120, 60);
 
         CaptureResult result = await Capture(new PickRegion(chosen)).CaptureRegionAsync();
 
@@ -111,8 +111,8 @@ public sealed class WindowsScreenCaptureTests : IDisposable
         Assert.False(Directory.Exists(_folder) && Directory.GetFiles(_folder).Length > 0);
     }
 
-    private sealed class PickRegion(PixelRect? chosen) : IRegionSelector
+    private sealed class PickRegion(ScreenRect? chosen) : IRegionSelector
     {
-        public Task<PixelRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default) => Task.FromResult(chosen);
+        public Task<ScreenRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default) => Task.FromResult(chosen);
     }
 }

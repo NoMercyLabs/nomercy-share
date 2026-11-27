@@ -9,6 +9,8 @@
     <PackageReference Include="Tmds.DBus.Protocol" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The same fakes the unit tests use, so the proof run has one set of stand-ins. -->
+    <Compile Include="../../tests/NoMercy.Share.Core.Tests/Fakes.cs" Link="Fakes.cs" />
     <ProjectReference Include="../../src/NoMercy.Share.App/NoMercy.Share.App.csproj" />
   </ItemGroup>
 </Project>

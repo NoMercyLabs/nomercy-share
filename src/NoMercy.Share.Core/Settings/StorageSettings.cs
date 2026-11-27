@@ -8,6 +8,15 @@ namespace NoMercy.Share.Core.Settings;
 /// </summary>
 public sealed record StorageSettings
 {
+    /// <summary>The shortest and longest random id an object key may have; a shorter id could be guessed, a longer one makes an unwieldy link.</summary>
+    public const int MinKeyLength = 8;
+
+    public const int MaxKeyLength = 64;
+
+    private const string HttpScheme = "http";
+
+    private const string HttpsScheme = "https";
+
     /// <summary>The provider name, matched against <see cref="Sharing.IShareUploader.ProviderName"/>.</summary>
     public string Provider { get; init; } = ShareDefaults.ProviderName;
 
@@ -64,18 +73,19 @@ public sealed record StorageSettings
         RequireText(nameof(KeepPrefix), KeepPrefix);
         RequireText(nameof(ExpiryPrefixPattern), ExpiryPrefixPattern);
 
-        if (KeyLength is < ShareDefaults.MinKeyLength or > ShareDefaults.MaxKeyLength)
+        if (KeyLength is < MinKeyLength or > MaxKeyLength)
         {
-            throw Invalid(nameof(KeyLength), Strings.Get("error.setting.range", ShareDefaults.MinKeyLength, ShareDefaults.MaxKeyLength));
+            throw Fail(nameof(KeyLength), Strings.Get("error.setting.range", MinKeyLength, MaxKeyLength));
         }
 
         if (ExpiryBucketDays is not { Length: > 0 } || ExpiryBucketDays.Any(days => days < 1))
         {
-            throw Invalid(nameof(ExpiryBucketDays), Strings.Get("error.setting.days"));
+            throw Fail(nameof(ExpiryBucketDays), Strings.Get("error.setting.days"));
         }
     }
 
-    private static InvalidStorageSettingsException Invalid(string name, string reason) =>
+    /// <summary>The exception for a setting that cannot work, named as it is in settings.json, for example "Storage.Bucket".</summary>
+    private static InvalidStorageSettingsException Fail(string name, string reason) =>
         new($"Storage.{name}", Strings.Get("error.setting.invalid", $"Storage.{name}", reason));
 
     private static void RequireText(string name, string value)
@@ -88,9 +98,9 @@ public sealed record StorageSettings
 
     private static void RequireHttpAddress(string name, string value)
     {
-        if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) || uri.Scheme is not ("http" or "https"))
+        if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) || uri.Scheme is not (HttpScheme or HttpsScheme))
         {
-            throw Invalid(name, Strings.Get("error.setting.address"));
+            throw Fail(name, Strings.Get("error.setting.address"));
         }
     }
 }

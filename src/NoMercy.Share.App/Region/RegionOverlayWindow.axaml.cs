@@ -4,7 +4,6 @@ using Avalonia.Input;
 using Avalonia.Media;
 using NoMercy.Share.Core;
 using NoMercy.Share.Core.Capture;
-using PixelRect = NoMercy.Share.Core.Capture.PixelRect;
 
 namespace NoMercy.Share.App;
 
@@ -14,7 +13,7 @@ namespace NoMercy.Share.App;
 /// </summary>
 public partial class RegionOverlayWindow : Window
 {
-    private readonly PixelRect _monitor;
+    private readonly ScreenRect _monitor;
     private readonly double _scale = 1;
     private Point? _anchor;
     private Point _current;
@@ -39,8 +38,9 @@ public partial class RegionOverlayWindow : Window
     }
 
     /// <summary>The user dragged a selection and confirmed it; the rectangle is in virtual screen pixels.</summary>
-    public event EventHandler<PixelRect>? Confirmed;
+    public event EventHandler<ScreenRect>? Confirmed;
 
+    /// <summary>The user pressed Esc.</summary>
     public event EventHandler? Cancelled;
 
     /// <summary>Draws a selection between two points (device-independent units, relative to this window).</summary>
@@ -104,7 +104,7 @@ public partial class RegionOverlayWindow : Window
     /// <summary>A click with no drag selects nothing, so the picker waits for a real drag.</summary>
     private void Confirm()
     {
-        PixelRect selection = Selection();
+        ScreenRect selection = Selection();
         if (selection.IsEmpty)
         {
             _anchor = null;
@@ -115,13 +115,13 @@ public partial class RegionOverlayWindow : Window
         Confirmed?.Invoke(this, selection);
     }
 
-    private PixelRect Selection() => _anchor is { } anchor
-        ? RegionMath.FromDrag(anchor.X, anchor.Y, _current.X, _current.Y, _scale, new PixelRect(_monitor.X, _monitor.Y, 0, 0), _monitor)
+    private ScreenRect Selection() => _anchor is { } anchor
+        ? RegionMath.FromDrag(anchor.X, anchor.Y, _current.X, _current.Y, _scale, _monitor.X, _monitor.Y, _monitor)
         : default;
 
     private void Redraw()
     {
-        PixelRect selection = Selection();
+        ScreenRect selection = Selection();
         bool visible = !selection.IsEmpty;
         Edge.IsVisible = visible;
         SizeLabel.IsVisible = visible;
@@ -137,18 +137,22 @@ public partial class RegionOverlayWindow : Window
         Canvas.SetTop(Edge, area.Y - edge);
         Edge.Width = area.Width + (2 * edge);
         Edge.Height = area.Height + (2 * edge);
+        PlaceSizeLabel(selection);
+    }
 
+    private void PlaceSizeLabel(ScreenRect selection)
+    {
         SizeText.Text = Strings.Get("overlay.size", selection.Width, selection.Height);
         SizeLabel.Measure(Size.Infinity);
         Size label = SizeLabel.DesiredSize;
-        PixelRect local = new(selection.X - _monitor.X, selection.Y - _monitor.Y, selection.Width, selection.Height);
+        ScreenRect local = new(selection.X - _monitor.X, selection.Y - _monitor.Y, selection.Width, selection.Height);
         (double x, double y) = RegionMath.LabelPosition(local, label.Width * _scale, label.Height * _scale, Resource("Nm-Space-2") * _scale, _monitor.Width, _monitor.Height);
         Canvas.SetLeft(SizeLabel, x / _scale);
         Canvas.SetTop(SizeLabel, y / _scale);
     }
 
     /// <summary>The whole window with the selection cut out (even-odd fill), so only the outside is dimmed.</summary>
-    private Geometry DimGeometry(PixelRect? selection)
+    private Geometry DimGeometry(ScreenRect? selection)
     {
         GeometryGroup group = new() { FillRule = FillRule.EvenOdd };
         group.Children.Add(new RectangleGeometry(new Rect(0, 0, _monitor.Width / _scale, _monitor.Height / _scale)));

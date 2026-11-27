@@ -18,32 +18,32 @@
           </StackPanel>
         </Border>
         <Border Classes="separator" />
-        <Button Classes="bar" Command="{Binding RegionCommand}" ToolTip.Tip="{local:Loc bar.region}" AutomationProperties.Name="{local:Loc bar.region}">
+        <Button x:Name="RegionButton" Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Region}" ToolTip.Tip="{local:Loc bar.region}" AutomationProperties.Name="{local:Loc bar.region}">
           <icons:MoooomIcon Kind="crossHair" />
         </Button>
-        <Button Classes="bar" Command="{Binding WindowCommand}" ToolTip.Tip="{local:Loc bar.window}" AutomationProperties.Name="{local:Loc bar.window}">
+        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Window}" ToolTip.Tip="{local:Loc bar.window}" AutomationProperties.Name="{local:Loc bar.window}">
           <icons:MoooomIcon Kind="macOsWindow" />
         </Button>
-        <Button Classes="bar" Command="{Binding FullScreenCommand}" ToolTip.Tip="{local:Loc bar.fullscreen}" AutomationProperties.Name="{local:Loc bar.fullscreen}">
+        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.FullScreen}" ToolTip.Tip="{local:Loc bar.fullscreen}" AutomationProperties.Name="{local:Loc bar.fullscreen}">
           <icons:MoooomIcon Kind="monitor" />
         </Button>
         <Border Classes="separator" />
-        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecording}" Command="{Binding RecordCommand}"
+        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecording}" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Record}"
                 ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}">
           <icons:MoooomIcon Kind="webcam" />
         </Button>
-        <Button Classes="bar" Command="{Binding WebPageCommand}" ToolTip.Tip="{local:Loc bar.webpage}" AutomationProperties.Name="{local:Loc bar.webpage}">
+        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.WebPage}" ToolTip.Tip="{local:Loc bar.webpage}" AutomationProperties.Name="{local:Loc bar.webpage}">
           <icons:MoooomIcon Kind="globe" />
         </Button>
         <Border Classes="separator" />
-        <Button Classes="bar" Command="{Binding RecentCommand}" ToolTip.Tip="{local:Loc bar.recent}" AutomationProperties.Name="{local:Loc bar.recent}">
+        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Recent}" ToolTip.Tip="{local:Loc bar.recent}" AutomationProperties.Name="{local:Loc bar.recent}">
           <icons:MoooomIcon Kind="link" />
         </Button>
-        <Button Classes="bar" Command="{Binding SettingsCommand}" ToolTip.Tip="{local:Loc bar.settings}" AutomationProperties.Name="{local:Loc bar.settings}">
+        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Settings}" ToolTip.Tip="{local:Loc bar.settings}" AutomationProperties.Name="{local:Loc bar.settings}">
           <icons:MoooomIcon Kind="settings" />
         </Button>
         <Border Classes="separator" />
-        <Button Classes="bar" Command="{Binding CloseCommand}" ToolTip.Tip="{local:Loc bar.close}" AutomationProperties.Name="{local:Loc bar.close}">
+        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Close}" ToolTip.Tip="{local:Loc bar.close}" AutomationProperties.Name="{local:Loc bar.close}">
           <icons:MoooomIcon Kind="cross" />
         </Button>
       </StackPanel>

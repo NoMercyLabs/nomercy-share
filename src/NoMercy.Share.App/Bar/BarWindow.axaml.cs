@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Settings;
@@ -54,30 +55,32 @@ public partial class BarWindow : Window
     /// <summary>Puts the bar at its saved position, clamped to a visible screen, or centered at the top on first open.</summary>
     private void Place()
     {
-        double scale = RenderScaling;
-        List<ScreenArea> areas = [.. Screens.All.Select(s => new ScreenArea(s.WorkingArea.X, s.WorkingArea.Y, s.WorkingArea.Width, s.WorkingArea.Height))];
-        double width = Bounds.Width * scale;
-        double height = Bounds.Height * scale;
-        BarPosition? saved = _store?.Load();
-        BarPosition target;
-        if (saved is not null)
+        BarPosition? target = TargetPosition();
+        if (target is not null)
         {
-            target = BarPlacement.Clamp(saved, width, height, areas);
-        }
-        else if (Screens.Primary is { } primary)
-        {
-            target = BarPlacement.FirstOpen(new ScreenArea(primary.WorkingArea.X, primary.WorkingArea.Y, primary.WorkingArea.Width, primary.WorkingArea.Height),
-                width, _settings.FirstOpenTopMargin * scale);
-        }
-        else
-        {
-            _placed = true;
-            return;
+            Position = new PixelPoint((int)Math.Round(target.X), (int)Math.Round(target.Y));
         }
 
-        Position = new PixelPoint((int)Math.Round(target.X), (int)Math.Round(target.Y));
         _placed = true;
     }
+
+    private BarPosition? TargetPosition()
+    {
+        double scale = RenderScaling;
+        double width = Bounds.Width * scale;
+        double height = Bounds.Height * scale;
+        if (_store?.Load() is { } saved)
+        {
+            return BarPlacement.Clamp(saved, width, height, [.. Screens.All.Select(ToArea)]);
+        }
+
+        return Screens.Primary is { } primary
+            ? BarPlacement.FirstOpen(ToArea(primary), width, _settings.FirstOpenTopMargin * scale)
+            : null;
+    }
+
+    private static ScreenArea ToArea(Screen screen) =>
+        new(screen.WorkingArea.X, screen.WorkingArea.Y, screen.WorkingArea.Width, screen.WorkingArea.Height);
 
     private void SavePosition()
     {

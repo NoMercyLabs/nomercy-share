@@ -22,7 +22,7 @@ public interface ICaptureHost
 public interface IRegionSelector
 {
     /// <summary>Shows the frame and returns the chosen rectangle in virtual screen pixels, or null when the user cancels.</summary>
-    Task<PixelRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default);
+    Task<ScreenRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default);
 }
 
 /// <summary>A still capture: hide the bar, take the picture (which saves the PNG), bring the bar back. Sharing it is the share flow's job.</summary>

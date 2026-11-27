@@ -18,7 +18,7 @@ public sealed class CaptureFlowTests
         return Task.CompletedTask;
     });
 
-    private BarViewModel Bar(ClipboardContent content = ClipboardContent.Image) => new(Flow(), new FakeScreenRecorder(), new FakeWebPageCapture(),
+    private BarViewModel Bar(ClipboardContent content = ClipboardContent.Image) => new(Flow(),
         new ShareFlow(new FakeUploader(), _clipboard, new ExpirySettings(), new ClipboardSettings { Content = content }));
 
     [Theory]

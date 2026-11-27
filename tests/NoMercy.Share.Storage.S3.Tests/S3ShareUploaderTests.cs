@@ -139,6 +139,19 @@ public sealed class S3ShareUploaderTests(S3MockFixture mock) : IClassFixture<S3M
     }
 
     [Fact]
+    public async Task AnInvalidSettingIsNamedBeforeTheCredentialIsRead()
+    {
+        FakeCredentialStore store = new(Credential);
+        S3ShareUploader uploader = new("r2", Settings() with { Bucket = string.Empty }, store, new FixedTime(Now));
+
+        InvalidStorageSettingsException error = await Assert.ThrowsAsync<InvalidStorageSettingsException>(
+            () => uploader.UploadAsync(Path.Combine(Path.GetTempPath(), "share-not-here.png"), Expiry.Never));
+
+        Assert.Equal("Storage.Bucket", error.Setting);
+        Assert.Null(store.AskedFor);
+    }
+
+    [Fact]
     public async Task AnUnreachableEndpointFailsCalmlyAndKeepsTheFile()
     {
         string file = GeneratedPng(out _);

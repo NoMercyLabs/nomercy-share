@@ -30,18 +30,8 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
 {
     public bool IsRecording { get; private set; }
 
-    public Exception? StartThrows { get; set; }
-
-    public RecordingOptions? StartedWith { get; private set; }
-
     public Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
-        if (StartThrows is not null)
-        {
-            return Task.FromException(StartThrows);
-        }
-
-        StartedWith = options;
         IsRecording = true;
         return Task.CompletedTask;
     }
@@ -72,17 +62,7 @@ internal sealed class FakeUploader(string name = "r2") : IShareUploader
 
     public Exception? Throws { get; set; }
 
-    public Exception? ValidateThrows { get; set; }
-
     public bool IsConfigured { get; set; } = true;
-
-    public void Validate()
-    {
-        if (ValidateThrows is not null)
-        {
-            throw ValidateThrows;
-        }
-    }
 
     public Task<ShareLink> UploadAsync(string filePath, Expiry expiry, CancellationToken cancellationToken = default)
     {

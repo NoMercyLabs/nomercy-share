@@ -1,0 +1,6 @@
+namespace NoMercy.Share.Core.Sharing;
+
+/// <summary>The public link of an upload.</summary>
+/// <param name="Url">The address to share.</param>
+/// <param name="ExpiresAt">When the link stops working (UTC); null when it never does.</param>
+public sealed record ShareLink(Uri Url, DateTimeOffset? ExpiresAt);

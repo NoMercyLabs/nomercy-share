@@ -1,52 +1,51 @@
+using System.Diagnostics;
 using System.Windows.Input;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Bar;
 
-/// <summary>The floating bar: each button runs one action through the platform interfaces.</summary>
+/// <summary>The floating bar: each button runs one action. Recording and web page capture are optional until a platform has them.</summary>
 public sealed class BarViewModel : ObservableObject
 {
     private readonly CaptureFlow _capture;
-    private readonly IScreenRecorder _recorder;
-    private readonly IWebPageCapture _web;
     private readonly ShareFlow _flow;
+    private readonly IScreenRecorder? _recorder;
+    private readonly IWebPageCapture? _web;
+    private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _busy;
 
-    public BarViewModel(CaptureFlow capture, IScreenRecorder recorder, IWebPageCapture web, ShareFlow flow)
+    public BarViewModel(CaptureFlow capture, ShareFlow flow, IScreenRecorder? recorder = null, IWebPageCapture? web = null)
     {
         _capture = capture;
+        _flow = flow;
         _recorder = recorder;
         _web = web;
-        _flow = flow;
-        RegionCommand = Command(BarAction.Region);
-        WindowCommand = Command(BarAction.Window);
-        FullScreenCommand = Command(BarAction.FullScreen);
-        RecordCommand = Command(BarAction.Record);
-        WebPageCommand = Command(BarAction.WebPage);
-        RecentCommand = Command(BarAction.Recent);
-        SettingsCommand = Command(BarAction.Settings);
-        CloseCommand = Command(BarAction.Close);
+        _actions = new Dictionary<BarAction, Func<CancellationToken, Task>>
+        {
+            [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
+            [BarAction.Window] = token => CaptureAsync(CaptureKind.Window, token),
+            [BarAction.FullScreen] = token => CaptureAsync(CaptureKind.FullScreen, token),
+            [BarAction.Record] = ToggleRecordingAsync,
+            [BarAction.WebPage] = CaptureWebPageAsync,
+            [BarAction.Recent] = _ => ShowNotice("notice.later"),
+            [BarAction.Settings] = _ => ShowNotice("notice.later"),
+            [BarAction.Close] = _ => RequestClose()
+        };
+        ActionCommand = new BarCommand(parameter =>
+        {
+            if (parameter is BarAction action)
+            {
+                _ = RunAsync(action);
+            }
+        });
     }
 
-    public ICommand RegionCommand { get; }
+    /// <summary>Runs the <see cref="BarAction"/> given as the command parameter.</summary>
+    public ICommand ActionCommand { get; }
 
-    public ICommand WindowCommand { get; }
-
-    public ICommand FullScreenCommand { get; }
-
-    public ICommand RecordCommand { get; }
-
-    public ICommand WebPageCommand { get; }
-
-    public ICommand RecentCommand { get; }
-
-    public ICommand SettingsCommand { get; }
-
-    public ICommand CloseCommand { get; }
-
-    public bool IsRecording => _recorder.IsRecording;
+    public bool IsRecording => _recorder?.IsRecording ?? false;
 
     /// <summary>The tooltip and screen-reader name of the record button: start, or stop while recording.</summary>
     public string RecordLabel => Strings.Get(IsRecording ? "bar.record.stop" : "bar.record");
@@ -62,7 +61,7 @@ public sealed class BarViewModel : ObservableObject
 
     public void ClearNotice() => Notice = null;
 
-    /// <summary>Runs one button. Never throws: an action that is not built yet or fails becomes a notice.</summary>
+    /// <summary>Runs one button. Never throws: a failure becomes a notice.</summary>
     public async Task RunAsync(BarAction action, CancellationToken cancellationToken = default)
     {
         if (_busy)
@@ -74,11 +73,7 @@ public sealed class BarViewModel : ObservableObject
         ClearNotice();
         try
         {
-            await DoAsync(action, cancellationToken);
-        }
-        catch (NotImplementedException)
-        {
-            Notice = Strings.Get("notice.later");
+            await _actions[action](cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -88,8 +83,9 @@ public sealed class BarViewModel : ObservableObject
         {
             Notice = Strings.Get("notice.upload.failed", error.Message);
         }
-        catch (Exception)
+        catch (Exception error)
         {
+            Trace.TraceError("Bar action {0} failed: {1}", action, error);
             Notice = Strings.Get("notice.failed");
         }
         finally
@@ -100,42 +96,40 @@ public sealed class BarViewModel : ObservableObject
         }
     }
 
-    private BarCommand Command(BarAction action) => new(() => _ = RunAsync(action));
-
-    private async Task DoAsync(BarAction action, CancellationToken cancellationToken)
+    private Task ShowNotice(string key)
     {
-        switch (action)
-        {
-            case BarAction.Region:
-                await CaptureAsync(CaptureKind.Region, cancellationToken);
-                break;
-            case BarAction.Window:
-                await CaptureAsync(CaptureKind.Window, cancellationToken);
-                break;
-            case BarAction.FullScreen:
-                await CaptureAsync(CaptureKind.FullScreen, cancellationToken);
-                break;
-            case BarAction.WebPage:
-                await ShareAsync(await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken), cancellationToken);
-                break;
-            case BarAction.Record:
-                await ToggleRecordingAsync(cancellationToken);
-                break;
-            case BarAction.Recent:
-            case BarAction.Settings:
-                Notice = Strings.Get("notice.later");
-                break;
-            case BarAction.Close:
-                CloseRequested?.Invoke(this, EventArgs.Empty);
-                break;
-        }
+        Notice = Strings.Get(key);
+        return Task.CompletedTask;
+    }
+
+    private Task RequestClose()
+    {
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+        return Task.CompletedTask;
     }
 
     private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken) =>
         await ShareAsync(await _capture.RunAsync(kind, cancellationToken), cancellationToken);
 
+    private async Task CaptureWebPageAsync(CancellationToken cancellationToken)
+    {
+        if (_web is null)
+        {
+            await ShowNotice("notice.later");
+            return;
+        }
+
+        await ShareAsync(await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken), cancellationToken);
+    }
+
     private async Task ToggleRecordingAsync(CancellationToken cancellationToken)
     {
+        if (_recorder is null)
+        {
+            await ShowNotice("notice.later");
+            return;
+        }
+
         if (_recorder.IsRecording)
         {
             await ShareAsync(await _recorder.StopAsync(cancellationToken), cancellationToken);
@@ -143,36 +137,22 @@ public sealed class BarViewModel : ObservableObject
         }
 
         await _recorder.StartAsync(new RecordingOptions(), cancellationToken);
-        Notice = Strings.Get("notice.recording");
+        await ShowNotice("notice.recording");
     }
 
     private async Task ShareAsync(CaptureResult capture, CancellationToken cancellationToken)
     {
-        ShareLink? link = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
-        Notice = Strings.Get(NoticeAfterShare(link, capture));
+        ShareOutcome outcome = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
+        Notice = Strings.Get(NoticeKeyFor(outcome));
     }
 
-    private string NoticeAfterShare(ShareLink? link, CaptureResult capture)
+    private static string NoticeKeyFor(ShareOutcome outcome)
     {
-        if (link is null)
+        if (outcome.Link is null)
         {
             return "notice.clipboard.local";
         }
 
-        return _flow.PutsOnlyTheImage(capture) ? "notice.clipboard" : "notice.copied";
+        return outcome.Copied is { Image: true, Text: false } ? "notice.clipboard" : "notice.copied";
     }
-}
-
-/// <summary>A command that runs a plain action.</summary>
-public sealed class BarCommand(Action run) : ICommand
-{
-    public event EventHandler? CanExecuteChanged
-    {
-        add { }
-        remove { }
-    }
-
-    public bool CanExecute(object? parameter) => true;
-
-    public void Execute(object? parameter) => run();
 }

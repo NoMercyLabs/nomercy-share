@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -11,9 +12,9 @@ namespace NoMercy.Share.App;
 /// </summary>
 public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner) : IRegionSelector
 {
-    public async Task<PixelRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default)
+    public async Task<ScreenRect?> SelectAsync(ScreenFrame frozen, CancellationToken cancellationToken = default)
     {
-        TaskCompletionSource<PixelRect?> done = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<ScreenRect?> done = new(TaskCreationOptions.RunContinuationsAsynchronously);
         List<RegionOverlayWindow> overlays = [];
         await Dispatcher.UIThread.InvokeAsync(() => Open(frozen, overlays, done));
         await using CancellationTokenRegistration registration = cancellationToken.Register(() => done.TrySetResult(null));
@@ -27,12 +28,13 @@ public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner) : IRegionSelec
         }
     }
 
-    private void Open(ScreenFrame frozen, List<RegionOverlayWindow> overlays, TaskCompletionSource<PixelRect?> done)
+    private void Open(ScreenFrame frozen, List<RegionOverlayWindow> overlays, TaskCompletionSource<ScreenRect?> done)
     {
         IReadOnlyList<Screen> screens = owner()?.Screens?.All ?? [];
         foreach (Screen screen in screens)
         {
-            PixelRect area = Intersect(frozen.Bounds, new PixelRect(screen.Bounds.X, screen.Bounds.Y, screen.Bounds.Width, screen.Bounds.Height));
+            PixelRect monitor = screen.Bounds;
+            ScreenRect area = frozen.Bounds.Intersect(new ScreenRect(monitor.X, monitor.Y, monitor.Width, monitor.Height));
             if (area.IsEmpty)
             {
                 continue;
@@ -51,12 +53,5 @@ public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner) : IRegionSelec
         }
 
         overlays.ForEach(window => window.Show());
-    }
-
-    private static PixelRect Intersect(PixelRect a, PixelRect b)
-    {
-        int left = Math.Max(a.X, b.X);
-        int top = Math.Max(a.Y, b.Y);
-        return new PixelRect(left, top, Math.Min(a.Right, b.Right) - left, Math.Min(a.Bottom, b.Bottom) - top);
     }
 }

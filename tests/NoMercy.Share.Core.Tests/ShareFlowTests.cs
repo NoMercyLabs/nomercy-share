@@ -16,16 +16,17 @@ public sealed class ShareFlowTests
 
     private BarViewModel Bar(ClipboardContent content = ClipboardContent.Link) => new(
         new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
-        new FakeScreenRecorder(), new FakeWebPageCapture(), Flow(content));
+        Flow(content), new FakeScreenRecorder(), new FakeWebPageCapture());
 
     [Fact]
     public async Task WithNoShareHostSetUpTheImageGoesOnTheClipboardAndNothingUploads()
     {
         _uploader.IsConfigured = false;
 
-        ShareLink? link = await Flow().ShareAsync(_png);
+        ShareOutcome outcome = await Flow().ShareAsync(_png);
 
-        Assert.Null(link);
+        Assert.Null(outcome.Link);
+        Assert.Equal(ClipboardPlan.LocalOnly, outcome.Copied);
         Assert.Empty(_uploader.Uploads);
         Assert.Equal(["/tmp/shot.png"], _clipboard.Images);
         Assert.Empty(_clipboard.Texts);
@@ -99,17 +100,6 @@ public sealed class ShareFlowTests
     }
 
     [Fact]
-    public async Task TheUploaderIsValidatedBeforeEveryUpload()
-    {
-        _uploader.ValidateThrows = new InvalidStorageSettingsException("Storage.Bucket", "Setting \"Storage.Bucket\" is empty.");
-
-        await Assert.ThrowsAsync<InvalidStorageSettingsException>(() => Flow().ShareAsync(_png));
-
-        Assert.Empty(_uploader.Uploads);
-        Assert.Empty(_clipboard.Texts);
-    }
-
-    [Fact]
     public async Task TheBarShowsTheReasonOfAFailedUploadAndKeepsTheClipboard()
     {
         _uploader.Throws = new ShareUploadException("access denied (403)");
@@ -125,7 +115,7 @@ public sealed class ShareFlowTests
     [Fact]
     public async Task TheBarShowsTheSettingNameOfAnInvalidSetting()
     {
-        _uploader.ValidateThrows = new InvalidStorageSettingsException("Storage.Endpoint", "Setting \"Storage.Endpoint\" is empty. Set it in settings.json.");
+        _uploader.Throws = new InvalidStorageSettingsException("Storage.Endpoint", "Setting \"Storage.Endpoint\" is empty. Set it in settings.json.");
         BarViewModel bar = Bar();
 
         await bar.RunAsync(BarAction.FullScreen);

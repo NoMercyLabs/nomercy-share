@@ -29,7 +29,7 @@ public sealed class ScreenFrameTests
     {
         ScreenFrame frame = Pattern(-100, 0, 40, 30);
 
-        ScreenFrame crop = frame.Crop(new PixelRect(-90, 5, 10, 4));
+        ScreenFrame crop = frame.Crop(new ScreenRect(-90, 5, 10, 4));
 
         Assert.Equal((-90, 5, 10, 4), (crop.X, crop.Y, crop.Width, crop.Height));
         Assert.Equal(10 * 4 * 4, crop.Bgra.Length);
@@ -42,7 +42,7 @@ public sealed class ScreenFrameTests
     {
         ScreenFrame frame = Pattern(0, 0, 10, 10);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => frame.Crop(new PixelRect(5, 5, 10, 10)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => frame.Crop(new ScreenRect(5, 5, 10, 10)));
     }
 
     [Fact]

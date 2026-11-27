@@ -7,14 +7,11 @@ namespace NoMercy.Share.Platform.Windows;
 
 public static class WindowsPlatformExtensions
 {
-    /// <summary>Registers every Windows implementation of the platform interfaces. The clipboard belongs to the app's UI toolkit.</summary>
+    /// <summary>Registers the Windows screen capture and credential store. Recording and web page capture are not built.</summary>
     public static IServiceCollection AddWindowsPlatform(this IServiceCollection services)
     {
         services.AddSingleton<IScreenCapture>(sp => new WindowsScreenCapture(
             sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(), sp.GetRequiredService<CaptureSettings>()));
-        services.AddSingleton<IScreenRecorder, WindowsScreenRecorder>();
-        services.AddSingleton<IWebPageCapture, WindowsWebPageCapture>();
-        services.AddSingleton<IGlobalHotkeys, WindowsGlobalHotkeys>();
         services.AddSingleton<ICredentialStore, WindowsCredentialStore>();
         return services;
     }

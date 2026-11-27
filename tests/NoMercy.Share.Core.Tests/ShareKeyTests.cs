@@ -17,7 +17,7 @@ public sealed class ShareKeyTests
         string id = Path.GetFileNameWithoutExtension(key);
 
         Assert.Equal(14, id.Length);
-        Assert.All(id, c => Assert.Contains(c, ShareDefaults.KeyAlphabet));
+        Assert.All(id, c => Assert.Contains(c, ShareKeyPlanner.KeyAlphabet));
     }
 
     [Fact]

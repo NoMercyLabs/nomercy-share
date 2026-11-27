@@ -26,22 +26,22 @@ internal static class WindowFinder
     }
 
     /// <summary>The window rectangle with its invisible resize border, in physical pixels.</summary>
-    public static PixelRect OuterBounds(nint window)
+    public static ScreenRect OuterBounds(nint window)
     {
         if (!NativeMethods.GetWindowRect(window, out NativeMethods.Rect rect))
         {
             throw new InvalidOperationException("Windows did not give the window's size.");
         }
 
-        return ToPixelRect(rect);
+        return ToScreenRect(rect);
     }
 
     /// <summary>The visible frame from DWM, without the invisible border and shadow area; the outer bounds when DWM has none.</summary>
-    public static PixelRect VisibleBounds(nint window, PixelRect outer)
+    public static ScreenRect VisibleBounds(nint window, ScreenRect outer)
     {
         int result = NativeMethods.DwmGetWindowAttribute(window, NativeMethods.DwmExtendedFrameBounds, out NativeMethods.Rect frame,
             System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.Rect>());
-        return result == 0 ? ToPixelRect(frame) : outer;
+        return result == 0 ? ToScreenRect(frame) : outer;
     }
 
     private static bool IsCandidate(nint window)
@@ -62,5 +62,5 @@ internal static class WindowFinder
         return new string(buffer[..Math.Max(0, length)]);
     }
 
-    private static PixelRect ToPixelRect(NativeMethods.Rect rect) => new(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+    private static ScreenRect ToScreenRect(NativeMethods.Rect rect) => new(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
 }
