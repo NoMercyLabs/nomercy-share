@@ -16,5 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/NoMercy.Share.Platform.Windows/NoMercy.Share.Platform.Windows.csproj" />
+    <!-- Only so the app is built before the live focus test starts it. -->
+    <ProjectReference Include="../../src/NoMercy.Share.App/NoMercy.Share.App.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
