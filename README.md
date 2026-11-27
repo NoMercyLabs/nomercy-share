@@ -1,115 +1,142 @@
 # NoMercy Share
 
-Capture something from the screen, upload it to a share host, and get the link in the clipboard. One click.
+NoMercy Share puts a small floating bar on your Windows desktop. Click a button, and a screenshot, a screen recording or a picture of a web page is saved, uploaded to a host you choose, and the link is on your clipboard. Paste it into a chat and the other person sees the picture.
 
-Status: steps 1 to 4 are built. Step 4 is the viewer: the Cloudflare Worker in `host/` serves share.nomercy.tv. A browser or a chat app preview gets a branded page; `?raw=1` or any other client gets the file itself; an expired link answers 410 and a sidecar `.json` is never served. See `host/README.md`. Steps 1 to 3: The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Global hotkeys work on Windows (`Hotkeys` in settings.json; defaults Win+Shift+S region, PrintScreen full screen, Alt+PrintScreen window, Shift+PrintScreen record; an empty value turns one off). Win+Shift+S opens NoMercy Share's region capture instead of the Snipping Tool; clear the Region hotkey to give it back to Windows. Web page capture works on Windows (see Web page capture). Settings opens the settings window (see Settings).
+![The NoMercy Share bar: a handle, then region, window, full screen, record, web page, recent links, settings and close buttons.](docs/images/bar.png)
 
-## Still capture (Windows)
+## Before you start
 
-The bar hides itself while the picture is taken (`Capture.HideDelayMilliseconds`, default 150) and comes back after. All pictures are in physical pixels.
+- NoMercy Share runs on Windows. Other systems print a message and exit.
+- There is no installer yet. You run it from source, which needs the [.NET 10 SDK](https://dotnet.microsoft.com/download):
 
-| Button | How | Why |
-| --- | --- | --- |
-| Full screen | GDI BitBlt from the screen, of the monitor under the cursor (`Capture.FullScreenArea`: `CursorMonitor` or `VirtualScreen`) | A click on the bar puts the cursor on the bar's monitor; BitBlt is exact and needs no extra API for one still picture. |
-| Window | The window that was active before the bar, else the window under the cursor. PrintWindow with PW_RENDERFULLCONTENT, cropped to the DWM frame (no invisible border); BitBlt of the frame if PrintWindow fails | Works while other windows cover it; no extra picking step. |
-| Region | One BitBlt freezes the virtual screen, one overlay per monitor shows it dimmed outside the selection. Drag to select, mouse-up or Enter confirms, Esc cancels | Each monitor keeps its own display scale; a selection stays on one monitor. |
+  ```
+  dotnet run --project src/NoMercy.Share.App
+  ```
 
-Files go to `Capture.Folder` (default: `NoMercy Share` under the user's Pictures folder) as `Capture.FileNamePattern` (default `nomercy-share-<UTC yyyyMMddTHHmmssfffZ>.png`, sortable). All four settings are in `settings.json`.
+- Screen recording needs [ffmpeg](https://ffmpeg.org/download.html) on your PATH. Screenshots do not.
+- Web page capture needs Microsoft Edge or Google Chrome. Windows ships with Edge.
+- To get links instead of files, you need somewhere to upload to: a Cloudflare R2 or S3-compatible bucket, or a Discord channel webhook. See [Set up sharing](#set-up-sharing).
 
-## Web page capture (Windows)
-
-The Web page button opens a small window: the address (filled in when the clipboard holds an https address), the mode (Full page, Visible area, One element with a CSS selector) and the width (Desktop or Phone). Enter captures, Escape cancels. The picture is shared like any other capture.
-
-It runs Edge (else Chrome) headless with its own empty profile over the DevTools protocol, and stops it after each capture. Pages open signed out: the profile holds no cookies. Only http and https addresses are opened. Pictures are made at 2 pixels per CSS pixel.
-
-| Setting (`WebCapture`) | Default | What it does |
-| --- | --- | --- |
-| `BrowserPath` | blank | The browser file; blank finds Edge, then Chrome, in their standard folders. |
-| `DesktopWidth`, `PhoneWidth` | 1280, 390 | The page width in CSS pixels. |
-| `Height` | 800 | The height of the visible area. |
-| `ScaleFactor` | 2 | Picture pixels per CSS pixel. |
-| `LoadTimeoutSeconds` | 30 | How long a page gets to load. |
-| `SettleMilliseconds` | 500 | The wait after the load, for late layout. |
-| `MaxFullPageHeight` | 16384 | A taller page or element is cut off here. |
-
-## Browser extension
-
-The extension in `extension/` captures the open tab in Edge or Chrome and hands the picture to the app, which shares it like any other capture. The popup has three buttons: Full page, Visible area and Pick element (hover a part of the page, click it, Escape cancels). The link goes to the clipboard when the app has a share host set up. Without one the picture is saved on this PC and the popup names the file.
-
-1. Build it: `npm ci` and `npm run build` in `extension/`.
-2. Open `edge://extensions` (or `chrome://extensions`), turn on Developer mode, choose Load unpacked and pick `extension/dist`.
-3. Start NoMercy Share once. It registers the native host for Edge and Chrome (current user only), which lets the extension start the app. Until then the popup says "Start NoMercy Share once so the browser can find it."
-
-The extension asks for `activeTab`, `scripting`, `nativeMessaging`, `debugger`, `clipboardWrite` and `contextMenus`, and for no host access. Full page and Pick element attach the browser debugger to the tab for the capture only, so the browser shows its "started debugging" bar for a moment. Pages taller than 16384 CSS pixels are cut off there. Browser pages, the extension stores and local files are refused.
-
-The key in `extension/manifest-key.txt` fixes the extension id (`pffggmajnklhkjjgldpojacknecfkmlc`) that the app lists in the native host manifest.
-
-## Upload and expiry
-
-`Storage.Provider` is `r2` or `s3` (the same S3 client; R2 is the default). It uses the AWS SDK for .NET with a custom `Storage.Endpoint` and path-style addressing: the SDK already signs, retries and reads S3 errors, so a hand-written SigV4 client would be more code to keep correct. R2 needs `Storage.Region` = `auto` (the default).
-
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `Storage.Endpoint`, `Storage.Bucket`, `Storage.PublicBaseUrl`, `Storage.CredentialName` | empty | Required. A missing one fails the upload with a notice that names it, for example `Storage.Bucket`. |
-| `Storage.KeyLength` | 10 | Length of the random id in the object key (letters and digits). The key never holds the local file name. |
-| `Storage.ExpiryBucketDays` | `[1, 7, 30, 90]` | The lifetimes that have a prefix on the host. |
-| `Storage.ExpiryPrefixPattern`, `Storage.KeepPrefix`, `Storage.SidecarSuffix` | `exp-{0}d`, `keep`, `.json` | Folder names and the sidecar suffix. |
-| `Expiry.DefaultDays` | 30 (null = never) | The lifetime of an upload that names none. |
-| `Clipboard.Content` | `Link` | `Link`, `Image` or `Both` after a capture is shared. |
-
-Discord as a provider: `Storage.Provider` = `discord` uploads the file itself to a channel through a webhook (`?wait=true`, the file as `files[0]`) and the Discord file link goes on the clipboard. The webhook address is a secret in the credential store (`Discord.CredentialName`, default `nomercy-share-discord`), never in settings.json. Two limits: Discord links are signed and expire (the `ex` value in the link, shown in the recent list; the default expiry does not apply), and the file size cap is a setting, `Discord.MaxUploadMegabytes` (default 10). A bigger file fails before the upload; recordings are squeezed to the smaller of `Recording.MaxSizeMegabytes` and that cap. `Discord.TimeoutSeconds` (default 10) limits one upload.
-
-The link is `Storage.PublicBaseUrl` + `/` + the key, for example `https://share.example.test/exp-7d/aB3dE5gH7j.png`.
-
-Expiry: the host deletes, the app does not. An upload goes under the smallest prefix that covers its lifetime (`exp-7d/` for 2 to 7 days; longer than the largest goes under the largest) and `never` goes under `keep/`. The object carries the metadata `x-amz-meta-expires-at` (UTC, `2026-12-04T10:00:00Z`, or `never`) and a sidecar `<key>.json` with the key, upload time, expiry, content type and size. The link's expiry is the prefix's deletion time, so it is never earlier than asked. The host needs one lifecycle rule per prefix: on R2, "delete objects after N days" with the prefix `exp-1d/`, `exp-7d/`, `exp-30d/` and `exp-90d/` (N matching the days in the name). Nothing deletes `keep/`.
-
-Credentials: `Storage.CredentialName` names a generic credential in the Windows Credential Manager. The user name is the access key id, the password is the secret:
-
-```
-cmdkey /generic:NAME /user:ACCESS_KEY_ID /pass:SECRET
-```
-
-A failed upload keeps the PNG, shows `Upload failed: <reason>. The file is kept.` on the bar and leaves the clipboard as it was. The reason is the service's error code or "could not be reached"; no secret is in any message.
+Until sharing is set up, nothing is uploaded. Every capture is saved in a `NoMercy Share` folder inside your Pictures folder, and the picture itself goes on the clipboard so you can still paste it.
 
 ## The bar
 
-A small borderless, always-on-top pill. Drag it by the handle at the left edge; it remembers its position in `settings.json` in the user's app-data folder (`NoMercy Share`) and comes back on a visible screen.
+The bar floats above your other windows. Drag it by the handle on the left edge and it remembers where you left it. Every button has a tooltip, and Tab and Enter work if you prefer the keyboard.
 
-Buttons: region, window, full screen, record, web page, recent links, settings, close. Icons are the Moooom set; colors, radii and spacing come from the NM design tokens. Every button has a tooltip and an accessible name, and Tab and Enter work.
+From left to right: the handle, then **Capture a region**, **Capture a window**, **Capture the full screen**, **Record the screen**, **Capture a web page**, **Recent links**, **Settings** and **Close**.
+
+After a capture the bar says what happened underneath it, for example "Link copied". A failed upload keeps the file on your PC and says why.
+
+![The bar after a capture, with the notice "Link copied" under it.](docs/images/bar-capture-done.png)
+
+## Capture a region
+
+Press `Win+Shift+S`, or click the crosshair button. The screen freezes and dims. Drag over the part you want, and the size shows beside the selection. Let go of the mouse button or press Enter to capture. Press Esc to cancel.
+
+NoMercy Share takes over `Win+Shift+S` from the Snipping Tool. If you want Windows to have it back, clear that hotkey in [Settings](#settings).
+
+![The region overlay: the screen is dimmed, a bright rectangle is selected and its size, 580 by 340, sits under it.](docs/images/region-capture.png)
+
+Each monitor keeps its own display scale, so a selection stays on one monitor.
+
+## Capture a window or the full screen
+
+**Capture a window** takes the window you were using before you clicked the bar. If there was none, it takes the window under the cursor. Windows that are partly covered by others still come out whole.
+
+**Capture the full screen** takes the monitor your cursor is on.
+
+The bar hides itself for a moment so it is not in the picture. Both buttons have hotkeys: `Alt+PrintScreen` for a window and `PrintScreen` for the full screen. Once the capture is shared, the bar shows the notice you saw above.
+
+## Record the screen
+
+Click the record button (or press `Shift+PrintScreen`), then drag over the part of the screen to record, the same way as for a region. Esc cancels. The bar shows a red dot and a running timer while it records.
+
+![The bar while recording: the record button is highlighted with a red dot and the timer reads 01:23.](docs/images/bar-recording.png)
+
+Click the button again to stop. The recording is squeezed into an MP4 that fits the size limit, 50 MB unless you change it, and shared like any other capture. A long recording is compressed harder to fit, so keep clips short if quality matters.
+
+Sound is off until you turn it on. In [Settings](#settings), under Recording, switch on **Record system sound** for what your speakers play and **Record microphone** for your voice. If a microphone or sound output is missing, the recording still starts and the bar tells you what it left out.
+
+## Capture a web page
+
+Click the globe button. A small window asks for three things:
+
+- **Address**: filled in for you when your clipboard holds an https address.
+- **Mode**: **Full page**, **Visible area**, or **One element**, where you give a CSS selector such as `#header`.
+- **Width**: **Desktop** or **Phone**, which decides how the page lays itself out.
+
+Press Enter to capture or Esc to cancel.
+
+![The Capture a web page window: Address https://example.test/articles/made-up, Mode Full page, Width Desktop, with Cancel and Capture buttons.](docs/images/web-page-capture.png)
+
+The page opens in a private, headless Edge (or Chrome) that is closed again afterwards. It has no cookies, so you see the page as a signed-out visitor, and only http and https addresses are opened.
+
+## Capture from your browser
+
+The browser extension for Edge and Chrome captures the tab you are looking at. It hands the picture to NoMercy Share, which shares it like any other capture. The extension is not on a browser store yet, so you load it from the repository. [Browser extension](docs/browser-extension.md) has the steps.
+
+Click the extension's icon to open its popup.
+
+![The extension popup with three buttons: Full page, Visible area and Pick element.](docs/images/extension-popup.png)
+
+- **Full page** captures the whole page, however far it scrolls.
+- **Visible area** captures what is on screen.
+- **Pick element** lets you point at one part of the page. Move the mouse and the part under it is highlighted. Click to capture it, or press Esc to cancel.
+
+![A page with one card highlighted by a teal outline and tint while Pick element is active.](docs/images/extension-pick-element.png)
+
+While Full page or Pick element works, the browser shows its own "started debugging" bar for a moment. That is the browser telling you the extension is controlling the tab. Browser pages, extension stores and local files cannot be captured.
+
+## Recent links
+
+Click the link button to see the links you shared lately, newest first. Each row shows when you shared it and when it expires. Use the copy button to copy a link again, or the arrow to open it in your browser. With a row selected, Enter copies its link and Esc closes the list.
+
+![The recent links list with three rows: an image that expires in 29 days, a video that expires in 4 days and an expired image shown dimmed.](docs/images/recent-links.png)
 
 ## Settings
 
-The bar's Settings button opens one window with four sections: Sharing (provider: Cloudflare R2, S3-compatible or Discord; with Discord only the webhook address; endpoint, bucket, region, public link base URL, access key id, secret access key), Links (default expiry: never, 1, 7, 30 or 90 days), Hotkeys (click a field and press the keys; the cross turns a hotkey off) and Recording (max size in MB, frame rate). Save checks every field, writes `settings.json` and the access key to the credential store (default name `nomercy-share`), and applies it: the next share uses the new host and expiry, the next recording the new limits, and the hotkeys register again. The secret is never shown or loaded back; an empty secret box keeps the stored one. Cancel writes nothing. Set `NOMERCY_SHARE_DATA` to a folder to keep `settings.json` and `recent.json` there instead of the user's app-data folder, for a portable or test copy.
+The gear opens one window with four sections. **Save** checks every field and applies the change at once: the next share uses the new host, the next recording the new limits, and the hotkeys register again. **Cancel** changes nothing.
 
-## Architecture
+![The Settings window with the Sharing, Links, Hotkeys and Recording sections filled in with example values.](docs/images/settings.png)
 
-Every action is an interface in `NoMercy.Share.Core`. Each platform registers its own implementations with dependency injection.
-
-| Project | What it holds |
+| Section | What you set |
 | --- | --- |
-| `NoMercy.Share.Core` | The interfaces (`IScreenCapture`, `IScreenRecorder`, `IWebPageCapture`, `IShareUploader`, `IClipboard`), the settings, the bar view model. No UI toolkit, no OS code. |
-| `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: screen capture, recording, web page capture, hotkeys and the credential store. |
-| `NoMercy.Share.Storage.S3` | S3-compatible storage; Cloudflare R2 is the first provider (`AddS3Storage()` registers `r2` and `s3`). |
-| `NoMercy.Share.Storage.Discord` | Discord as a provider (`AddDiscordStorage()` registers `discord`). |
-| `NoMercy.Share.App` | The Avalonia app and the composition root. The clipboard lives here because it needs this UI toolkit. |
+| Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). |
+| Links | The default expiry: never, or 1, 7, 30 or 90 days. |
+| Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
+| Recording | The largest video to share, the frame rate, and the two sound switches. |
 
-Storage is configurable: the provider is chosen by name in settings (`Storage.Provider`, default `r2`), so another host is one more registered uploader. Credentials are named in settings and never stored in the file.
+Your secret access key is stored in the Windows Credential Manager, never in a file. The box shows "Saved" afterwards and stays empty. Leave it empty and the stored key stays.
 
-## Build and run
+## Set up sharing
 
-Needs the .NET 10 SDK.
+Pick the provider in Settings under Sharing.
 
-```
-dotnet build NoMercy.Share.sln -c Release
-dotnet test NoMercy.Share.sln
-dotnet run --project src/NoMercy.Share.App
-```
+**Cloudflare R2 or another S3-compatible host.** Fill in the endpoint, bucket, region, the public link base URL, and your access key id and secret. The public link base URL is the address your links start with, for example `https://share.example.test`. A link is that address plus a random name, so nobody can guess it. [Storage hosts](docs/storage-hosts.md) explains how the host expires links, which you set up once.
 
-Windows only for now; other systems print a clear message and exit.
+**Discord.** Choose Discord and paste a channel's webhook address. The file is posted to that channel and the Discord link goes on your clipboard. Discord decides how long its links work, and files are limited to 10 MB by default, so a larger recording is squeezed to fit.
 
-Proof images (headless render): `dotnet run --project tools/NoMercy.Share.Screenshots -- <folder>`.
+## The link you share
 
-Icons: `node tools/nm-icons/emit-avalonia-icons.mjs <moooom icons folder> src/NoMercy.Share.App/Icons/icons.json src/NoMercy.Share.App/Icons/MoooomIconData.g.cs`
+A link opens a simple page with the picture, video or audio, an **Open original** button, a **Download** button, and a line saying how long the link works. Chat apps that preview links show the picture itself. Add `?raw=1` to a link to get the plain file.
+
+![The page a share link opens: a captured web page shown large, "Expires in 7 days" at the top right, and Open original and Download buttons below.](docs/images/share-page.png)
+
+When a link has expired, the page says so calmly instead of showing an error. The page is served by the Cloudflare Worker in [`host/`](host/README.md), which you only need if you run your own host for these links.
+
+## When Windows blocks saving
+
+Windows can stop an app it does not know from saving in your Pictures folder (this is Controlled folder access). NoMercy Share then asks under the bar whether to allow itself. **Allow** makes Windows ask for administrator permission and, once you agree, captures are saved in your Pictures folder again. **Not now** hides the question until you restart the app. Meanwhile captures are saved to a `Captures` folder inside `NoMercy Share` in your local app data, so nothing is lost.
+
+![The bar with a question under it: Windows blocks NoMercy Share from saving in a folder, Allow the app? with Allow and Not now.](docs/images/bar-windows-protection.png)
+
+## More
+
+- [Settings file](docs/settings-file.md): every option in `settings.json`, with its default.
+- [Storage hosts](docs/storage-hosts.md): R2, S3 and Discord setup, expiry folders and credentials.
+- [Browser extension](docs/browser-extension.md): build it, load it, what it may do.
+- [Share page host](host/README.md): the Worker that serves links.
+- [Development](docs/development.md): architecture, build, tests and how the screenshots here are made.
 
 ## License
 
