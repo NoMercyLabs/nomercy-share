@@ -335,18 +335,11 @@ public sealed class BarViewModel : ObservableObject
     {
         ShareOutcome outcome = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
         Notice = Strings.Get(NoticeKeyFor(outcome));
-        foreach (DestinationFailure failure in outcome.DestinationFailures)
-        {
-            Notice += ". " + Strings.Get("notice.destination.failed", failure.Name, failure.Reason);
-        }
-
         if (capture.IsOverCap)
         {
-            Notice += " " + Strings.Get("notice.recording.overcap", Megabytes(capture.SizeBytes), Megabytes(capture.SizeCapBytes));
+            Notice += " " + Strings.Get("notice.recording.overcap", MegabyteText.FromBytes(capture.SizeBytes), MegabyteText.FromBytes(capture.SizeCapBytes));
         }
     }
-
-    private static string Megabytes(long bytes) => (bytes / (1024.0 * 1024)).ToString("0.#", CultureInfo.InvariantCulture);
 
     private static string NoticeKeyFor(ShareOutcome outcome)
     {

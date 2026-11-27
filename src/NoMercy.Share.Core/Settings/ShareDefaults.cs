@@ -35,6 +35,9 @@ public static class ShareDefaults
     /// <summary>How long one post to Discord may take before it counts as failed.</summary>
     public const int DiscordTimeoutSeconds = 10;
 
+    /// <summary>The largest file a Discord webhook takes without a boosted server.</summary>
+    public const double DiscordMaxUploadMegabytes = 10;
+
     /// <summary>How many days a link lives unless the upload says otherwise. Null in the settings means never.</summary>
     public const int ExpiryDays = 30;
 

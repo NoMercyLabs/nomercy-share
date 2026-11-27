@@ -56,13 +56,12 @@ public static class Program
             model.Save();
             SaveSettings(Path.Combine(folder, $"share-settings-errors-{name}.png"), model);
 
-            SettingsViewModel on = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), new DiscordSettings { Enabled = true }, webhookStored: true);
-            SaveSettings(Path.Combine(folder, $"share-settings-discord-{name}.png"), on);
-            SettingsViewModel wrong = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
-            wrong.DiscordEnabled = true;
+            SettingsViewModel on = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), DiscordSettings.ProviderName, webhookStored: true);
+            SaveSettings(Path.Combine(folder, $"share-settings-discordprovider-{name}.png"), on);
+            SettingsViewModel wrong = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), DiscordSettings.ProviderName);
             wrong.DiscordWebhook = "https://example.test/not-discord";
             wrong.Save();
-            SaveSettings(Path.Combine(folder, $"share-settings-discord-error-{name}.png"), wrong);
+            SaveSettings(Path.Combine(folder, $"share-settings-discordprovider-error-{name}.png"), wrong);
         }
     }
 
@@ -97,14 +96,20 @@ public static class Program
         window.Close();
     }
 
-    private static SettingsViewModel SettingsModel(string temp, DiscordSettings? discord = null, bool webhookStored = false)
+    private static SettingsViewModel SettingsModel(string temp, string provider = "r2", bool webhookStored = false)
     {
         SettingsFile file = new(Path.Combine(temp, "settings.json"));
         file.Save(new ShareSettings
         {
-            Storage = new StorageSettings { Endpoint = "https://storage.example.test", Bucket = "made-up-bucket", PublicBaseUrl = "https://share.example.test", CredentialName = "made-up" },
-            Expiry = new ExpirySettings { DefaultDays = 7 },
-            Discord = discord ?? new DiscordSettings()
+            Storage = new StorageSettings
+            {
+                Provider = provider,
+                Endpoint = "https://storage.example.test",
+                Bucket = "made-up-bucket",
+                PublicBaseUrl = "https://share.example.test",
+                CredentialName = "made-up"
+            },
+            Expiry = new ExpirySettings { DefaultDays = 7 }
         });
         FakeCredentialStore credentials = new();
         credentials.Stored["made-up"] = new StoredCredential("made-up-key-id", "made-up-secret");
@@ -115,7 +120,7 @@ public static class Program
 
         BarViewModel bar = new(new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings()),
             new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()));
-        return new SettingsViewModel(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3"]);
+        return new SettingsViewModel(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3", "discord"]);
     }
 
     private static void SaveSettings(string file, SettingsViewModel model)

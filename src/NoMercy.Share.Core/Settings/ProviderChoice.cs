@@ -7,6 +7,7 @@ public sealed record ProviderChoice(string Value)
     {
         "r2" => Strings.Get("settings.provider.r2"),
         "s3" => Strings.Get("settings.provider.s3"),
+        DiscordSettings.ProviderName => Strings.Get("settings.provider.discord"),
         _ => Value
     };
 }

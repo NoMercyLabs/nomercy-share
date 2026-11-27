@@ -45,6 +45,8 @@ It runs Edge (else Chrome) headless with its own empty profile over the DevTools
 | `Expiry.DefaultDays` | 30 (null = never) | The lifetime of an upload that names none. |
 | `Clipboard.Content` | `Link` | `Link`, `Image` or `Both` after a capture is shared. |
 
+Discord as a provider: `Storage.Provider` = `discord` uploads the file itself to a channel through a webhook (`?wait=true`, the file as `files[0]`) and the Discord file link goes on the clipboard. The webhook address is a secret in the credential store (`Discord.CredentialName`, default `nomercy-share-discord`), never in settings.json. Two limits: Discord links are signed and expire (the `ex` value in the link, shown in the recent list; the default expiry does not apply), and the file size cap is a setting, `Discord.MaxUploadMegabytes` (default 10). A bigger file fails before the upload; recordings are squeezed to the smaller of `Recording.MaxSizeMegabytes` and that cap. `Discord.TimeoutSeconds` (default 10) limits one upload.
+
 The link is `Storage.PublicBaseUrl` + `/` + the key, for example `https://share.example.test/exp-7d/aB3dE5gH7j.png`.
 
 Expiry: the host deletes, the app does not. An upload goes under the smallest prefix that covers its lifetime (`exp-7d/` for 2 to 7 days; longer than the largest goes under the largest) and `never` goes under `keep/`. The object carries the metadata `x-amz-meta-expires-at` (UTC, `2026-12-04T10:00:00Z`, or `never`) and a sidecar `<key>.json` with the key, upload time, expiry, content type and size. The link's expiry is the prefix's deletion time, so it is never earlier than asked. The host needs one lifecycle rule per prefix: on R2, "delete objects after N days" with the prefix `exp-1d/`, `exp-7d/`, `exp-30d/` and `exp-90d/` (N matching the days in the name). Nothing deletes `keep/`.
@@ -65,7 +67,7 @@ Buttons: region, window, full screen, record, web page, recent links, settings, 
 
 ## Settings
 
-The bar's Settings button opens one window with four sections: Sharing (provider, endpoint, bucket, region, public link base URL, access key id, secret access key), Links (default expiry: never, 1, 7, 30 or 90 days), Hotkeys (click a field and press the keys; the cross turns a hotkey off) and Recording (max size in MB, frame rate). Save checks every field, writes `settings.json` and the access key to the credential store (default name `nomercy-share`), and applies it: the next share uses the new host and expiry, the next recording the new limits, and the hotkeys register again. The secret is never shown or loaded back; an empty secret box keeps the stored one. Cancel writes nothing. Set `NOMERCY_SHARE_DATA` to a folder to keep `settings.json` and `recent.json` there instead of the user's app-data folder, for a portable or test copy.
+The bar's Settings button opens one window with four sections: Sharing (provider: Cloudflare R2, S3-compatible or Discord; with Discord only the webhook address; endpoint, bucket, region, public link base URL, access key id, secret access key), Links (default expiry: never, 1, 7, 30 or 90 days), Hotkeys (click a field and press the keys; the cross turns a hotkey off) and Recording (max size in MB, frame rate). Save checks every field, writes `settings.json` and the access key to the credential store (default name `nomercy-share`), and applies it: the next share uses the new host and expiry, the next recording the new limits, and the hotkeys register again. The secret is never shown or loaded back; an empty secret box keeps the stored one. Cancel writes nothing. Set `NOMERCY_SHARE_DATA` to a folder to keep `settings.json` and `recent.json` there instead of the user's app-data folder, for a portable or test copy.
 
 ## Architecture
 
@@ -76,6 +78,7 @@ Every action is an interface in `NoMercy.Share.Core`. Each platform registers it
 | `NoMercy.Share.Core` | The interfaces (`IScreenCapture`, `IScreenRecorder`, `IWebPageCapture`, `IShareUploader`, `IClipboard`), the settings, the bar view model. No UI toolkit, no OS code. |
 | `NoMercy.Share.Platform.Windows` | `AddWindowsPlatform()`: screen capture, recording, web page capture, hotkeys and the credential store. |
 | `NoMercy.Share.Storage.S3` | S3-compatible storage; Cloudflare R2 is the first provider (`AddS3Storage()` registers `r2` and `s3`). |
+| `NoMercy.Share.Storage.Discord` | Discord as a provider (`AddDiscordStorage()` registers `discord`). |
 | `NoMercy.Share.App` | The Avalonia app and the composition root. The clipboard lives here because it needs this UI toolkit. |
 
 Storage is configurable: the provider is chosen by name in settings (`Storage.Provider`, default `r2`), so another host is one more registered uploader. Credentials are named in settings and never stored in the file.

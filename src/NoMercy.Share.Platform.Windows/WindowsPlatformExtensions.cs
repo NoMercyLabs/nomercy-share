@@ -15,7 +15,7 @@ public static class WindowsPlatformExtensions
             sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(), sp.GetRequiredService<CaptureSettings>()));
         services.AddSingleton<IScreenRecorder>(sp => new FfmpegScreenRecorder(
             sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(),
-            () => sp.GetRequiredService<LiveSettings>().Current.Recording));
+            () => sp.GetRequiredService<LiveSettings>().Current.EffectiveRecording()));
         services.AddSingleton<IWebPageCapture>(sp => new CdpWebPageCapture(
             sp.GetRequiredService<CaptureFiles>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture));
         services.AddSingleton<ICredentialStore, WindowsCredentialStore>();

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace NoMercy.Share.Core.Destinations;
+namespace NoMercy.Share.Core.Discord;
 
 /// <summary>What counts as a Discord webhook address, and how it sits in the credential store.</summary>
 public static class DiscordWebhookAddress

@@ -34,4 +34,10 @@ public sealed record ShareSettings
     public RecentSettings Recent { get; init; } = new();
 
     public WebCaptureSettings WebCapture { get; init; } = new();
+
+    /// <summary>The recording limits in force. With Discord as the provider the size cap is the smaller of its own and Discord's.</summary>
+    public RecordingSettings EffectiveRecording() =>
+        string.Equals(Storage.Provider, DiscordSettings.ProviderName, StringComparison.OrdinalIgnoreCase)
+            ? Recording with { MaxSizeMegabytes = Math.Min(Recording.MaxSizeMegabytes, Discord.MaxUploadMegabytes) }
+            : Recording;
 }

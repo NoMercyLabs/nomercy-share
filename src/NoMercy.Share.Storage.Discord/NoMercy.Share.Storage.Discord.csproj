@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Discord as a storage provider: the file goes to a channel through a webhook and the Discord link is the share link. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NoMercy.Share.Core/NoMercy.Share.Core.csproj" />
+  </ItemGroup>
+</Project>

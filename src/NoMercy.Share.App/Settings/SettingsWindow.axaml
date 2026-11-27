@@ -33,7 +33,7 @@
               </ComboBox.ItemTemplate>
             </ComboBox>
           </Grid>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsStorageFields}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
               <ColumnDefinition Width="*" />
@@ -44,7 +44,7 @@
               <TextBlock Classes="field-error" Text="{Binding EndpointError}" IsVisible="{Binding EndpointError, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </StackPanel>
           </Grid>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsStorageFields}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
               <ColumnDefinition Width="*" />
@@ -55,7 +55,7 @@
               <TextBlock Classes="field-error" Text="{Binding BucketError}" IsVisible="{Binding BucketError, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </StackPanel>
           </Grid>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsStorageFields}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
               <ColumnDefinition Width="*" />
@@ -66,7 +66,7 @@
               <TextBlock Classes="field-error" Text="{Binding RegionError}" IsVisible="{Binding RegionError, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </StackPanel>
           </Grid>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsStorageFields}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
               <ColumnDefinition Width="*" />
@@ -77,7 +77,7 @@
               <TextBlock Classes="field-error" Text="{Binding PublicBaseUrlError}" IsVisible="{Binding PublicBaseUrlError, Converter={x:Static ObjectConverters.IsNotNull}}" />
             </StackPanel>
           </Grid>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsStorageFields}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
               <ColumnDefinition Width="*" />
@@ -85,7 +85,7 @@
             <TextBlock Classes="field-label" Text="{local:Loc settings.keyid}" />
             <TextBox Grid.Column="1" Text="{Binding AccessKeyId}" AutomationProperties.Name="{local:Loc settings.keyid}" />
           </Grid>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsStorageFields}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
               <ColumnDefinition Width="*" />
@@ -94,6 +94,19 @@
             <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
               <TextBox PasswordChar="•" Text="{Binding SecretAccessKey}" PlaceholderText="{Binding SecretPlaceholder}" AutomationProperties.Name="{local:Loc settings.secret}" />
               <TextBlock Classes="field-error" Text="{Binding CredentialError}" IsVisible="{Binding CredentialError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding IsDiscord}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.discord.webhook}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox PasswordChar="•" Text="{Binding DiscordWebhook}" PlaceholderText="{Binding DiscordWebhookPlaceholder}"
+                       AutomationProperties.Name="{local:Loc settings.discord.webhook}" />
+              <TextBlock Classes="field-error" Text="{Binding DiscordWebhookError}" IsVisible="{Binding DiscordWebhookError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              <TextBlock Classes="status" Text="{local:Loc settings.discord.helper}" TextWrapping="Wrap" />
             </StackPanel>
           </Grid>
         </StackPanel>
@@ -107,35 +120,15 @@
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock Classes="field-label" Text="{local:Loc settings.expiry}" />
-            <ComboBox Grid.Column="1" ItemsSource="{Binding ExpiryChoices}" SelectedItem="{Binding SelectedExpiry}" AutomationProperties.Name="{local:Loc settings.expiry}">
+            <ComboBox Grid.Column="1" ItemsSource="{Binding ExpiryChoices}" SelectedItem="{Binding SelectedExpiry}" IsVisible="{Binding ShowsStorageFields}"
+                      AutomationProperties.Name="{local:Loc settings.expiry}">
               <ComboBox.ItemTemplate>
                 <DataTemplate x:DataType="settings:ExpiryChoice">
                   <TextBlock Text="{Binding Label}" />
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
-          </Grid>
-        </StackPanel>
-
-        <StackPanel Spacing="{DynamicResource Nm-Space-3}">
-          <TextBlock Classes="section" Text="{local:Loc settings.section.discord}" />
-          <Border Classes="section-line" />
-          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
-            <ToggleSwitch IsChecked="{Binding DiscordEnabled}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center"
-                          AutomationProperties.Name="{local:Loc settings.discord.enabled}" />
-            <TextBlock Classes="switch-label" Text="{local:Loc settings.discord.enabled}" />
-          </StackPanel>
-          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Classes="field-label" Text="{local:Loc settings.discord.webhook}" />
-            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
-              <TextBox PasswordChar="•" Text="{Binding DiscordWebhook}" PlaceholderText="{Binding DiscordWebhookPlaceholder}"
-                       AutomationProperties.Name="{local:Loc settings.discord.webhook}" />
-              <TextBlock Classes="field-error" Text="{Binding DiscordWebhookError}" IsVisible="{Binding DiscordWebhookError, Converter={x:Static ObjectConverters.IsNotNull}}" />
-            </StackPanel>
+            <TextBlock Grid.Column="1" Classes="status" Text="{local:Loc settings.expiry.discord}" TextWrapping="Wrap" VerticalAlignment="Center" IsVisible="{Binding IsDiscord}" />
           </Grid>
         </StackPanel>
 

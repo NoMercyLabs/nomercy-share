@@ -1,6 +1,6 @@
 using System.Globalization;
 using NoMercy.Share.Core.Bar;
-using NoMercy.Share.Core.Destinations;
+using NoMercy.Share.Core.Discord;
 using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Sharing;
 
@@ -23,6 +23,7 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly LiveSettings _live;
     private readonly ICredentialStore _credentials;
     private readonly HotkeyBinder _binder;
+    private readonly bool _discordStored;
     private string _provider;
     private string _endpoint;
     private string _bucket;
@@ -31,7 +32,6 @@ public sealed class SettingsViewModel : ObservableObject
     private string _accessKeyId;
     private string _secretAccessKey = string.Empty;
     private ExpiryChoice _selectedExpiry;
-    private bool _discordEnabled;
     private string _discordWebhook = string.Empty;
     private string? _discordWebhookError;
     private string _maxSizeMegabytes;
@@ -64,8 +64,8 @@ public sealed class SettingsViewModel : ObservableObject
         SecretPlaceholder = stored is null ? string.Empty : Strings.Get("settings.secret.saved");
         ExpiryChoices = ChoicesFor(storage, current.Expiry);
         _selectedExpiry = ExpiryChoices.First(choice => choice.Days == current.Expiry.DefaultDays);
-        _discordEnabled = current.Discord.Enabled;
-        DiscordWebhookPlaceholder = credentials.Read(DiscordNameFor(current.Discord)) is null ? string.Empty : Strings.Get("settings.secret.saved");
+        _discordStored = credentials.Read(DiscordNameFor(current.Discord)) is not null;
+        DiscordWebhookPlaceholder = _discordStored ? Strings.Get("settings.secret.saved") : string.Empty;
         Hotkeys = [.. HotkeyActions.Select(action => new HotkeyRow(action, current.Hotkeys.Chords().GetValueOrDefault(action, string.Empty)))];
         _maxSizeMegabytes = current.Recording.MaxSizeMegabytes.ToString(CultureInfo.InvariantCulture);
         _frameRate = current.Recording.FrameRate.ToString(CultureInfo.InvariantCulture);
@@ -89,8 +89,20 @@ public sealed class SettingsViewModel : ObservableObject
     public string Provider
     {
         get => _provider;
-        set => Set(ref _provider, value);
+        set
+        {
+            Set(ref _provider, value);
+            OnChanged(nameof(IsDiscord));
+            OnChanged(nameof(ShowsStorageFields));
+            OnChanged(nameof(SharingStatus));
+        }
     }
+
+    /// <summary>True while Discord is the picked provider: the window then asks for the webhook address only.</summary>
+    public bool IsDiscord => string.Equals(Provider, DiscordSettings.ProviderName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>True while the S3-style fields (endpoint, bucket, region, link base URL, key) are shown.</summary>
+    public bool ShowsStorageFields => !IsDiscord;
 
     public string Endpoint
     {
@@ -147,17 +159,15 @@ public sealed class SettingsViewModel : ObservableObject
         set => Set(ref _selectedExpiry, value);
     }
 
-    public bool DiscordEnabled
-    {
-        get => _discordEnabled;
-        set => Set(ref _discordEnabled, value);
-    }
-
     /// <summary>What the user typed this time. It goes to the credential store and nowhere else.</summary>
     public string DiscordWebhook
     {
         get => _discordWebhook;
-        set => Set(ref _discordWebhook, value);
+        set
+        {
+            Set(ref _discordWebhook, value);
+            OnChanged(nameof(SharingStatus));
+        }
     }
 
     /// <summary>Shown in the empty webhook box when an address is stored; the address itself is never loaded.</summary>
@@ -186,6 +196,13 @@ public sealed class SettingsViewModel : ObservableObject
     {
         get
         {
+            if (IsDiscord)
+            {
+                return _discordStored || !string.IsNullOrWhiteSpace(DiscordWebhook)
+                    ? Strings.Get("settings.sharing.on", Strings.Get("settings.provider.discord"))
+                    : Strings.Get("settings.sharing.off");
+            }
+
             if (!IsSharingFilledIn)
             {
                 return Strings.Get("settings.sharing.off");
@@ -322,7 +339,12 @@ public sealed class SettingsViewModel : ObservableObject
     /// <summary>The Discord settings to save and the webhook to store; null when the stored one stays as it is.</summary>
     private (DiscordSettings Discord, StoredCredential? Webhook) PlanDiscord(DiscordSettings current)
     {
-        DiscordSettings discord = current with { Enabled = DiscordEnabled, CredentialName = DiscordNameFor(current) };
+        if (!IsDiscord)
+        {
+            return (current, null);
+        }
+
+        DiscordSettings discord = current with { CredentialName = DiscordNameFor(current) };
         string typed = DiscordWebhook.Trim();
         if (typed.Length > 0)
         {
@@ -333,7 +355,7 @@ public sealed class SettingsViewModel : ObservableObject
 
             DiscordWebhookError = Strings.Get("settings.error.discord");
         }
-        else if (DiscordEnabled && _credentials.Read(discord.CredentialName) is null)
+        else if (_credentials.Read(discord.CredentialName) is null)
         {
             DiscordWebhookError = Strings.Get("settings.error.missing.discord");
         }
@@ -357,6 +379,11 @@ public sealed class SettingsViewModel : ObservableObject
 
     private (StorageSettings Storage, CredentialPlan Credential) PlanStorage(StorageSettings current)
     {
+        if (IsDiscord)
+        {
+            return (current with { Provider = Provider }, new CredentialPlan(null));
+        }
+
         if (!IsSharingFilledIn)
         {
             return (current with { Provider = Provider, Endpoint = string.Empty, Bucket = string.Empty, PublicBaseUrl = string.Empty, CredentialName = string.Empty }, new CredentialPlan(null));

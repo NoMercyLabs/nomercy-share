@@ -18,5 +18,6 @@
     <ProjectReference Include="../NoMercy.Share.Core/NoMercy.Share.Core.csproj" />
     <ProjectReference Include="../NoMercy.Share.Platform.Windows/NoMercy.Share.Platform.Windows.csproj" />
     <ProjectReference Include="../NoMercy.Share.Storage.S3/NoMercy.Share.Storage.S3.csproj" />
+    <ProjectReference Include="../NoMercy.Share.Storage.Discord/NoMercy.Share.Storage.Discord.csproj" />
   </ItemGroup>
 </Project>
