@@ -62,6 +62,17 @@
     <Setter Property="Background" Value="{DynamicResource Share-Separator-Brush}" />
   </Style>
   <!-- The recent links list: a rounded card under the bar; rows tint on hover and selection like the bar buttons. -->
+  <!-- A text button of the access ask: the bar button's size, hover and focus ring, as wide as its label. -->
+  <Style Selector="Button.bar.ask">
+    <Setter Property="Width" Value="NaN" />
+    <Setter Property="MinWidth" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+  </Style>
+  <Style Selector="Button.bar.ask.first">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+  </Style>
   <Style Selector="Button.bar.small">
     <Setter Property="Width" Value="{DynamicResource Nm-Space-7}" />
     <Setter Property="Height" Value="{DynamicResource Nm-Space-7}" />

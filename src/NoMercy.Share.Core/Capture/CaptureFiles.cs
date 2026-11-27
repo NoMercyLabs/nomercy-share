@@ -9,6 +9,7 @@ public sealed class CaptureFiles(CaptureSettings settings, string picturesFolder
     private const string PictureExtension = ".png";
 
     private readonly string _fallbackFolder = fallbackFolder ?? DefaultFallbackFolder();
+    private volatile bool _fellBack;
 
     /// <summary>Where captures go when Windows refuses the captures folder: "NoMercy Share\Captures" under the local app data folder.</summary>
     public static string DefaultFallbackFolder() => Path.Combine(
@@ -32,6 +33,7 @@ public sealed class CaptureFiles(CaptureSettings settings, string picturesFolder
         string folder = ResolveFolder(settings.Folder, picturesFolder);
         if (!CanWrite(folder))
         {
+            _fellBack = true;
             folder = _fallbackFolder;
             Directory.CreateDirectory(folder);
         }
@@ -44,6 +46,23 @@ public sealed class CaptureFiles(CaptureSettings settings, string picturesFolder
         }
 
         return path;
+    }
+
+    /// <summary>The captures folder in use now.</summary>
+    public string CapturesFolder => ResolveFolder(settings.Folder, picturesFolder);
+
+    /// <summary>The folder captures go to when the captures folder is refused.</summary>
+    public string FallbackFolder => _fallbackFolder;
+
+    /// <summary>True when the app can write in the captures folder now.</summary>
+    public bool CanWriteCapturesFolder() => CanWrite(CapturesFolder);
+
+    /// <summary>True once after a capture used the fallback folder.</summary>
+    public bool TakeFallback()
+    {
+        bool fellBack = _fellBack;
+        _fellBack = false;
+        return fellBack;
     }
 
     /// <summary>Windows' controlled folder access can refuse an unknown app a file in the Pictures folder even after the folder exists, so the check writes a file that deletes itself on close.</summary>

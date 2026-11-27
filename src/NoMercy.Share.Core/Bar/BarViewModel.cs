@@ -20,6 +20,10 @@ public sealed class BarViewModel : ObservableObject
     private readonly IUrlOpener? _opener;
     private readonly IClipboard? _clipboard;
     private readonly SynchronizationContext? _context;
+    private readonly CaptureFiles? _files;
+    private readonly IFolderAccess? _folderAccess;
+    private string? _accessAsk;
+    private bool _accessAskDismissed;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _busy;
@@ -36,9 +40,13 @@ public sealed class BarViewModel : ObservableObject
         RecentLinks? recent = null,
         IUrlOpener? opener = null,
         IClipboard? clipboard = null,
-        IWebCaptureDialog? webDialog = null)
+        IWebCaptureDialog? webDialog = null,
+        CaptureFiles? files = null,
+        IFolderAccess? folderAccess = null)
     {
         _webDialog = webDialog;
+        _files = files;
+        _folderAccess = folderAccess;
         _capture = capture;
         _flow = flow;
         _recorder = recorder;
@@ -85,6 +93,65 @@ public sealed class BarViewModel : ObservableObject
                 OpenRecent(row);
             }
         });
+        AllowAccessCommand = new BarCommand(_ => _ = AllowAccessAsync());
+        DismissAccessCommand = new BarCommand(_ => DismissAccessAsk());
+    }
+
+    /// <summary>Asks the system to let the app write in the captures folder (the Allow button).</summary>
+    public ICommand AllowAccessCommand { get; }
+
+    /// <summary>Hides the access ask for this run (the Not now button).</summary>
+    public ICommand DismissAccessCommand { get; }
+
+    /// <summary>The lasting ask under the bar when the system blocks the captures folder, or null. It stays until Allow or Not now.</summary>
+    public string? AccessAsk
+    {
+        get => _accessAsk;
+        private set => Set(ref _accessAsk, value);
+    }
+
+    /// <summary>Shows the access ask when the captures folder is not writable, the system protection is on and the user did not say Not now.</summary>
+    public void CheckFolderAccess()
+    {
+        if (_files is null || _folderAccess is null || _accessAskDismissed || _accessAsk is not null)
+        {
+            return;
+        }
+
+        if (_folderAccess.IsProtectionOn() && !_files.CanWriteCapturesFolder())
+        {
+            AccessAsk = Strings.Get("ask.folder", _files.CapturesFolder);
+        }
+    }
+
+    public void DismissAccessAsk()
+    {
+        _accessAskDismissed = true;
+        AccessAsk = null;
+    }
+
+    /// <summary>Runs the system's allow request, then says whether captures save to the folder again.</summary>
+    public async Task AllowAccessAsync(CancellationToken cancellationToken = default)
+    {
+        if (_files is null || _folderAccess is null)
+        {
+            return;
+        }
+
+        AccessAsk = null;
+        bool granted = false;
+        try
+        {
+            granted = await _folderAccess.RequestAccessAsync(cancellationToken);
+        }
+        catch (Exception error) when (error is not OperationCanceledException)
+        {
+            Trace.TraceError("Asking for folder access failed: {0}", error);
+        }
+
+        Notice = granted && _files.CanWriteCapturesFolder()
+            ? Strings.Get("ask.allowed", _files.CapturesFolder)
+            : Strings.Get("ask.declined", _files.FallbackFolder);
     }
 
     /// <summary>Runs the <see cref="BarAction"/> given as the command parameter.</summary>
@@ -190,6 +257,11 @@ public sealed class BarViewModel : ObservableObject
         finally
         {
             _busy = false;
+            if (_files?.TakeFallback() == true)
+            {
+                CheckFolderAccess();
+            }
+
             OnChanged(nameof(IsRecording));
             OnChanged(nameof(RecordLabel));
             OnChanged(nameof(ElapsedText));

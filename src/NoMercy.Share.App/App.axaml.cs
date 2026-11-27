@@ -37,6 +37,7 @@ public sealed class App : Application
             desktop.MainWindow = _window;
             services.GetRequiredService<BarViewModel>().SettingsRequested += (_, _) => ShowSettings(services);
             services.GetRequiredService<HotkeyBinder>().Start();
+            services.GetRequiredService<BarViewModel>().CheckFolderAccess();
             RegisterNativeHost(services.GetRequiredService<ShareSettings>().NativeHost);
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
             desktop.Exit += (_, _) => services.Dispose();

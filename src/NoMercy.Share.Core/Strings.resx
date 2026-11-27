@@ -88,6 +88,11 @@
   <data name="notice.hotkey.taken" xml:space="preserve"><value>Hotkey {0} is in use by another app</value></data>
   <data name="notice.hotkey.taken.many" xml:space="preserve"><value>Hotkeys {0} are in use by another app</value></data>
   <data name="notice.hotkey.invalid" xml:space="preserve"><value>Hotkey "{0}" cannot be used: {1}</value></data>
+  <data name="ask.folder" xml:space="preserve"><value>Windows blocks NoMercy Share from saving in {0}. Allow the app?</value></data>
+  <data name="ask.allow" xml:space="preserve"><value>Allow</value></data>
+  <data name="ask.notnow" xml:space="preserve"><value>Not now</value></data>
+  <data name="ask.allowed" xml:space="preserve"><value>Captures save to {0} again</value></data>
+  <data name="ask.declined" xml:space="preserve"><value>Not allowed. Captures stay in {0}</value></data>
   <data name="error.hotkey.empty" xml:space="preserve"><value>a hotkey needs a key, for example Ctrl+PrintScreen.</value></data>
   <data name="error.hotkey.modifier" xml:space="preserve"><value>"{0}" is not a modifier. Use Ctrl, Alt, Shift or Win.</value></data>
   <data name="error.hotkey.duplicate" xml:space="preserve"><value>"{0}" is named twice.</value></data>

@@ -22,6 +22,7 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IGlobalHotkeys, Win32GlobalHotkeys>();
         services.AddSingleton<IUrlOpener>(new ShellUrlOpener());
         services.AddSingleton<IForegroundGrant, WindowsForegroundGrant>();
+        services.AddSingleton<IFolderAccess, WindowsFolderAccess>();
         return services;
     }
 }

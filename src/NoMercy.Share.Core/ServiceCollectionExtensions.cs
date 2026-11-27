@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
@@ -36,6 +37,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IScreenCapture>(),
             sp.GetRequiredService<ICaptureHost>(),
             sp.GetRequiredService<CaptureSettings>()));
+        services.TryAddSingleton<IFolderAccess, NoFolderAccess>();
         services.AddSingleton<BarViewModel>();
         services.AddSingleton<HotkeyBinder>();
         return services;

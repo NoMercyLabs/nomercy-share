@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Headless;
 using Avalonia.Media;
 using NoMercy.Share.App.Icons;
 
@@ -11,7 +10,7 @@ public sealed class MoooomIconBoxTests
 
     static MoooomIconBoxTests()
     {
-        AppBuilder.Configure<Application>().UseHeadless(new AvaloniaHeadlessPlatformOptions()).SetupWithoutStarting();
+        HeadlessApp.Ensure();
     }
 
     [Fact]
