@@ -30,8 +30,17 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
 {
     public bool IsRecording { get; private set; }
 
+    public Exception? StartThrows { get; set; }
+
+    public Exception? StopThrows { get; set; }
+
     public Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
+        if (StartThrows is not null)
+        {
+            return Task.FromException(StartThrows);
+        }
+
         IsRecording = true;
         return Task.CompletedTask;
     }
@@ -39,7 +48,9 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
     public Task<CaptureResult> StopAsync(CancellationToken cancellationToken = default)
     {
         IsRecording = false;
-        return Task.FromResult(new CaptureResult("/tmp/recording.mp4", "video/mp4"));
+        return StopThrows is null
+            ? Task.FromResult(new CaptureResult("/tmp/recording.mp4", "video/mp4"))
+            : Task.FromException<CaptureResult>(StopThrows);
     }
 }
 
