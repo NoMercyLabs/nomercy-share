@@ -5,7 +5,7 @@
         Title="{local:Loc app.name}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" CanResize="False" SizeToContent="WidthAndHeight" WindowStartupLocation="Manual">
   <StackPanel Margin="{DynamicResource Nm-Space-6-Thickness}">
-    <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+    <Border x:Name="Pill" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
             Padding="{DynamicResource Nm-Space-1-Thickness}" HorizontalAlignment="Left"
             AutomationProperties.Name="{local:Loc bar.automation}">
@@ -52,6 +52,11 @@
         </Button>
       </StackPanel>
     </Border>
+    <!-- Under the bar, its left edge in line with the bar's; the panel has its own 24-unit shadow margin, so the offsets undo it. -->
+    <Popup x:Name="RecentPopup" IsOpen="{Binding IsRecentOpen, Mode=TwoWay}" PlacementTarget="{Binding #Pill}" Placement="BottomEdgeAlignedLeft"
+           HorizontalOffset="-24" VerticalOffset="-16" IsLightDismissEnabled="True" OverlayInputPassThroughElement="{Binding #Pill}">
+      <local:RecentPanel />
+    </Popup>
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
             BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"

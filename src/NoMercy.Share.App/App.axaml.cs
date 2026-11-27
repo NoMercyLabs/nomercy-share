@@ -7,6 +7,7 @@ using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Platform.Windows;
 using NoMercy.Share.Storage.S3;
@@ -49,7 +50,9 @@ public sealed class App : Application
         services.AddSingleton(settings.Capture);
         services.AddSingleton(settings.Recording);
         services.AddSingleton(settings.Hotkeys);
+        services.AddSingleton(settings.Recent);
         services.AddSingleton<BarPositionStore>();
+        services.AddSingleton(new RecentLinks(RecentLinks.DefaultPath(), settings.Recent));
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
         services.AddSingleton<IRegionSelector>(
             EnvironmentRegionSelector.FromEnvironment(Environment.GetEnvironmentVariable(EnvironmentRegionSelector.VariableName)) is { } fixedRegion

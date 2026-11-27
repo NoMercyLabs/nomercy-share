@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -11,6 +12,7 @@ using Avalonia.VisualTree;
 using NoMercy.Share.App;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 using NoMercy.Share.Core.Tests;
@@ -31,7 +33,78 @@ public static class Program
         RenderBar(folder, store);
         bool remembered = CheckPositionRemembered(folder, store);
         RenderRegionOverlay(folder);
-        return remembered ? 0 : 1;
+        bool popupFollows = RenderRecent(folder);
+        return remembered && popupFollows ? 0 : 1;
+    }
+
+    /// <summary>The recent links list, dark and light, with three made-up links and empty, at 2x; also checks the bar's popup opens and closes with the list.</summary>
+    private static bool RenderRecent(string folder)
+    {
+        DateTimeOffset now = new(2026, 11, 27, 12, 0, 0, TimeSpan.Zero);
+        string temp = Path.Combine(Path.GetTempPath(), $"share-recent-shots-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(temp);
+        string picture = Path.Combine(temp, "capture.png");
+        File.WriteAllBytes(picture, PngEncoder.Encode(SampleScreen(320, 200)));
+        foreach ((ThemeVariant theme, string name, string desktop) in new[] { (ThemeVariant.Dark, "dark", "#3A3F4B"), (ThemeVariant.Light, "light", "#C9CED8") })
+        {
+            Application.Current!.RequestedThemeVariant = theme;
+            RecentLinks full = new(Path.Combine(temp, $"full-{name}.json"), new RecentSettings(), () => now);
+            full.Add(new RecentLink("https://share.example.test/exp-30d/Qx7LmP2aRt.png", RecentKind.Image, "image/png", 48_000, now.AddMinutes(-5), now.AddDays(29), picture));
+            full.Add(new RecentLink("https://share.example.test/exp-7d/Zk3VbN8cYd.mp4", RecentKind.Video, "video/mp4", 9_000_000, now.AddHours(-3), now.AddDays(4), null));
+            full.Add(new RecentLink("https://share.example.test/exp-30d/Hh5TgW1eUo.png", RecentKind.Image, "image/png", 52_000, now.AddDays(-31), now.AddDays(-1), null));
+            SaveRecent(Path.Combine(folder, $"share-recent-{name}.png"), full, now, desktop);
+            SaveRecent(Path.Combine(folder, $"share-recent-empty-{name}.png"), new RecentLinks(Path.Combine(temp, $"none-{name}.json"), new RecentSettings(), () => now), now, desktop);
+        }
+
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        BarWindow window = Open(new BarPositionStore(new SettingsFile(Path.Combine(temp, "settings.json"))));
+        BarViewModel bar = (BarViewModel)window.DataContext!;
+        Popup popup = window.FindControl<Popup>("RecentPopup")!;
+        bar.IsRecentOpen = true;
+        bool opened = popup.IsOpen;
+        bar.CloseRecent();
+        Console.WriteLine($"recent popup follows the list: open={opened}, after close={popup.IsOpen}");
+        window.Close();
+        return opened && !popup.IsOpen && CheckPanelKeys(temp, now);
+    }
+
+    /// <summary>Enter on the selected row copies its link and Escape closes the list.</summary>
+    private static bool CheckPanelKeys(string temp, DateTimeOffset now)
+    {
+        FakeClipboard clipboard = new();
+        RecentLinks store = new(Path.Combine(temp, "keys.json"), new RecentSettings(), () => now);
+        store.Add(new RecentLink("https://share.example.test/exp-30d/Qx7LmP2aRt.png", RecentKind.Image, "image/png", 48_000, now, now.AddDays(29), null));
+        CaptureFlow capture = new(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
+        BarViewModel model = new(capture, new ShareFlow(new FakeUploader(), clipboard, new ExpirySettings(), new ClipboardSettings()), clock: () => now, recent: store, opener: new FakeUrlOpener(), clipboard: clipboard);
+        model.RunAsync(BarAction.Recent).GetAwaiter().GetResult();
+        RecentPanel panel = new() { DataContext = model };
+        Window host = new() { Content = panel };
+        host.Show();
+        Dispatcher.UIThread.RunJobs();
+        panel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        bool copied = clipboard.Texts.Count == 1 && model.Notice == "Link copied";
+        model.IsRecentOpen = true;
+        panel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
+        Console.WriteLine($"recent keys: enter copied={copied}, escape closed={!model.IsRecentOpen}");
+        host.Close();
+        return copied && !model.IsRecentOpen;
+    }
+
+    private static void SaveRecent(string file, RecentLinks store, DateTimeOffset now, string desktop)
+    {
+        CaptureFlow capture = new(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 });
+        ShareFlow flow = new(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings());
+        BarViewModel model = new(capture, flow, clock: () => now, recent: store, opener: new FakeUrlOpener(), clipboard: new FakeClipboard());
+        model.RunAsync(BarAction.Recent).GetAwaiter().GetResult();
+        // The 2x is a layout transform, so the window grows to the scaled size and nothing is clipped at the 1x bounds.
+        LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = new RecentPanel { DataContext = model } };
+        Window host = new() { Content = scaled, SizeToContent = SizeToContent.WidthAndHeight, Background = new SolidColorBrush(Color.Parse(desktop)) };
+        host.Show();
+        Dispatcher.UIThread.RunJobs();
+        using RenderTargetBitmap bitmap = Render(host, 1, 0, host.Bounds.Width);
+        bitmap.Save(file);
+        Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height} rows={model.RecentRows.Count}");
+        host.Close();
     }
 
     /// <summary>The bar in the dark theme: default, zoomed ends, hover, focus and a notice.</summary>
@@ -49,7 +122,7 @@ public static class Program
         recordClasses.Set(":pointerover", false);
         Named<Button>(window, "RegionButton").Focus(NavigationMethod.Tab);
         Save(window, Path.Combine(folder, "share-bar-focus.png"));
-        ((BarViewModel)window.DataContext!).ActionCommand.Execute(BarAction.Recent);
+        ((BarViewModel)window.DataContext!).ShowMessage("Link copied");
         Save(window, Path.Combine(folder, "share-bar-notice.png"));
         window.Close();
     }

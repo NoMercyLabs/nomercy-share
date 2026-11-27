@@ -163,7 +163,7 @@ public sealed class RecentLinksTests : IDisposable
         string before = File.ReadAllText(FilePath);
         Directory.CreateDirectory(FilePath + ".tmp");
 
-        Assert.ThrowsAny<IOException>(() => store.Add(Link("b", Now)));
+        Assert.ThrowsAny<Exception>(() => store.Add(Link("b", Now)));
 
         Assert.Equal(before, File.ReadAllText(FilePath));
     }

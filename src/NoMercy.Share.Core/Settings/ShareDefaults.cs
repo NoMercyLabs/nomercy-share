@@ -80,6 +80,10 @@ public static class ShareDefaults
 
     public const string HotkeyRecord = "Shift+PrintScreen";
 
+    public const int RecentMaxEntries = 50;
+
+    public const int RecentKeepExpiredDays = 7;
+
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
 }

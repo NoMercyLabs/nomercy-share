@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Input;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Bar;
@@ -14,19 +15,35 @@ public sealed class BarViewModel : ObservableObject
     private readonly IScreenRecorder? _recorder;
     private readonly IWebPageCapture? _web;
     private readonly Func<DateTimeOffset> _clock;
+    private readonly RecentLinks? _recent;
+    private readonly IUrlOpener? _opener;
+    private readonly IClipboard? _clipboard;
     private readonly SynchronizationContext? _context;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _busy;
+    private bool _isRecentOpen;
+    private IReadOnlyList<RecentRow> _recentRows = [];
     private DateTimeOffset? _recordingStartedAt;
 
-    public BarViewModel(CaptureFlow capture, ShareFlow flow, IScreenRecorder? recorder = null, IWebPageCapture? web = null, Func<DateTimeOffset>? clock = null)
+    public BarViewModel(
+        CaptureFlow capture,
+        ShareFlow flow,
+        IScreenRecorder? recorder = null,
+        IWebPageCapture? web = null,
+        Func<DateTimeOffset>? clock = null,
+        RecentLinks? recent = null,
+        IUrlOpener? opener = null,
+        IClipboard? clipboard = null)
     {
         _capture = capture;
         _flow = flow;
         _recorder = recorder;
         _web = web;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        _recent = recent;
+        _opener = opener;
+        _clipboard = clipboard;
         _context = SynchronizationContext.Current; // the recorder fails on another thread; the window reads the bar on this one
         if (recorder is not null)
         {
@@ -40,7 +57,7 @@ public sealed class BarViewModel : ObservableObject
             [BarAction.FullScreen] = token => CaptureAsync(CaptureKind.FullScreen, token),
             [BarAction.Record] = ToggleRecordingAsync,
             [BarAction.WebPage] = CaptureWebPageAsync,
-            [BarAction.Recent] = _ => ShowNotice("notice.later"),
+            [BarAction.Recent] = _ => ToggleRecent(),
             [BarAction.Settings] = _ => ShowNotice("notice.later"),
             [BarAction.Close] = _ => RequestClose()
         };
@@ -51,10 +68,51 @@ public sealed class BarViewModel : ObservableObject
                 _ = RunAsync(action);
             }
         });
+        CopyRecentCommand = new BarCommand(parameter =>
+        {
+            if (parameter is RecentRow row)
+            {
+                _ = CopyRecentAsync(row);
+            }
+        });
+        OpenRecentCommand = new BarCommand(parameter =>
+        {
+            if (parameter is RecentRow row)
+            {
+                OpenRecent(row);
+            }
+        });
     }
 
     /// <summary>Runs the <see cref="BarAction"/> given as the command parameter.</summary>
     public ICommand ActionCommand { get; }
+
+    /// <summary>Copies the link of the <see cref="RecentRow"/> given as the command parameter.</summary>
+    public ICommand CopyRecentCommand { get; }
+
+    /// <summary>Opens the link of the <see cref="RecentRow"/> given as the command parameter in the browser.</summary>
+    public ICommand OpenRecentCommand { get; }
+
+    /// <summary>True while the recent links list is open. The popup binds to it, so a click outside closes it.</summary>
+    public bool IsRecentOpen
+    {
+        get => _isRecentOpen;
+        set => Set(ref _isRecentOpen, value);
+    }
+
+    /// <summary>The links as of the last time the list opened, newest first.</summary>
+    public IReadOnlyList<RecentRow> RecentRows
+    {
+        get => _recentRows;
+        private set
+        {
+            _recentRows = value;
+            OnChanged(nameof(RecentRows));
+            OnChanged(nameof(IsRecentEmpty));
+        }
+    }
+
+    public bool IsRecentEmpty => _recentRows.Count == 0;
 
     public bool IsRecording => _recorder?.IsRecording ?? false;
 
@@ -75,6 +133,8 @@ public sealed class BarViewModel : ObservableObject
 
     public void ClearNotice() => Notice = null;
 
+    public void CloseRecent() => IsRecentOpen = false;
+
     /// <summary>Shows text the caller made, such as the hotkeys that could not be registered.</summary>
     public void ShowMessage(string text) => Notice = text;
 
@@ -91,6 +151,11 @@ public sealed class BarViewModel : ObservableObject
 
         _busy = true;
         ClearNotice();
+        if (action != BarAction.Recent)
+        {
+            CloseRecent();
+        }
+
         try
         {
             await _actions[action](cancellationToken);
@@ -146,6 +211,57 @@ public sealed class BarViewModel : ObservableObject
     {
         Notice = Strings.Get(key);
         return Task.CompletedTask;
+    }
+
+    private Task ToggleRecent()
+    {
+        if (_recent is null)
+        {
+            return ShowNotice("notice.later");
+        }
+
+        if (IsRecentOpen)
+        {
+            CloseRecent();
+            return Task.CompletedTask;
+        }
+
+        DateTimeOffset now = _clock();
+        RecentRows = [.. _recent.Load().Select(link => new RecentRow(link, now))];
+        IsRecentOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task CopyRecentAsync(RecentRow row)
+    {
+        CloseRecent();
+        try
+        {
+            if (_clipboard is not null)
+            {
+                await _clipboard.SetTextAsync(row.Link.Url);
+                Notice = Strings.Get("notice.copied");
+            }
+        }
+        catch (Exception error)
+        {
+            Trace.TraceError("Copying a recent link failed: {0}", error);
+            Notice = Strings.Get("notice.failed");
+        }
+    }
+
+    private void OpenRecent(RecentRow row)
+    {
+        CloseRecent();
+        try
+        {
+            _opener?.Open(new Uri(row.Link.Url));
+        }
+        catch (Exception error)
+        {
+            Trace.TraceError("Opening a recent link failed: {0}", error);
+            Notice = Strings.Get("notice.failed");
+        }
     }
 
     private Task RequestClose()

@@ -45,6 +45,7 @@ public partial class BarWindow : Window
         Opened += (_, _) => Place();
         PositionChanged += (_, _) =>
         {
+            viewModel.CloseRecent();
             if (_placed)
             {
                 _saveTimer.Stop();

@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:NoMercy.Share.App" xmlns:icons="using:NoMercy.Share.App.Icons"
+             xmlns:bar="using:NoMercy.Share.Core.Bar" xmlns:recent="using:NoMercy.Share.Core.Recent"
+             x:Class="NoMercy.Share.App.RecentPanel" x:DataType="bar:BarViewModel">
+  <!-- The margin is room for the shadow: the popup window is as big as this control. -->
+  <Border Classes="recent-panel" Margin="{DynamicResource Nm-Space-6-Thickness}" Width="340"
+          Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+          CornerRadius="{DynamicResource Nm-Radius-2Xl-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
+          Padding="{DynamicResource Nm-Space-1-Thickness}" AutomationProperties.Name="{local:Loc bar.recent}">
+    <Panel>
+      <TextBlock Classes="recent-empty" Text="{local:Loc recent.empty}" IsVisible="{Binding IsRecentEmpty}" TextWrapping="Wrap" />
+      <ListBox x:Name="List" Classes="recent" ItemsSource="{Binding RecentRows}" IsVisible="{Binding !IsRecentEmpty}">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="recent:RecentRow">
+            <Grid Classes="recent-row" Classes.expired="{Binding IsExpired}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource Nm-Space-3}">
+              <Border Classes="thumb">
+                <Panel>
+                  <icons:MoooomIcon Kind="{Binding IconName}" />
+                  <Image Source="{Binding ThumbnailPath, Converter={x:Static local:ThumbnailConverter.Instance}}" Stretch="UniformToFill" />
+                </Panel>
+              </Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Classes="row-path" Text="{Binding PathText}" />
+                <TextBlock Classes="row-detail" Text="{Binding DetailText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="{DynamicResource Nm-Space-0-5}">
+                <Button Classes="bar small" Click="OnCopyClick" ToolTip.Tip="{local:Loc recent.copy}" AutomationProperties.Name="{local:Loc recent.copy}">
+                  <icons:MoooomIcon Kind="fileCopy" />
+                </Button>
+                <Button Classes="bar small" Click="OnOpenClick" ToolTip.Tip="{local:Loc recent.open}" AutomationProperties.Name="{local:Loc recent.open}">
+                  <icons:MoooomIcon Kind="arrowUpRight" />
+                </Button>
+              </StackPanel>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Panel>
+  </Border>
+</UserControl>

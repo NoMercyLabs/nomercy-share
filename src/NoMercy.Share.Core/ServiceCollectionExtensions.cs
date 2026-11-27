@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -19,7 +20,8 @@ public static class ServiceCollectionExtensions
             ShareUploaderSelector.Select(sp.GetServices<IShareUploader>(), sp.GetRequiredService<StorageSettings>()),
             sp.GetRequiredService<IClipboard>(),
             sp.GetRequiredService<ExpirySettings>(),
-            sp.GetRequiredService<ClipboardSettings>()));
+            sp.GetRequiredService<ClipboardSettings>(),
+            sp.GetService<RecentLinks>()));
         services.AddSingleton(sp => new CaptureFiles(
             sp.GetRequiredService<CaptureSettings>(),
             Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),

@@ -61,6 +61,65 @@
     <Setter Property="Margin" Value="6,0" />
     <Setter Property="Background" Value="{DynamicResource Share-Separator-Brush}" />
   </Style>
+  <!-- The recent links list: a rounded card under the bar; rows tint on hover and selection like the bar buttons. -->
+  <Style Selector="Button.bar.small">
+    <Setter Property="Width" Value="{DynamicResource Nm-Space-7}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-7}" />
+  </Style>
+  <Style Selector="Button.bar.small icons|MoooomIcon">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+  </Style>
+  <Style Selector="ListBox.recent">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MaxHeight" Value="312" />
+  </Style>
+  <Style Selector="ListBox.recent > ListBoxItem">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Padding" Value="{DynamicResource Nm-Space-2-Thickness}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Xl-Corner}" />
+  </Style>
+  <Style Selector="ListBox.recent > ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.recent > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
+  </Style>
+  <Style Selector="ListBox.recent > ListBoxItem:selected:focus-within /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Border.thumb">
+    <Setter Property="Width" Value="{DynamicResource Nm-Space-10}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-10}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Lg-Corner}" />
+    <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+  <Style Selector="Border.thumb icons|MoooomIcon">
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+  </Style>
+  <Style Selector="TextBlock.row-path">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style Selector="TextBlock.row-detail">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style Selector="Grid.recent-row.expired Border.thumb, Grid.recent-row.expired TextBlock.row-path">
+    <Setter Property="Opacity" Value="0.55" />
+  </Style>
+  <Style Selector="TextBlock.recent-empty">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-4-Thickness}" />
+  </Style>
   <Style Selector="Border.brand icons|MoooomIcon">
     <Setter Property="Width" Value="16" />
     <Setter Property="Height" Value="16" />

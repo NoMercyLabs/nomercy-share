@@ -28,4 +28,6 @@ public sealed record ShareSettings
     public RecordingSettings Recording { get; init; } = new();
 
     public HotkeySettings Hotkeys { get; init; } = new();
+
+    public RecentSettings Recent { get; init; } = new();
 }

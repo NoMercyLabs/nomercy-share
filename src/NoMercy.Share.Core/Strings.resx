@@ -48,5 +48,18 @@
   <data name="error.upload.file" xml:space="preserve"><value>the captured file is gone</value></data>
   <data name="error.upload.service" xml:space="preserve"><value>the storage service refused it ({0})</value></data>
   <data name="error.upload.network" xml:space="preserve"><value>the storage service could not be reached</value></data>
+  <data name="error.url.https" xml:space="preserve"><value>only https addresses can be opened.</value></data>
+  <data name="recent.empty" xml:space="preserve"><value>No links yet. Capture something to share it.</value></data>
+  <data name="recent.copy" xml:space="preserve"><value>Copy link</value></data>
+  <data name="recent.open" xml:space="preserve"><value>Open in browser</value></data>
+  <data name="recent.age.now" xml:space="preserve"><value>just now</value></data>
+  <data name="recent.age.minutes" xml:space="preserve"><value>{0} min ago</value></data>
+  <data name="recent.age.hours" xml:space="preserve"><value>{0} h ago</value></data>
+  <data name="recent.age.days" xml:space="preserve"><value>{0} d ago</value></data>
+  <data name="recent.expired" xml:space="preserve"><value>expired</value></data>
+  <data name="recent.expires.minutes" xml:space="preserve"><value>expires in {0} min</value></data>
+  <data name="recent.expires.hours" xml:space="preserve"><value>expires in {0} h</value></data>
+  <data name="recent.expires.day" xml:space="preserve"><value>expires in 1 day</value></data>
+  <data name="recent.expires.days" xml:space="preserve"><value>expires in {0} days</value></data>
   <data name="unsupported.os" xml:space="preserve"><value>NoMercy Share does not support this operating system yet. Windows is first; other platforms follow.</value></data>
 </root>

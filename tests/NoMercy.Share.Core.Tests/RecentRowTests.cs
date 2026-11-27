@@ -35,13 +35,27 @@ public sealed class RecentRowTests : IDisposable
     }
 
     [Theory]
-    [InlineData(29 * 24, "expires in 29 days")]
-    [InlineData(24, "expires in 1 day")]
-    [InlineData(5, "expires in 5 h")]
-    [InlineData(0, "expires in 1 min")]
-    public void TheExpiryCountsDownInTheLargestWholeUnit(int hours, string expected)
+    [InlineData((29 * 24 * 60) + 30, "expires in 29 days")]
+    [InlineData((24 * 60) + 30, "expires in 1 day")]
+    [InlineData((5 * 60) + 30, "expires in 5 h")]
+    [InlineData(30, "expires in 30 min")]
+    public void TheExpiryCountsDownInTheLargestWholeUnit(int minutes, string expected)
     {
-        Assert.Equal(expected, Row(TimeSpan.FromMinutes(1), TimeSpan.FromHours(hours) + TimeSpan.FromMinutes(30)).ExpiryText);
+        Assert.Equal(expected, Row(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(minutes)).ExpiryText);
+    }
+
+    [Fact]
+    public void TheDetailLineJoinsTheAgeAndTheExpiry()
+    {
+        Assert.Equal("5 min ago · expires in 5 h", Row(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(330)).DetailText);
+        Assert.Equal("5 min ago", Row(TimeSpan.FromMinutes(5)).DetailText);
+    }
+
+    [Fact]
+    public void AVideoShowsTheFilmIconAndAnImageThePictureIcon()
+    {
+        Assert.Equal("filmMedia", Row(TimeSpan.Zero, kind: RecentKind.Video).IconName);
+        Assert.Equal("picture", Row(TimeSpan.Zero).IconName);
     }
 
     [Fact]
