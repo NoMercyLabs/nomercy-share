@@ -91,6 +91,7 @@ public sealed class MicrophoneAndSystemSoundFactAttribute : MicrophoneFactAttrib
     }
 }
 
+[Collection(RecordingCollection.Name)]
 public sealed class SoundRecordingTests(ITestOutputHelper output) : IDisposable
 {
     private const double ToneGain = 0.05; // low on purpose: a person may be in the room

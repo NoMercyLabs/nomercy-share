@@ -21,6 +21,8 @@ const bucket = fakeBucket({
   'exp-7d/gone.png.json': sidecar('exp-7d/gone.png', '2026-11-20T12:00:00Z'),
   'keep/clip.mp4': { bytes: PICTURE, contentType: 'video/mp4' },
   'keep/clip.mp4.json': sidecar('keep/clip.mp4', 'never'),
+  'keep/clip.webm': { bytes: PICTURE, contentType: 'video/webm' },
+  'keep/clip.webm.json': sidecar('keep/clip.webm', 'never'),
   'keep/old.png': { bytes: PICTURE, contentType: 'image/png' },
 });
 
@@ -229,6 +231,14 @@ describe('the viewer page', () => {
     expect(html).toContain('<video class="media"');
     expect(html).toContain(`<meta property="og:video" content="${ORIGIN}/keep/clip.mp4?raw=1">`);
     expect(html).not.toContain('<img class="media"');
+  });
+
+  it('names the real video type in the preview, so a WebM clip is not announced as MP4', async () => {
+    const mp4 = await (await get('/keep/clip.mp4', 'text/html')).text();
+    const webm = await (await get('/keep/clip.webm', 'text/html')).text();
+
+    expect(mp4).toContain('<meta property="og:video:type" content="video/mp4">');
+    expect(webm).toContain('<meta property="og:video:type" content="video/webm">');
   });
 
   it('says in how many days the link expires', async () => {

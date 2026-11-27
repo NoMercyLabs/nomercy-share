@@ -39,7 +39,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
 
         bar.CheckFolderAccess();
 
-        Assert.Equal(Strings.Get("ask.folder", BlockedFolder), bar.AccessAsk);
+        Assert.Equal(Strings.Get("ask.folder", BlockedFolder), bar.Ask?.Text);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
 
         bar.CheckFolderAccess();
 
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
 
         bar.CheckFolderAccess();
 
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
         await bar.AllowAccessAsync();
 
         Assert.Equal(1, _access.Requests);
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
         Assert.Equal(Strings.Get("ask.allowed", BlockedFolder), bar.Notice);
     }
 
@@ -90,7 +90,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
 
         await bar.AllowAccessAsync();
 
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
         Assert.Equal(Strings.Get("ask.declined", Path.Combine(_root, "fallback")), bar.Notice);
     }
 
@@ -104,7 +104,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
         bar.DismissAccessAsk();
         bar.CheckFolderAccess();
 
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
         Assert.Equal(0, _access.Requests);
     }
 
@@ -118,10 +118,10 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
 
         await bar.RunAsync(BarAction.Window);
 
-        Assert.Equal(Strings.Get("ask.folder", BlockedFolder), bar.AccessAsk);
+        Assert.Equal(Strings.Get("ask.folder", BlockedFolder), bar.Ask?.Text);
         bar.DismissAccessAsk();
         await bar.RunAsync(BarAction.Window);
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
 
         await bar.RunAsync(BarAction.Window);
 
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
     }
 
     [Fact]
@@ -144,9 +144,9 @@ public sealed class BarViewModelFolderAccessTests : IDisposable
         BarViewModel bar = Bar(Files(BlockedFolder));
         bar.CheckFolderAccess();
 
-        bar.DismissAccessCommand.Execute(null);
+        bar.AskNoCommand.Execute(null);
 
-        Assert.Null(bar.AccessAsk);
+        Assert.Null(bar.Ask?.Text);
     }
 
     private sealed class FakeFolderAccess : IFolderAccess

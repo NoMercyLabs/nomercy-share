@@ -73,6 +73,61 @@ public sealed class VideoEncoderTests
         Assert.Equal(["-f", "null", "-"], args.Skip(args.Count - 3));
     }
 
+    [Fact]
+    public void Vp9IsBamosTwoPassWebmTunedForScreens()
+    {
+        VideoEncoder vp9 = VideoEncoder.From(new RecordingSettings { Codec = "vp9", Speed = "balanced" });
+
+        Assert.True(vp9.IsTwoPass);
+        Assert.Equal((".webm", "video/webm", "libopus"), (vp9.Extension, vp9.ContentType, vp9.AudioCodec));
+        Assert.Equal(["-c:v", "libvpx-vp9", "-deadline", "good", "-cpu-used", "4", "-row-mt", "1", "-tune-content", "screen"], Slice(vp9.Arguments(), "-c:v", 10));
+        Assert.False(vp9.TakesPeakRate);
+    }
+
+    [Fact]
+    public void Mp4CodecsAreOnePassWithAac()
+    {
+        VideoEncoder h264 = VideoEncoder.From(new RecordingSettings());
+
+        Assert.False(h264.IsTwoPass);
+        Assert.Equal((".mp4", "video/mp4", "aac"), (h264.Extension, h264.ContentType, h264.AudioCodec));
+    }
+
+    [Fact]
+    public void PassOneOnlyStudiesThePictureAndWritesNoFile()
+    {
+        VideoEncoder vp9 = new("vp9", "cpu", "balanced");
+
+        IReadOnlyList<string> args = FfmpegArguments.Compress("in.mkv", "out.webm", Plan, encoder: vp9, pass: new EncodePass(1, "C:/tmp/log"));
+
+        Assert.Equal(["-pass", "1", "-passlogfile", "C:/tmp/log"], Slice(args, "-pass", 4));
+        Assert.Contains("-an", args);
+        Assert.DoesNotContain("out.webm", args);
+        Assert.Equal(["-f", "null", "NUL"], args.Skip(args.Count - 3));
+    }
+
+    [Fact]
+    public void PassTwoWritesTheWebmWithOpusAtThePlannedRate()
+    {
+        VideoEncoder vp9 = new("vp9", "cpu", "balanced");
+        AudioTrack[] sound = [new AudioTrack("C:/tmp/sound.wav", 0)];
+
+        IReadOnlyList<string> args = FfmpegArguments.Compress("in.mkv", "out.webm", Plan with { AudioKbps = 64 }, sound, encoder: vp9, pass: new EncodePass(2, "C:/tmp/log"));
+
+        Assert.Equal(["-pass", "2", "-passlogfile", "C:/tmp/log"], Slice(args, "-pass", 4));
+        Assert.Equal(["-c:a", "libopus", "-b:a", "64k"], Slice(args, "-c:a", 4));
+        Assert.DoesNotContain("+faststart", args);
+        Assert.Equal("out.webm", args[^1]);
+    }
+
+    [Fact]
+    public void ALowerPlannedFrameRateIsSetOnTheOutput()
+    {
+        IReadOnlyList<string> args = FfmpegArguments.Compress("in.mkv", "out.mp4", Plan with { FrameRate = 15 });
+
+        Assert.Equal(["-r", "15"], Slice(args, "-r", 2));
+    }
+
     private static IReadOnlyList<string> Slice(IReadOnlyList<string> args, string first, int count)
     {
         int at = args.ToList().IndexOf(first);

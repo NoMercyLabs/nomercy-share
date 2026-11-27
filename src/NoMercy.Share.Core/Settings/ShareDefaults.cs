@@ -61,6 +61,12 @@ public static class ShareDefaults
 
     public const string RecordingFfmpegPath = "";
 
+    /// <summary>Where a missing ffmpeg is downloaded from: the latest NoMercy FFmpeg release.</summary>
+    public const string FfmpegReleaseUrl = "https://api.github.com/repos/NoMercy-Entertainment/nomercy-ffmpeg/releases/latest";
+
+    /// <summary>The downloaded ffmpeg goes into this folder under "NoMercy Share" in the local app data folder.</summary>
+    public const string FfmpegFolderName = "ffmpeg";
+
     public const double RecordingMaxSizeMegabytes = 50;
 
     /// <summary>Bamo's headroom idea: aim under the limit (he used 9.5 for a 10 MB limit, 95 percent).</summary>
@@ -85,6 +91,14 @@ public static class ShareDefaults
     public const string RecordingSpeed = "fast";
 
     public const int RecordingAudioBitrateKbps = 128;
+
+    /// <summary>Bamo's audio steps: the total budget (kbps) from which each sound bitrate is used; below the last step, the lowest.</summary>
+    public static readonly IReadOnlyList<(int TotalKbps, int AudioKbps)> RecordingAudioSteps = [(760, 128), (520, 96), (0, 64)];
+
+    /// <summary>Text on a screen is unreadable under about 480 lines; fewer frames cost less than that.</summary>
+    public const int RecordingLowBudgetMinHeight = 480;
+
+    public const int RecordingLowBudgetFrameRate = 15;
 
     public const bool RecordingSystemSound = false;
 

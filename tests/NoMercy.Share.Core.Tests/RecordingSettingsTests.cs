@@ -124,4 +124,40 @@ public sealed class RecordingSettingsTests : IDisposable
         Assert.Null(FfmpegLocator.Find("  ", _folder));
         Assert.Null(FfmpegLocator.Find("", null));
     }
+
+    [Fact]
+    public void TheNoMercyBuildIsPickedBeforeTheOneOnThePath()
+    {
+        string onPath = Path.Combine(_folder, "path", FfmpegLocator.ExecutableName);
+        string ours = Path.Combine(_folder, "nomercy", FfmpegLocator.ExecutableName);
+        Directory.CreateDirectory(Path.GetDirectoryName(onPath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(ours)!);
+        File.WriteAllText(onPath, "x");
+        File.WriteAllText(ours, "x");
+
+        Assert.Equal(ours, FfmpegLocator.Find("", Path.GetDirectoryName(onPath), [ours]));
+        Assert.Equal(onPath, FfmpegLocator.Find("", Path.GetDirectoryName(onPath), [Path.Combine(_folder, "missing", FfmpegLocator.ExecutableName)]));
+    }
+
+    [Fact]
+    public void ThePathInTheSettingsStillWinsOverTheNoMercyBuild()
+    {
+        Directory.CreateDirectory(_folder);
+        string configured = Path.Combine(_folder, "mine.exe");
+        string ours = Path.Combine(_folder, FfmpegLocator.ExecutableName);
+        File.WriteAllText(configured, "x");
+        File.WriteAllText(ours, "x");
+
+        Assert.Equal(configured, FfmpegLocator.Find(configured, null, [ours]));
+    }
+
+    [Fact]
+    public void TheNoMercyBuildsAreTheMediaServersThenTheOneShareDownloads()
+    {
+        string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+        Assert.Equal(
+            [Path.Combine(local, "NoMercy", "binaries", "ffmpeg", FfmpegLocator.ExecutableName), Path.Combine(local, "NoMercy Share", "ffmpeg", FfmpegLocator.ExecutableName)],
+            FfmpegLocator.NoMercyBuilds());
+    }
 }

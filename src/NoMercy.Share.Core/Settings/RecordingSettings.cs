@@ -31,7 +31,13 @@ public sealed record RecordingSettings
     /// <summary>"fast", "balanced" or "quality": a slower encode gives a sharper picture at the same size.</summary>
     public string Speed { get; init; } = ShareDefaults.RecordingSpeed;
 
-    /// <summary>The audio bitrate, taken off the size budget when a recording has sound.</summary>
+    /// <summary>When the size budget would shrink the picture under this height, the frame rate drops to <see cref="LowBudgetFrameRate"/> first.</summary>
+    public int LowBudgetMinHeight { get; init; } = ShareDefaults.RecordingLowBudgetMinHeight;
+
+    /// <summary>The frame rate a long clip on a small budget drops to, so the picture stays readable; set it to <see cref="FrameRate"/> to never drop.</summary>
+    public int LowBudgetFrameRate { get; init; } = ShareDefaults.RecordingLowBudgetFrameRate;
+
+    /// <summary>The highest audio bitrate, taken off the size budget when a recording has sound. A tight budget uses less (Bamo's steps).</summary>
     public int AudioBitrateKbps { get; init; } = ShareDefaults.RecordingAudioBitrateKbps;
 
     /// <summary>Which sound goes into a recording.</summary>

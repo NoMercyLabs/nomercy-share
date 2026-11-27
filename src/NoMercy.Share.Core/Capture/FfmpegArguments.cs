@@ -30,13 +30,16 @@ public static class FfmpegArguments
         "-y", outputPath
     ];
 
-    /// <summary>Squeezes the recording to the plan in one pass: the bitrate is held to the budget, and the file starts playing before it has downloaded. Sound files are extra inputs, mixed into one AAC stream.</summary>
-    public static IReadOnlyList<string> Compress(string inputPath, string outputPath, VideoPlan plan, IReadOnlyList<AudioTrack>? sound = null, int audioKbps = 0, VideoEncoder? encoder = null)
+    /// <summary>Squeezes the recording to the plan: the bitrate held to the budget, sound files mixed into one stream. A two-pass
+    /// encoder runs it twice: pass 1 only studies the picture and writes no file, pass 2 writes it.</summary>
+    public static IReadOnlyList<string> Compress(string inputPath, string outputPath, VideoPlan plan, IReadOnlyList<AudioTrack>? sound = null, int audioKbps = 0,
+        VideoEncoder? encoder = null, EncodePass? pass = null)
     {
-        sound ??= [];
         encoder ??= VideoEncoder.From(new Settings.RecordingSettings());
-        string rate = string.Create(CultureInfo.InvariantCulture, $"{plan.VideoKbps}k");
-        string buffer = string.Create(CultureInfo.InvariantCulture, $"{plan.VideoKbps * 2L}k");
+        bool studyOnly = pass is { Number: 1 };
+        sound = studyOnly ? [] : sound ?? [];
+        string rate = Kilobits(plan.VideoKbps);
+        string buffer = Kilobits(plan.VideoKbps * 2);
         List<string> args = ["-hide_banner", "-loglevel", QuietLog, "-nostats", "-nostdin", "-i", inputPath];
         foreach (AudioTrack track in sound)
         {
@@ -44,6 +47,11 @@ public static class FfmpegArguments
         }
 
         args.AddRange(["-vf", string.Create(CultureInfo.InvariantCulture, $"scale={plan.Width}:{plan.Height}:flags=lanczos")]);
+        if (plan.FrameRate > 0)
+        {
+            args.AddRange(["-r", plan.FrameRate.ToString(CultureInfo.InvariantCulture)]);
+        }
+
         if (sound.Count > 1)
         {
             args.AddRange(["-filter_complex", Mix(sound.Count)]);
@@ -51,12 +59,29 @@ public static class FfmpegArguments
 
         args.AddRange(encoder.Arguments());
         args.AddRange(RateArguments(encoder, rate, buffer));
-        args.AddRange(["-pix_fmt", encoder.PixelFormat, "-movflags", "+faststart"]);
+        args.AddRange(["-pix_fmt", encoder.PixelFormat]);
+        if (pass is { } twoPass)
+        {
+            args.AddRange(["-pass", twoPass.Number.ToString(CultureInfo.InvariantCulture), "-passlogfile", twoPass.LogPath]);
+        }
+
+        if (studyOnly)
+        {
+            args.AddRange(["-an", "-f", "null", OperatingSystem.IsWindows() ? "NUL" : "/dev/null"]);
+            return args;
+        }
+
+        if (encoder.Extension == ".mp4")
+        {
+            args.AddRange(["-movflags", "+faststart"]); // the file starts playing before it has downloaded
+        }
+
+        string sound_rate = Kilobits(plan.AudioKbps > 0 ? plan.AudioKbps : audioKbps);
         args.AddRange(sound.Count switch
         {
             0 => ["-an"],
-            1 => ["-map", "0:v:0", "-map", "1:a:0", "-c:a", "aac", "-b:a", Kilobits(audioKbps)],
-            _ => ["-map", "0:v:0", "-map", "[mix]", "-c:a", "aac", "-b:a", Kilobits(audioKbps)]
+            1 => ["-map", "0:v:0", "-map", "1:a:0", "-c:a", encoder.AudioCodec, "-b:a", sound_rate],
+            _ => ["-map", "0:v:0", "-map", "[mix]", "-c:a", encoder.AudioCodec, "-b:a", sound_rate]
         });
         args.AddRange(["-y", outputPath]);
         return args;

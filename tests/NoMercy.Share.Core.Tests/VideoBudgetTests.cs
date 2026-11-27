@@ -76,19 +76,21 @@ public sealed class VideoBudgetTests
     {
         VideoPlan plan = VideoBudget.Plan(600, 1920, 1080, Defaults, includeAudio: true);
 
-        Assert.InRange(plan.VideoKbps, 500, 520); // the size budget is 648 - 128 = 520
+        Assert.Equal(96, plan.AudioKbps); // 50 MB over 600 s is 682 kbps in total: Bamo's 96 step
+        Assert.InRange(plan.VideoKbps, 540, 552); // the size budget is 648 - 96 = 552
     }
 
     [Fact]
     public void ABiggerAudioBitrateLeavesLessForTheVideoByTheSameAmount()
     {
         RecordingSettings quiet = Defaults with { AudioBitrateKbps = 64 };
-        RecordingSettings loud = Defaults with { AudioBitrateKbps = 192 };
+        RecordingSettings loud = Defaults with { AudioBitrateKbps = 96 };
 
-        int withLess = VideoBudget.Plan(900, 1920, 1080, quiet, includeAudio: true).VideoKbps;
-        int withMore = VideoBudget.Plan(900, 1920, 1080, loud, includeAudio: true).VideoKbps;
+        // 50 MB over 500 s is 819 kbps in total, so Bamo's step allows up to 128 and the setting decides
+        int withLess = VideoBudget.Plan(500, 1920, 1080, quiet, includeAudio: true).VideoKbps;
+        int withMore = VideoBudget.Plan(500, 1920, 1080, loud, includeAudio: true).VideoKbps;
 
-        Assert.InRange(withLess - withMore, 127, 128); // the budget is cut to whole kilobits, so it can be one short
+        Assert.InRange(withLess - withMore, 31, 32); // the budget is cut to whole kilobits, so it can be one short
     }
 
     [Fact]
@@ -100,6 +102,48 @@ public sealed class VideoBudgetTests
 
         Assert.Equal((1280, 720), (plan.Width, plan.Height));
         Assert.Equal(5529, plan.VideoKbps); // 0.1 * 1280 * 720 * 60 / 1000; the size budget (7782) is larger
+    }
+
+    /// <summary>Bamo's audio steps: 128 kbps when the total budget is 760 or more, 96 from 520, else 64; never above the setting.</summary>
+    [Theory]
+    [InlineData(10, 128)]  // 10 MB over 10 s: 8192 kbps in total
+    [InlineData(140, 96)]  // 585 kbps in total
+    [InlineData(200, 64)]  // 409 kbps in total
+    public void TheSoundGetsLessOfATightBudget(double seconds, int audioKbps)
+    {
+        VideoPlan plan = VideoBudget.Plan(seconds, 1920, 1080, new RecordingSettings { MaxSizeMegabytes = 10 }, includeAudio: true);
+
+        Assert.Equal(audioKbps, plan.AudioKbps);
+    }
+
+    [Fact]
+    public void TheSoundNeverGetsMoreThanTheSetting()
+    {
+        VideoPlan plan = VideoBudget.Plan(10, 1920, 1080, new RecordingSettings { AudioBitrateKbps = 48 }, includeAudio: true);
+
+        Assert.Equal(48, plan.AudioKbps);
+    }
+
+    [Fact]
+    public void ALongClipOnASmallBudgetDropsFramesBeforeThePictureGetsTiny()
+    {
+        RecordingSettings discord = new() { MaxSizeMegabytes = 10, FrameRate = 30 };
+        RecordingSettings keepFrames = discord with { LowBudgetFrameRate = 30 };
+
+        VideoPlan dropped = VideoBudget.Plan(300, 1920, 1080, discord);
+        VideoPlan kept = VideoBudget.Plan(300, 1920, 1080, keepFrames);
+
+        Assert.True(kept.Height < discord.LowBudgetMinHeight, $"the test clip must shrink under the floor without the drop: {kept.Height}");
+        Assert.Equal(discord.LowBudgetFrameRate, dropped.FrameRate);
+        Assert.True(dropped.Height > kept.Height, $"{dropped.Height} vs {kept.Height}");
+    }
+
+    [Fact]
+    public void AShortClipKeepsTheRecordingsFrameRate()
+    {
+        VideoPlan plan = VideoBudget.Plan(10, 1920, 1080, new RecordingSettings { FrameRate = 30 });
+
+        Assert.Equal(0, plan.FrameRate); // 0: no -r, the recording's own rate
     }
 
     [Fact]

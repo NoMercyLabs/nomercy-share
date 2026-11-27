@@ -38,15 +38,16 @@ An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share open
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `Recording.FfmpegPath` | blank | The ffmpeg file to run. Blank looks for ffmpeg on the PATH. |
+| `Recording.FfmpegPath` | blank | The ffmpeg file to run. Blank uses NoMercy FFmpeg (the media server's copy, then the one Share downloaded), then ffmpeg on the PATH. When none is found, the record button offers to download the latest NoMercy FFmpeg release (about 300 MB) to `%LOCALAPPDATA%\NoMercy Share\ffmpeg`. The download must match the release checksum, or it is thrown away. |
 | `Recording.MaxSizeMegabytes` | 50 | The largest recording that gets shared. A longer clip is squeezed harder. |
 | `Recording.FrameRate` | 30 | Frames per second. |
 | `Recording.MaxWidth`, `Recording.MaxHeight` | 1920, 1080 | The largest video size. 0 and 0 keep the screen's own size. Settings offers 720p, 1080p, 1440p, 4K and the original size; another size you type here is kept. |
-| `Recording.Codec` | `h264` | The video codec: `h264`, `hevc` or `av1`. H.264 plays everywhere; HEVC and AV1 look sharper at the same size, but not every browser or app plays them. |
+| `Recording.Codec` | `h264` | The video codec: `h264`, `vp9`, `hevc` or `av1`. H.264 plays everywhere (MP4). VP9 encodes twice to fit the most picture into the size limit (WebM with Opus sound, CPU only), best for Discord. HEVC and AV1 look sharper at the same size, but not every browser or app plays them. |
 | `Recording.Encoder` | `cpu` | What encodes the video: `cpu`, `nvidia`, `intel` or `amd`. Settings lists only the ones that pass a test encode on your PC. If a GPU encode fails, the recording is encoded again on the CPU. |
 | `Recording.Speed` | `fast` | `fast`, `balanced` or `quality`. A slower encode gives a sharper picture at the same file size. |
 | `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. |
-| `Recording.AudioBitrateKbps` | 128 | The audio bitrate, taken off the size budget when a recording has sound. |
+| `Recording.AudioBitrateKbps` | 128 | The highest audio bitrate, taken off the size budget when a recording has sound. A tight budget steps it down: 128 kbps from 760 kbps of total budget, 96 from 520, 64 below that. |
+| `Recording.LowBudgetMinHeight`, `Recording.LowBudgetFrameRate` | 480, 15 | When the budget would shrink the picture below this height, the frame rate drops to this rate first, so the picture stays sharper. |
 | `Recording.SizeHeadroom` | 0.95 | The part of the size limit the video may use. |
 | `Recording.TargetBitsPerPixel` | 0.05 | The most bits spent on one pixel of one frame. |
 | `Recording.MaxCompressAttempts` | 2 | How many more times a video that is still over the limit is encoded. |

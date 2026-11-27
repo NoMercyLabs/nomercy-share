@@ -32,6 +32,7 @@ internal static class FfmpegTools
         Ffmpeg() is { } ffmpeg && Path.Combine(Path.GetDirectoryName(ffmpeg)!, "ffprobe.exe") is { } probe && File.Exists(probe) ? probe : null;
 }
 
+[Collection(RecordingCollection.Name)]
 public sealed class FfmpegScreenRecorderTests : IDisposable
 {
     private readonly string _folder = Path.Combine(Path.GetTempPath(), $"share-recording-{Guid.NewGuid():N}");

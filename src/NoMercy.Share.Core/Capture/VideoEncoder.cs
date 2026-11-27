@@ -10,7 +10,8 @@ public sealed record VideoEncoder(string Codec, string Family, string Speed)
 {
     public const string Cpu = "cpu";
 
-    public static readonly IReadOnlyList<string> Codecs = ["h264", "hevc", "av1"];
+    /// <summary>vp9 is Bamo's Discord encode: two passes into WebM, the smallest file for a hard size cap.</summary>
+    public static readonly IReadOnlyList<string> Codecs = ["h264", "hevc", "av1", "vp9"];
 
     /// <summary>The CPU first: it works on every PC.</summary>
     public static readonly IReadOnlyList<string> Families = [Cpu, "nvidia", "intel", "amd"];
@@ -33,6 +34,7 @@ public sealed record VideoEncoder(string Codec, string Family, string Speed)
     {
         (Cpu, "hevc") => "libx265",
         (Cpu, "av1") => "libsvtav1",
+        (Cpu, "vp9") => "libvpx-vp9",
         (Cpu, _) => "libx264",
         ("nvidia", _) => $"{Codec}_nvenc",
         ("intel", _) => $"{Codec}_qsv",
@@ -46,8 +48,20 @@ public sealed record VideoEncoder(string Codec, string Family, string Speed)
         .. Codec == "hevc" ? (string[])["-tag:v", "hvc1"] : [] // without it Apple players and Safari refuse HEVC in mp4
     ];
 
-    /// <summary>Whether the encoder takes a peak rate. SVT-AV1 treats a peak equal to the rate as CBR, which it allows only for low delay.</summary>
-    public bool TakesPeakRate => Name != "libsvtav1";
+    /// <summary>Whether the encoder takes a peak rate. SVT-AV1 reads a peak equal to the rate as CBR (low delay only); two-pass VP9 spends its own peaks.</summary>
+    public bool TakesPeakRate => Name is not ("libsvtav1" or "libvpx-vp9");
+
+    /// <summary>libvpx VP9 studies the whole clip in pass 1, then spends the bits where pass 2 needs them: the most picture for a hard cap.</summary>
+    public bool IsTwoPass => Name == "libvpx-vp9";
+
+    private bool IsWebm => Codec == "vp9";
+
+    public string Extension => IsWebm ? ".webm" : ".mp4";
+
+    public string ContentType => IsWebm ? "video/webm" : "video/mp4";
+
+    /// <summary>WebM carries Opus, which sounds good at 64 kbps; MP4 carries AAC.</summary>
+    public string AudioCodec => IsWebm ? "libopus" : "aac";
 
     /// <summary>The picture format the encoder reads: Quick Sync wants NV12, the rest 4:2:0 planar.</summary>
     public string PixelFormat => Family == "intel" ? "nv12" : "yuv420p";
@@ -61,12 +75,16 @@ public sealed record VideoEncoder(string Codec, string Family, string Speed)
 
     private static readonly string[] AmfQualities = ["speed", "balanced", "quality"];
 
+    /// <summary>Bamo used cpu-used 4 at the good deadline; that is balanced here.</summary>
+    private static readonly string[] VpxCpuUsed = ["5", "4", "2"];
+
     private string[] SpeedOption()
     {
         int step = Speeds.ToList().IndexOf(Speed);
         return (Family, Codec) switch
         {
             (Cpu, "av1") => ["-preset", SvtAv1Presets[step]],
+            (Cpu, "vp9") => ["-deadline", "good", "-cpu-used", VpxCpuUsed[step], "-row-mt", "1", "-tune-content", "screen"],
             (Cpu, _) or ("intel", _) => ["-preset", X26xPresets[step]],
             ("nvidia", _) => ["-preset", NvencPresets[step]],
             _ => ["-quality", AmfQualities[step]]

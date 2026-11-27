@@ -13,7 +13,7 @@ NoMercy Share puts a small floating bar on your Windows desktop. Click a button,
   dotnet run --project src/NoMercy.Share.App
   ```
 
-- Screen recording needs [ffmpeg](https://ffmpeg.org/download.html) on your PATH. Screenshots do not.
+- Screen recording needs FFmpeg. If none is found, the record button offers to download [NoMercy FFmpeg](https://github.com/NoMercy-Entertainment/nomercy-ffmpeg/releases/latest) (about 300 MB) for you. An ffmpeg on your PATH works too. Screenshots do not need it.
 - Web page capture needs Microsoft Edge or Google Chrome. Windows ships with Edge.
 - To get links instead of files, you need somewhere to upload to: a Cloudflare R2 or S3-compatible bucket, or a Discord channel webhook. See [Set up sharing](#set-up-sharing).
 
@@ -104,7 +104,7 @@ The gear opens one window with four sections in the list on the left. Pick a sec
 | Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). |
 | Links | The default expiry: never, or 1, 7, 30 or 90 days. |
 | Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
-| Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, and the two sound switches. |
+| Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, VP9, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, and the two sound switches. |
 
 Your secret access key is stored in the Windows Credential Manager, never in a file. The box shows "Saved" afterwards and stays empty. Leave it empty and the stored key stays.
 

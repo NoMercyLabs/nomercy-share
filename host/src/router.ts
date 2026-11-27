@@ -122,13 +122,15 @@ async function serve(request: Request, env: RouterEnv, key: string) {
     }
 
     const rawUrl = `${url.origin}/${key}?raw=1`;
-    const kind = kindOf(head.httpMetadata?.contentType ?? '');
+    const contentType = head.httpMetadata?.contentType ?? '';
+    const kind = kindOf(contentType);
     const line = expiresAt
       ? expiryLine(expiresAt, env.now())
       : null;
 
     return page(200, viewerPage({
       kind,
+      contentType,
       rawUrl,
       pageUrl: `${url.origin}/${key}`,
       expiryLine: line,

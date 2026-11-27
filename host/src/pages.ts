@@ -5,6 +5,8 @@ export type MediaKind = 'image' | 'video' | 'audio' | 'file';
 
 export interface ViewerModel {
   kind: MediaKind;
+  /** The stored media type, so a link preview names the real format (video/webm or video/mp4). */
+  contentType: string;
   rawUrl: string;
   pageUrl: string;
   expiryLine: string | null;
@@ -59,7 +61,7 @@ function previewTags(model: ViewerModel) {
   const raw = escapeHtml(model.rawUrl);
   const media = {
     image: `<meta property="og:image" content="${raw}">\n<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:image" content="${raw}">`,
-    video: `<meta property="og:video" content="${raw}">\n<meta property="og:video:type" content="video/mp4">\n<meta name="twitter:card" content="player">`,
+    video: `<meta property="og:video" content="${raw}">\n<meta property="og:video:type" content="${escapeHtml(model.contentType)}">\n<meta name="twitter:card" content="player">`,
     audio: `<meta property="og:audio" content="${raw}">\n<meta name="twitter:card" content="summary">`,
     file: '<meta name="twitter:card" content="summary">',
   };

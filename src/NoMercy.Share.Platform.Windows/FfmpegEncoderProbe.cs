@@ -21,7 +21,7 @@ public sealed class FfmpegEncoderProbe(Func<RecordingSettings> current) : IEncod
     private async Task<IReadOnlyList<string>> ProbeAsync(string codec)
     {
         RecordingSettings settings = current();
-        if (FfmpegLocator.Find(settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH")) is not { } ffmpeg)
+        if (FfmpegLocator.Find(settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH"), FfmpegLocator.NoMercyBuilds()) is not { } ffmpeg)
         {
             return [VideoEncoder.Cpu];
         }

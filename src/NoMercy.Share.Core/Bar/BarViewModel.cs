@@ -22,8 +22,10 @@ public sealed class BarViewModel : ObservableObject
     private readonly SynchronizationContext? _context;
     private readonly CaptureFiles? _files;
     private readonly IFolderAccess? _folderAccess;
-    private string? _accessAsk;
+    private readonly IFfmpegInstall? _ffmpeg;
+    private BarAsk? _ask;
     private bool _accessAskDismissed;
+    private bool _downloading;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _busy;
@@ -42,8 +44,10 @@ public sealed class BarViewModel : ObservableObject
         IClipboard? clipboard = null,
         IWebCaptureDialog? webDialog = null,
         CaptureFiles? files = null,
-        IFolderAccess? folderAccess = null)
+        IFolderAccess? folderAccess = null,
+        IFfmpegInstall? ffmpeg = null)
     {
+        _ffmpeg = ffmpeg;
         _webDialog = webDialog;
         _files = files;
         _folderAccess = folderAccess;
@@ -93,41 +97,85 @@ public sealed class BarViewModel : ObservableObject
                 OpenRecent(row);
             }
         });
-        AllowAccessCommand = new BarCommand(_ => _ = AllowAccessAsync());
-        DismissAccessCommand = new BarCommand(_ => DismissAccessAsk());
+        AskYesCommand = new BarCommand(_ => _ = Ask?.Yes());
+        AskNoCommand = new BarCommand(_ => Ask?.No());
     }
 
-    /// <summary>Asks the system to let the app write in the captures folder (the Allow button).</summary>
-    public ICommand AllowAccessCommand { get; }
+    /// <summary>The yes button of the question under the bar.</summary>
+    public ICommand AskYesCommand { get; }
 
-    /// <summary>Hides the access ask for this run (the Not now button).</summary>
-    public ICommand DismissAccessCommand { get; }
+    /// <summary>The Not now button of the question under the bar.</summary>
+    public ICommand AskNoCommand { get; }
 
-    /// <summary>The lasting ask under the bar when the system blocks the captures folder, or null. It stays until Allow or Not now.</summary>
-    public string? AccessAsk
+    /// <summary>The lasting yes-or-no question under the bar, or null. It stays until one of its buttons is pressed.</summary>
+    public BarAsk? Ask
     {
-        get => _accessAsk;
-        private set => Set(ref _accessAsk, value);
+        get => _ask;
+        private set => Set(ref _ask, value);
     }
 
-    /// <summary>Shows the access ask when the captures folder is not writable, the system protection is on and the user did not say Not now.</summary>
+    /// <summary>Asks to let the app write in the captures folder when it is not writable, the system protection is on and the user did not say Not now.</summary>
     public void CheckFolderAccess()
     {
-        if (_files is null || _folderAccess is null || _accessAskDismissed || _accessAsk is not null)
+        if (_files is null || _folderAccess is null || _accessAskDismissed || _ask is not null)
         {
             return;
         }
 
         if (_folderAccess.IsProtectionOn() && !_files.CanWriteCapturesFolder())
         {
-            AccessAsk = Strings.Get("ask.folder", _files.CapturesFolder);
+            Ask = new BarAsk(Strings.Get("ask.folder", _files.CapturesFolder), Strings.Get("ask.allow"), () => AllowAccessAsync(), DismissAccessAsk);
         }
     }
 
+    /// <summary>Not now on the folder question: it is not asked again this run.</summary>
     public void DismissAccessAsk()
     {
         _accessAskDismissed = true;
-        AccessAsk = null;
+        Ask = null;
+    }
+
+    /// <summary>Downloads the NoMercy ffmpeg, with its progress on the bar, then says it is ready for the next recording.</summary>
+    private async Task DownloadFfmpegAsync()
+    {
+        Ask = null;
+        _downloading = true;
+        Notice = Strings.Get("notice.ffmpeg.progress", 0);
+        try
+        {
+            await _ffmpeg!.DownloadAsync(new BarProgress(share => Post(() =>
+            {
+                if (_downloading)
+                {
+                    Notice = Strings.Get("notice.ffmpeg.progress", (int)(share * 100));
+                }
+            })));
+            _downloading = false;
+            Notice = Strings.Get("notice.ffmpeg.ready");
+        }
+        catch (Exception error) when (error is IOException or HttpRequestException or System.Text.Json.JsonException or InvalidDataException or UnauthorizedAccessException)
+        {
+            _downloading = false;
+            Notice = Strings.Get("notice.ffmpeg.failed", error.Message);
+        }
+    }
+
+    /// <summary>Runs on the bar's thread when there is one; a test has none and runs it at once.</summary>
+    private void Post(Action action)
+    {
+        if (_context is null)
+        {
+            action();
+        }
+        else
+        {
+            _context.Post(_ => action(), null);
+        }
+    }
+
+    private sealed class BarProgress(Action<double> report) : IProgress<double>
+    {
+        public void Report(double value) => report(value);
     }
 
     /// <summary>Runs the system's allow request, then says whether captures save to the folder again.</summary>
@@ -138,7 +186,7 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
-        AccessAsk = null;
+        Ask = null;
         bool granted = false;
         try
         {
@@ -392,6 +440,16 @@ public sealed class BarViewModel : ObservableObject
         {
             _recordingStartedAt = null;
             await ShareAsync(await _recorder.StopAsync(cancellationToken), cancellationToken);
+            return;
+        }
+
+        if (_ffmpeg is not null && !_ffmpeg.IsFound())
+        {
+            if (!_downloading)
+            {
+                Ask = new BarAsk(Strings.Get("ask.ffmpeg"), Strings.Get("ask.download"), DownloadFfmpegAsync, () => Ask = null);
+            }
+
             return;
         }
 

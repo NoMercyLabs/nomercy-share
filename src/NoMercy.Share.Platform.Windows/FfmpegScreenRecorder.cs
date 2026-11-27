@@ -13,7 +13,8 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 {
     private const string RawExtension = ".mkv";
 
-    private const string FinishedExtension = ".mp4";
+    /// <summary>libvpx names its pass log after the -passlogfile value plus this.</summary>
+    private const string PassLogSuffix = "-0.log";
 
     private const string SoundExtension = ".wav";
 
@@ -45,7 +46,7 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
     public async Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
         _settings = current();
-        string ffmpeg = FfmpegLocator.Find(_settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH"))
+        string ffmpeg = FfmpegLocator.Find(_settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH"), FfmpegLocator.NoMercyBuilds())
             ?? throw new RecordingException(Strings.Get("error.ffmpeg.missing"));
         ScreenFrame frozen = await Task.Run(WindowsScreenCapture.FrozenVirtualScreen, cancellationToken);
         if (await selector.SelectAsync(frozen, cancellationToken) is not { IsEmpty: false } region)
@@ -157,26 +158,43 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 
         IReadOnlyList<AudioTrack> tracks = sound?.Tracks ?? [];
         VideoPlan plan = VideoBudget.Plan(seconds, _target.Width, _target.Height, _settings, includeAudio: tracks.Count > 0);
-        string mp4 = files.NewPath(FinishedExtension);
-        SqueezeOutcome outcome = await SizeCapRetry.RunAsync(plan, _settings, async attempt =>
+        VideoEncoder encoder = VideoEncoder.From(_settings);
+        string output = files.NewPath(encoder.Extension);
+        EncodePass? study = encoder.IsTwoPass ? new EncodePass(1, Path.ChangeExtension(raw, null) + "-pass") : null;
+        try
         {
-            await SqueezeAsync(raw, mp4, attempt, tracks, cancellationToken);
-            return new FileInfo(mp4).Length;
-        });
+            if (study is { } first && await EncodeAsync(raw, output, plan, [], encoder, first, cancellationToken) is { } studyFailure)
+            {
+                throw studyFailure;
+            }
 
-        File.Delete(raw);
-        sound?.Delete();
-        long capBytes = (long)(_settings.MaxSizeMegabytes * 1024 * 1024);
-        return new CaptureResult(mp4, "video/mp4", outcome.Plan.Width, outcome.Plan.Height, outcome.Bytes, capBytes);
+            // A retry keeps the picture, so pass 1's study still holds; only pass 2 runs again.
+            SqueezeOutcome outcome = await SizeCapRetry.RunAsync(plan, _settings, async attempt =>
+            {
+                await SqueezeAsync(raw, output, attempt, tracks, encoder, study is { } log ? log with { Number = 2 } : null, cancellationToken);
+                return new FileInfo(output).Length;
+            });
+
+            File.Delete(raw);
+            sound?.Delete();
+            long capBytes = (long)(_settings.MaxSizeMegabytes * 1024 * 1024);
+            return new CaptureResult(output, encoder.ContentType, outcome.Plan.Width, outcome.Plan.Height, outcome.Bytes, capBytes);
+        }
+        finally
+        {
+            if (study is { } log)
+            {
+                DeleteQuietly(log.LogPath + PassLogSuffix);
+            }
+        }
     }
 
-    /// <summary>One squeeze pass with the chosen encoder. A GPU encode that fails is done again on the CPU, so a driver problem never loses the recording. A retry writes over the file of the pass before it.</summary>
-    private async Task SqueezeAsync(string raw, string mp4, VideoPlan plan, IReadOnlyList<AudioTrack> tracks, CancellationToken cancellationToken)
+    /// <summary>One squeeze with the chosen encoder. A GPU encode that fails is done again on the CPU, so a driver problem never loses the recording. A retry writes over the file of the pass before it.</summary>
+    private async Task SqueezeAsync(string raw, string output, VideoPlan plan, IReadOnlyList<AudioTrack> tracks, VideoEncoder encoder, EncodePass? pass, CancellationToken cancellationToken)
     {
-        VideoEncoder encoder = VideoEncoder.From(_settings);
-        if (await EncodeAsync(raw, mp4, plan, tracks, encoder, cancellationToken) is { } failure)
+        if (await EncodeAsync(raw, output, plan, tracks, encoder, pass, cancellationToken) is { } failure)
         {
-            if (encoder.IsCpu || await EncodeAsync(raw, mp4, plan, tracks, encoder.OnCpu(), cancellationToken) is not null)
+            if (encoder.IsCpu || await EncodeAsync(raw, output, plan, tracks, encoder.OnCpu(), pass, cancellationToken) is not null)
             {
                 throw failure;
             }
@@ -184,9 +202,9 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
     }
 
     /// <summary>One encode; null when it worked, else the failure that says why.</summary>
-    private async Task<RecordingException?> EncodeAsync(string raw, string mp4, VideoPlan plan, IReadOnlyList<AudioTrack> tracks, VideoEncoder encoder, CancellationToken cancellationToken)
+    private async Task<RecordingException?> EncodeAsync(string raw, string output, VideoPlan plan, IReadOnlyList<AudioTrack> tracks, VideoEncoder encoder, EncodePass? pass, CancellationToken cancellationToken)
     {
-        using FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, mp4, plan, tracks, _settings.AudioBitrateKbps, encoder));
+        using FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, output, plan, tracks, _settings.AudioBitrateKbps, encoder, pass));
         int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(_settings.CompressTimeoutSeconds), cancellationToken);
         return exit == 0 ? null : squeeze.Failure(exit);
     }

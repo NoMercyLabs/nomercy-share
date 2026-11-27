@@ -8,6 +8,16 @@ namespace NoMercy.Share.Platform.Windows;
 
 public static class WindowsPlatformExtensions
 {
+    /// <summary>GitHub's API refuses a call without a User-Agent; the 300 MB download has no time limit of its own.</summary>
+    private static readonly HttpClient DownloadClient = CreateDownloadClient();
+
+    private static HttpClient CreateDownloadClient()
+    {
+        HttpClient client = new() { Timeout = Timeout.InfiniteTimeSpan };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("NoMercy-Share");
+        return client;
+    }
+
     /// <summary>Registers the Windows screen capture, screen recording, web page capture, global hotkeys, https opener, foreground grant and credential store.</summary>
     public static IServiceCollection AddWindowsPlatform(this IServiceCollection services)
     {
@@ -24,6 +34,8 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IForegroundGrant, WindowsForegroundGrant>();
         services.AddSingleton<IFolderAccess, WindowsFolderAccess>();
         services.AddSingleton<IEncoderProbe>(sp => new FfmpegEncoderProbe(() => sp.GetRequiredService<LiveSettings>().Current.Recording));
+        services.AddSingleton<IFfmpegInstall>(sp => new FfmpegDownload(DownloadClient, FfmpegDownload.DefaultFolder(), ShareDefaults.FfmpegReleaseUrl, FfmpegDownload.ThisPlatform(),
+            () => FfmpegLocator.Find(sp.GetRequiredService<LiveSettings>().Current.Recording.FfmpegPath, Environment.GetEnvironmentVariable("PATH"), FfmpegLocator.NoMercyBuilds()) is not null));
         return services;
     }
 }

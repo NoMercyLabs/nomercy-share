@@ -68,12 +68,12 @@
     <Border x:Name="AccessAsk" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
             BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
-            IsVisible="{Binding AccessAsk, Converter={x:Static ObjectConverters.IsNotNull}}">
+            IsVisible="{Binding Ask, Converter={x:Static ObjectConverters.IsNotNull}}">
       <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
-        <TextBlock Text="{Binding AccessAsk}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
+        <TextBlock Text="{Binding Ask.Text, FallbackValue={x:Null}}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
                    VerticalAlignment="Center" MaxWidth="360" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
-        <Button x:Name="AllowButton" Classes="bar ask first" Command="{Binding AllowAccessCommand}" Content="{local:Loc ask.allow}" />
-        <Button Classes="bar ask" Command="{Binding DismissAccessCommand}" Content="{local:Loc ask.notnow}" />
+        <Button x:Name="AllowButton" Classes="bar ask first" Command="{Binding AskYesCommand}" Content="{Binding Ask.YesLabel, FallbackValue={x:Null}}" />
+        <Button Classes="bar ask" Command="{Binding AskNoCommand}" Content="{local:Loc ask.notnow}" />
       </StackPanel>
     </Border>
   </StackPanel>
