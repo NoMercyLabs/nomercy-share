@@ -9,10 +9,15 @@ export interface PickedElement extends ViewportRect {
 
 /**
  * Runs inside the page (chrome.scripting serializes it), so it may use nothing from this module. It draws one overlay
- * element with a shadow root, follows the hovered element, and answers with the clicked one, or null on Escape. The
- * overlay and every listener are gone before it answers.
+ * element with a shadow root, follows the hovered element, and answers with the clicked one, or null on Escape or on
+ * the cancel event (see cancelPick). A picker still open from an earlier pick closes first. The overlay and every
+ * listener are gone before it answers.
  */
 export function pickElement(): Promise<PickedElement | null> {
+  const cancelEvent = 'nomercy-share:cancel-pick';
+
+  window.dispatchEvent(new Event(cancelEvent));
+
   return new Promise((resolve) => {
     const host = document.createElement('div');
 
@@ -67,6 +72,7 @@ export function pickElement(): Promise<PickedElement | null> {
       window.removeEventListener('mouseup', stop, true);
       window.removeEventListener('pointerdown', stop, true);
       window.removeEventListener('pointerup', stop, true);
+      window.removeEventListener(cancelEvent, onCancel);
       host.remove();
       resolve(result);
     };
@@ -98,6 +104,11 @@ export function pickElement(): Promise<PickedElement | null> {
       }
     }
 
+    function onCancel(): void {
+      finish(null);
+    }
+
+    window.addEventListener(cancelEvent, onCancel);
     window.addEventListener('mousemove', onMove, true);
     window.addEventListener('scroll', draw, true);
     window.addEventListener('click', onClick, true);
@@ -108,6 +119,11 @@ export function pickElement(): Promise<PickedElement | null> {
     window.addEventListener('pointerup', stop, true);
     document.documentElement.append(host);
   });
+}
+
+/** Runs inside the page: closes an open picker, which then answers null. The event name matches the one in pickElement. */
+export function cancelPick(): void {
+  window.dispatchEvent(new Event('nomercy-share:cancel-pick'));
 }
 
 /** Runs inside the page: puts text on the clipboard when the popup that would do it has closed. */

@@ -1,7 +1,7 @@
 import { elementClip, fullPageClip, type Clip } from './clip';
 import { DEBUGGER_PROTOCOL } from './config';
 import { dataUrlToBase64 } from './dataUrl';
-import { pickElement, type PickedElement } from './picker';
+import { cancelPick, pickElement, type PickedElement } from './picker';
 import { STRINGS } from './strings';
 
 interface LayoutMetrics {
@@ -87,4 +87,9 @@ export async function pickOnPage(tabId: number): Promise<PickedElement | null> {
   const [injection] = await chrome.scripting.executeScript({ target, func: pickElement });
 
   return injection?.result ?? null;
+}
+
+/** Closes the picker on the page, so its pick answers null. */
+export async function cancelPickOnPage(tabId: number): Promise<void> {
+  await chrome.scripting.executeScript({ target: { tabId }, func: cancelPick });
 }

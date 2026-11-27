@@ -65,6 +65,19 @@ async function run(mode: ShareMode, buttons: HTMLButtonElement[]): Promise<void>
     ? STRINGS.picking
     : STRINGS.sharing);
 
+  const tabId = tab.id;
+
+  // While the popup is open it has the keyboard, so its Escape must close the picker on the page too.
+  const cancelOnEscape = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') {
+      void chrome.runtime.sendMessage({ type: 'cancel-pick', tabId });
+    }
+  };
+
+  if (mode === 'element') {
+    document.addEventListener('keydown', cancelOnEscape);
+  }
+
   try {
     const response: ShareResponse | undefined = await chrome.runtime.sendMessage({
       type: 'share',
@@ -82,6 +95,8 @@ async function run(mode: ShareMode, buttons: HTMLButtonElement[]): Promise<void>
       ? error.message
       : String(error), 'error');
   } finally {
+    document.removeEventListener('keydown', cancelOnEscape);
+
     for (const button of buttons) {
       button.disabled = false;
     }

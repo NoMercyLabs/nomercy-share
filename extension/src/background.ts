@@ -1,3 +1,4 @@
+import { cancelPickOnPage } from './capture';
 import { isShareMode, SHARE_MODES, type ShareMode } from './modes';
 import { share, type ShareResult } from './share';
 import { STRINGS } from './strings';
@@ -48,6 +49,15 @@ function readRequest(message: ShareMessage | null | undefined): ShareRequest | n
 type Incoming = ShareMessage | null | undefined;
 
 chrome.runtime.onMessage.addListener((message: Incoming, _sender, sendResponse) => {
+  // Escape in the popup goes to the popup, not the page, so the popup asks for the picker to close.
+  if (message?.type === 'cancel-pick' && typeof message.tabId === 'number') {
+    void cancelPickOnPage(message.tabId).finally(() => {
+      sendResponse(true);
+    });
+
+    return true;
+  }
+
   const request = readRequest(message);
 
   if (request === null) {
