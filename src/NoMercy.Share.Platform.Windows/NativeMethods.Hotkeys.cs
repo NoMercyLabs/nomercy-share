@@ -21,6 +21,9 @@ internal static partial class NativeMethods
     /// <summary>WM_APP + 1: posted to the hotkey window by the keyboard hook when a chord it serves is pressed. wParam is the BarAction.</summary>
     internal const uint WmHookedChord = 0x8001;
 
+    /// <summary>WM_APP + 2: posted by the hook while recording. wParam is the held modifiers, lParam the virtual-key code.</summary>
+    internal const uint WmRecordedChord = 0x8002;
+
     internal const int WhKeyboardLowLevel = 13;
 
     internal const int HcAction = 0;

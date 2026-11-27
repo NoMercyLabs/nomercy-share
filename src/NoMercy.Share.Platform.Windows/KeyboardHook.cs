@@ -53,6 +53,11 @@ internal sealed class KeyboardHook : IDisposable
                     NativeMethods.PostMessage(_window, NativeMethods.WmHookedChord, (nint)action, 0);
                 }
 
+                if (decision.Recorded is { } chord)
+                {
+                    NativeMethods.PostMessage(_window, NativeMethods.WmRecordedChord, (nint)chord.Modifiers, (nint)key);
+                }
+
                 if (decision.Swallow)
                 {
                     return 1;

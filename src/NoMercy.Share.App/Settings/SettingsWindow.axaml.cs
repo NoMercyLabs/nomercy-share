@@ -5,7 +5,7 @@ using NoMercy.Share.Core.Settings;
 
 namespace NoMercy.Share.App;
 
-/// <summary>The settings window. A hotkey field records the chord pressed while it has focus; no global hook is involved.</summary>
+/// <summary>The settings window. A hotkey field records the chord pressed while it has focus; Win chords come from the global hook in record mode.</summary>
 public partial class SettingsWindow : Window
 {
     public SettingsWindow()
@@ -25,7 +25,13 @@ public partial class SettingsWindow : Window
         base.OnClosed(e);
     }
 
-    private void OnChordGotFocus(object? sender, RoutedEventArgs e) => (DataContext as SettingsViewModel)?.HotkeyFieldFocused();
+    private void OnChordGotFocus(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: HotkeyRow row })
+        {
+            (DataContext as SettingsViewModel)?.HotkeyFieldFocused(row);
+        }
+    }
 
     private void OnChordLostFocus(object? sender, RoutedEventArgs e) => (DataContext as SettingsViewModel)?.HotkeyFieldLeft();
 

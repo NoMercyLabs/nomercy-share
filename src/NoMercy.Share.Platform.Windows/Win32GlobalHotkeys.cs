@@ -21,7 +21,7 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
     private readonly Dictionary<int, BarAction> _registered = [];
     private Dictionary<BarAction, HotkeyChord> _wanted = [];
     private KeyboardHook? _hook;
-    private int _pauses;
+    private readonly List<Action<HotkeyChord>> _recorders = [];
     private bool _disposed;
 
     public Win32GlobalHotkeys()
@@ -47,19 +47,21 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
         ObjectDisposedException.ThrowIf(_disposed, this);
         Release();
         _wanted = new Dictionary<BarAction, HotkeyChord>(chords);
-        return _pauses > 0 ? [.. chords.Select(pair => new HotkeyRegistration(pair.Key, pair.Value, true))] : Bind(chords);
+        return _recorders.Count > 0 ? [.. chords.Select(pair => new HotkeyRegistration(pair.Key, pair.Value, true))] : Bind(chords);
     }
 
-    /// <summary>Takes the chords and the keyboard hook off until the handle is disposed; the chords come back at the resume.</summary>
-    public IDisposable Pause()
+    /// <summary>Drops the chords and runs the hook in record mode until the handle is disposed; the chords come back then.</summary>
+    public IDisposable Record(Action<HotkeyChord> onChord)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (++_pauses == 1)
+        _recorders.Add(onChord);
+        if (_recorders.Count == 1)
         {
             Release();
+            _hook = KeyboardHook.TryInstall(HookChordMatcher.ForRecording(), _window);
         }
 
-        return new PauseHandle(this);
+        return new RecordHandle(this, onChord);
     }
 
     private IReadOnlyList<HotkeyRegistration> Bind(IReadOnlyDictionary<BarAction, HotkeyChord> chords)
@@ -108,25 +110,36 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
         NativeMethods.DestroyWindow(_window);
     }
 
-    private void Resume()
+    private void EndRecording(Action<HotkeyChord> onChord)
     {
-        if (!_disposed && --_pauses == 0)
+        if (_disposed || !_recorders.Remove(onChord) || _recorders.Count > 0)
         {
-            Bind(_wanted);
+            return;
         }
+
+        Release();
+        Bind(_wanted);
     }
 
-    private sealed class PauseHandle(Win32GlobalHotkeys owner) : IDisposable
+    private sealed class RecordHandle(Win32GlobalHotkeys owner, Action<HotkeyChord> onChord) : IDisposable
     {
-        private bool _released;
+        public void Dispose() => owner.EndRecording(onChord);
+    }
 
-        public void Dispose()
+    private void RaiseRecorded(HotkeyModifiers modifiers, uint key)
+    {
+        if (_recorders.Count == 0 || !WindowsKeyCodes.TryKeyName(key, out string? name))
         {
-            if (!_released)
-            {
-                _released = true;
-                owner.Resume();
-            }
+            return;
+        }
+
+        try
+        {
+            _recorders[^1](new HotkeyChord(modifiers, name));
+        }
+        catch (Exception error)
+        {
+            Trace.TraceError("Hotkey recording failed: {0}", error); // an exception must not cross back into Windows
         }
     }
 
@@ -204,7 +217,7 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
     private static nint WindowProc(nint window, uint message, nint wParam, nint lParam)
     {
-        if (message is not (NativeMethods.WmHotkey or NativeMethods.WmHookedChord))
+        if (message is not (NativeMethods.WmHotkey or NativeMethods.WmHookedChord or NativeMethods.WmRecordedChord))
         {
             return NativeMethods.DefWindowProc(window, message, wParam, lParam);
         }
@@ -218,6 +231,10 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
         if (message == NativeMethods.WmHotkey)
         {
             owner?.Raise((int)wParam);
+        }
+        else if (message == NativeMethods.WmRecordedChord)
+        {
+            owner?.RaiseRecorded((HotkeyModifiers)(int)wParam, (uint)lParam);
         }
         else
         {

@@ -45,8 +45,8 @@ public sealed class HotkeyBinder(IGlobalHotkeys hotkeys, BarViewModel bar, Hotke
         Start();
     }
 
-    /// <summary>Turns the global hotkeys off until the handle is disposed, so a field can record a chord the app itself serves.</summary>
-    public IDisposable Pause() => hotkeys.Pause();
+    /// <summary>Records chords, the Win ones the shell would take included, until the handle is disposed; the hotkeys raise nothing meanwhile.</summary>
+    public IDisposable Record(Action<HotkeyChord> onChord) => hotkeys.Record(onChord);
 
     public void Dispose()
     {

@@ -11,6 +11,6 @@ public interface IGlobalHotkeys : IDisposable
     /// <summary>Registers the chords, replacing any from an earlier call. A chord that cannot be had is reported, never thrown.</summary>
     IReadOnlyList<HotkeyRegistration> Register(IReadOnlyDictionary<BarAction, HotkeyChord> chords);
 
-    /// <summary>Turns the hotkeys off until the handle is disposed: nothing is raised and every key goes on. Pauses nest; Register during one applies at the resume.</summary>
-    IDisposable Pause();
+    /// <summary>Until the handle is disposed: no action is raised, and a Win chord goes to <paramref name="onChord"/> on the UI thread (newest recording first).</summary>
+    IDisposable Record(Action<HotkeyChord> onChord);
 }

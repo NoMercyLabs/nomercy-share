@@ -52,6 +52,30 @@ internal static class WindowsKeyCodes
         return false;
     }
 
+    /// <summary>The key name for a virtual-key code, the reverse of <see cref="TryVirtualKey"/>; false for a key no chord can use.</summary>
+    public static bool TryKeyName(uint code, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? name)
+    {
+        name = Named.FirstOrDefault(pair => pair.Value == code).Key;
+        if (name is not null)
+        {
+            return true;
+        }
+
+        if (code is >= 'A' and <= 'Z' or >= '0' and <= '9')
+        {
+            name = ((char)code).ToString();
+        }
+        else if (code is >= FirstFunctionKey and < FirstFunctionKey + 24)
+        {
+            name = $"F{code - FirstFunctionKey + 1}";
+        }
+
+        return name is not null;
+    }
+
+    /// <summary>Shift, Ctrl, Alt and the Win keys, in their left, right and general forms.</summary>
+    public static bool IsModifierKey(uint code) => code is >= 0x10 and <= 0x12 or >= 0xA0 and <= 0xA5 or 0x5B or 0x5C;
+
     public static uint Modifiers(HotkeyModifiers modifiers) =>
         (modifiers.HasFlag(HotkeyModifiers.Alt) ? NativeMethods.ModAlt : 0)
         | (modifiers.HasFlag(HotkeyModifiers.Ctrl) ? NativeMethods.ModControl : 0)
