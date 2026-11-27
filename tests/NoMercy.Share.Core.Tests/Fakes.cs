@@ -123,6 +123,23 @@ internal sealed class FakeClipboard : IClipboard
     }
 }
 
+internal sealed class FakeUrlOpener : IUrlOpener
+{
+    public List<Uri> Opened { get; } = [];
+
+    public Exception? Throws { get; set; }
+
+    public void Open(Uri url)
+    {
+        if (Throws is not null)
+        {
+            throw Throws;
+        }
+
+        Opened.Add(url);
+    }
+}
+
 internal sealed class FakeCaptureHost : ICaptureHost
 {
     public List<string> Events { get; } = [];
