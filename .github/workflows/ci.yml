@@ -23,3 +23,22 @@ jobs:
       - run: dotnet build NoMercy.Share.sln -c Release
       # The S3Mock tests skip without Linux Docker and the desktop-capture tests skip without an interactive desktop.
       - run: dotnet test NoMercy.Share.sln -c Release --no-build
+
+  host:
+    # The Cloudflare Worker behind share.nomercy.tv: type check, strict lint and the router tests.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: host
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: host/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test

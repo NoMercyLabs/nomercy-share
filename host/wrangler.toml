@@ -1,0 +1,15 @@
+name = "nomercy-share-host"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+workers_dev = false
+# The account id comes from CLOUDFLARE_ACCOUNT_ID, never from this file.
+
+routes = [{ pattern = "share.nomercy.tv/*", zone_name = "nomercy.tv" }]
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "nomercy-share"
+
+[vars]
+# How long a browser or a chat app may keep the raw file before it asks again, in seconds.
+RAW_MAX_AGE_SECONDS = "3600"

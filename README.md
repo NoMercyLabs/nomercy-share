@@ -2,7 +2,7 @@
 
 Capture something from the screen, upload it to a share host, and get the link in the clipboard. One click.
 
-Status: steps 1 to 3 are built. The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Not built yet: screen recording, web page capture, global hotkeys and the viewer page. The Record, Web page, Recent and Settings buttons show "Coming in a later step".
+Status: steps 1 to 4 are built. Step 4 is the viewer: the Cloudflare Worker in `host/` serves share.nomercy.tv. A browser or a chat app preview gets a branded page; `?raw=1` or any other client gets the file itself; an expired link answers 410 and a sidecar `.json` is never served. See `host/README.md`. Steps 1 to 3: The bar, still capture (Region, Window, Full screen) and upload to an S3-compatible host (Cloudflare R2 first) work on Windows, and the share link goes on the clipboard. Not built yet: screen recording, web page capture, global hotkeys and the viewer page. The Record, Web page, Recent and Settings buttons show "Coming in a later step".
 
 ## Still capture (Windows)
 
