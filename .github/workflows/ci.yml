@@ -24,6 +24,21 @@ jobs:
       # The S3Mock tests skip without Linux Docker and the desktop-capture tests skip without an interactive desktop.
       - run: dotnet test NoMercy.Share.sln -c Release --no-build
 
+  storage:
+    # The S3Mock upload tests need Docker with Linux containers, which only the Linux runner has.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      # Fails when a test skips: here every S3Mock test must really run.
+      - run: |
+          set -o pipefail
+          dotnet test tests/NoMercy.Share.Storage.S3.Tests -c Release | tee storage-tests.log
+          grep -Eq "Skipped: +0," storage-tests.log
+
   host:
     # The Cloudflare Worker behind share.nomercy.tv: type check, strict lint and the router tests.
     runs-on: ubuntu-latest
