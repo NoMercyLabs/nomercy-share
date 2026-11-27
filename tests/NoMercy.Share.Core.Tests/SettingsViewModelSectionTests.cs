@@ -48,6 +48,18 @@ public sealed class SettingsViewModelSectionTests : IDisposable
     }
 
     [Fact]
+    public void AHotkeyRowListensWhileItsFieldHasFocusAndStopsWhenItIsLeft()
+    {
+        HotkeyRow row = _model.Hotkeys[0];
+
+        _model.HotkeyFieldFocused(row);
+        Assert.True(row.IsListening);
+
+        _model.HotkeyFieldLeft();
+        Assert.False(row.IsListening);
+    }
+
+    [Fact]
     public void ASaveWithAMistakeInAnotherSectionJumpsToTheFirstSectionWithAnError()
     {
         _model.SelectedSection = SettingsSection.Links;

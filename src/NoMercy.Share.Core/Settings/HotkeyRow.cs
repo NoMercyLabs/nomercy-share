@@ -7,6 +7,14 @@ public sealed class HotkeyRow(BarAction action, string chord) : ObservableObject
 {
     private string _chord = chord;
     private string? _error;
+    private bool _isListening;
+
+    /// <summary>True while the field has focus and records the next chord.</summary>
+    public bool IsListening
+    {
+        get => _isListening;
+        set => Set(ref _isListening, value);
+    }
 
     public BarAction Action { get; } = action;
 

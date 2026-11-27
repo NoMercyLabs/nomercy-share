@@ -49,6 +49,7 @@
   <data name="settings.expiry.day" xml:space="preserve"><value>{0} day</value></data>
   <data name="settings.expiry.days" xml:space="preserve"><value>{0} days</value></data>
   <data name="settings.hotkey.off" xml:space="preserve"><value>Off</value></data>
+  <data name="settings.hotkey.listening" xml:space="preserve"><value>Press the new keys</value></data>
   <data name="settings.hotkey.clear" xml:space="preserve"><value>Turn off</value></data>
   <data name="settings.provider.r2" xml:space="preserve"><value>Cloudflare R2</value></data>
   <data name="settings.provider.s3" xml:space="preserve"><value>S3-compatible</value></data>

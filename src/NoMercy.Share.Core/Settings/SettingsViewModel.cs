@@ -382,6 +382,7 @@ public sealed class SettingsViewModel : ObservableObject
     {
         ReleaseHotkeys();
         _recording = _binder.Record(chord => row.Chord = chord.ToString());
+        row.IsListening = true;
     }
 
     public void HotkeyFieldLeft() => ReleaseHotkeys();
@@ -391,6 +392,10 @@ public sealed class SettingsViewModel : ObservableObject
     {
         _recording?.Dispose();
         _recording = null;
+        foreach (HotkeyRow row in Hotkeys)
+        {
+            row.IsListening = false;
+        }
     }
 
     private bool HasErrors =>

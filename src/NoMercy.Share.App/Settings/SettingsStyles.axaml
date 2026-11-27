@@ -16,7 +16,7 @@
   <Style Selector="Window.settings TextBox:focus /template/ Border#PART_BorderElement">
     <Setter Property="Background" Value="{DynamicResource Nm-Input-Bg-Brush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
   </Style>
   <Style Selector="Window.settings ComboBox /template/ Border#Background, Window.settings ComboBox:pointerover /template/ Border#Background, Window.settings ComboBox:pressed /template/ Border#Background">
     <Setter Property="Background" Value="{DynamicResource Nm-Input-Bg-Brush}" />
@@ -24,7 +24,7 @@
   </Style>
   <Style Selector="Window.settings ComboBox:focus-visible /template/ Border#Background">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
   </Style>
   <Style Selector="Window.settings ComboBox /template/ Border#PopupBorder">
     <Setter Property="Background" Value="{DynamicResource Share-Bar-Brush}" />
@@ -39,12 +39,14 @@
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="LineHeight" Value="{DynamicResource Nm-Space-9}" />
   </Style>
+  <!-- The brand row and the section title share one 36 line box and one top offset, so their text sits on one baseline. -->
   <Style Selector="TextBlock.section">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xl}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LineHeight" Value="{DynamicResource Nm-Space-9}" />
   </Style>
 
   <!-- The section list: rows tint on hover and selection like the bar buttons; the icon goes from secondary to primary. -->
@@ -62,8 +64,8 @@
     <Setter Property="Cursor" Value="Hand" />
   </Style>
   <Style Selector="ListBox.rail > ListBoxItem icons|MoooomIcon">
-    <Setter Property="Width" Value="20" />
-    <Setter Property="Height" Value="20" />
+    <Setter Property="Width" Value="{DynamicResource Nm-Space-5}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-5}" />
     <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
   </Style>
   <Style Selector="ListBox.rail > ListBoxItem TextBlock">
@@ -84,7 +86,7 @@
   </Style>
   <Style Selector="ListBox.rail > ListBoxItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ListBox.rail > ListBoxItem:selected:focus-within /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
   </Style>
 
   <!-- Groups of related fields: the card's 24 corner, its 16 padding and the 8 corner of the inputs nest; the padding also holds the last error line. -->
@@ -95,10 +97,18 @@
     <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-3Xl-Corner}" />
     <Setter Property="Padding" Value="{DynamicResource Nm-Space-4-Thickness}" />
   </Style>
-  <Style Selector="Border.note">
-    <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
-    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Xl-Corner}" />
-    <Setter Property="Padding" Value="{DynamicResource Nm-Space-3-Thickness}" />
+  <!-- A quiet status line: no fill, so it cannot read as a selected control; the info icon is its cue. -->
+  <Style Selector="StackPanel.note">
+    <Setter Property="Orientation" Value="Horizontal" />
+    <Setter Property="Spacing" Value="{DynamicResource Nm-Space-2}" />
+  </Style>
+  <Style Selector="StackPanel.note icons|MoooomIcon">
+    <Setter Property="Width" Value="{DynamicResource Nm-Space-5}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-5}" />
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+  </Style>
+  <Style Selector="StackPanel.note TextBlock">
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="StackPanel.field">
     <Setter Property="Spacing" Value="{DynamicResource Nm-Space-1}" />
@@ -115,16 +125,17 @@
   <Style Selector="TextBlock.field-label">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
-    <Setter Property="Margin" Value="4,2,0,0" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-1-Thickness}" />
   </Style>
-  <Style Selector="Border.note TextBlock.status">
+  <Style Selector="StackPanel.note TextBlock.status">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
   </Style>
   <!-- Takes no height: the error is drawn under its input, in the gap between field groups, so showing it moves nothing. -->
   <Style Selector="TextBlock.field-error">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Red-11-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
-    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextWrapping" Value="NoWrap" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     <Setter Property="VerticalAlignment" Value="Top" />
     <Setter Property="Margin" Value="4,-2,0,-16" />
     <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
@@ -144,13 +155,13 @@
     <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
   <Style Selector="Window.settings TextBox Button.bar">
-    <Setter Property="Margin" Value="0,0,4,0" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-1-Thickness}" />
   </Style>
   <Style Selector="TextBlock.unit">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Muted-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
     <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Margin" Value="0,0,12,0" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-3-Thickness}" />
   </Style>
 
   <!-- A chord is drawn as key caps; the box itself stays the text field that records the keys, its own text hidden. -->
@@ -161,13 +172,13 @@
     <Setter Property="SelectionForegroundBrush" Value="Transparent" />
   </Style>
   <Style Selector="ItemsControl.keycaps">
-    <Setter Property="Margin" Value="4,0,0,0" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-1-Thickness}" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="Border.keycap">
     <Setter Property="MinWidth" Value="{DynamicResource Nm-Space-6}" />
     <Setter Property="Height" Value="{DynamicResource Nm-Space-6}" />
-    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="Padding" Value="{DynamicResource Nm-Space-1-5-Thickness}" />
     <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
     <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Corner}" />
   </Style>
@@ -209,13 +220,13 @@
   </Style>
   <Style Selector="ListBox.segmented > ListBoxItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter, ListBox.segmented > ListBoxItem:selected:focus-within /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
   </Style>
 
   <!-- A switch row: the label left, the switch right, 44 high so the whole row is easy to hit. -->
   <Style Selector="Grid.switch-row">
-    <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-11}" />
-    <Setter Property="Margin" Value="4,0" />
+    <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-1-Thickness}" />
   </Style>
   <Style Selector="TextBlock.switch-label">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
@@ -232,12 +243,27 @@
   </Style>
   <Style Selector="Window.settings ToggleSwitch:focus-visible /template/ Border#SwitchKnobBounds">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
+  </Style>
+
+  <!-- While a hotkey box listens, the caps give way to a muted prompt. -->
+  <Style Selector="TextBlock.listening">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Muted-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-2-Thickness}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <!-- The scrollbar thumb takes the bar's tints instead of Fluent's own grays. -->
+  <Style Selector="Window.settings ScrollBar /template/ Thumb">
+    <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
+  </Style>
+  <Style Selector="Window.settings ScrollBar /template/ Thumb /template/ Border">
+    <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
   </Style>
 
   <!-- Footer: Cancel is the quiet pill, Save the one accent. -->
   <Style Selector="Window.settings Button.footer">
-    <Setter Property="MinWidth" Value="88" />
+    <Setter Property="MinWidth" Value="{DynamicResource Nm-Space-24}" />
     <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-9}" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -257,7 +283,7 @@
   </Style>
   <Style Selector="Window.settings Button.footer:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
   </Style>
   <!-- Not named "accent": that class is Fluent's own and paints the system blue. -->
   <Style Selector="Window.settings Button.footer.primary /template/ ContentPresenter#PART_ContentPresenter">

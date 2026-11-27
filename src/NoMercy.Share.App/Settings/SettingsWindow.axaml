@@ -18,9 +18,9 @@
 
     <Grid ColumnDefinitions="200,*">
       <Border BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,0,1,0">
-        <StackPanel Margin="{DynamicResource Nm-Space-2-Thickness}" Spacing="{DynamicResource Nm-Space-4}">
+        <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}" Spacing="{DynamicResource Nm-Space-3}">
           <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}" Margin="{DynamicResource Nm-Space-3-Thickness}">
-            <local:NoMercyMark Width="20" Height="20" />
+            <local:NoMercyMark Width="20" Height="20" VerticalAlignment="Center" />
             <TextBlock Classes="brand-name" Text="{local:Loc app.name}" />
           </StackPanel>
           <ListBox Classes="rail" SelectedIndex="{Binding SelectedSectionIndex, Mode=TwoWay}" AutomationProperties.Name="{local:Loc settings.sections}">
@@ -57,9 +57,10 @@
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsSharing}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.sharing}" />
-            <Border Classes="note">
+            <StackPanel Classes="note">
+              <icons:MoooomIcon Kind="infoCircle" />
               <TextBlock Classes="status" Text="{Binding SharingStatus}" AutomationProperties.LiveSetting="Polite" />
-            </Border>
+            </StackPanel>
             <ListBox Classes="segmented" ItemsSource="{Binding Providers}" SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Provider}"
                      AutomationProperties.Name="{local:Loc settings.provider}">
               <ListBox.ItemsPanel>
@@ -161,20 +162,23 @@
                       <TextBox Classes="chord" IsReadOnly="True" Text="{Binding Chord}" PlaceholderText="{local:Loc settings.hotkey.off}" KeyDown="OnChordKeyDown" GotFocus="OnChordGotFocus" LostFocus="OnChordLostFocus"
                                AutomationProperties.Name="{Binding Label}">
                         <TextBox.InnerLeftContent>
-                          <ItemsControl Classes="keycaps" ItemsSource="{Binding Chord, Converter={x:Static local:ChordCapsConverter.Instance}}" IsHitTestVisible="False" Focusable="False">
-                            <ItemsControl.ItemsPanel>
-                              <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-1}" />
-                              </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                              <DataTemplate x:DataType="x:String">
-                                <Border Classes="keycap">
-                                  <TextBlock Text="{Binding}" />
-                                </Border>
-                              </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                          </ItemsControl>
+                          <Panel IsHitTestVisible="False">
+                            <ItemsControl Classes="keycaps" ItemsSource="{Binding Chord, Converter={x:Static local:ChordCapsConverter.Instance}}" IsVisible="{Binding !IsListening}" Focusable="False">
+                              <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                  <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-1}" />
+                                </ItemsPanelTemplate>
+                              </ItemsControl.ItemsPanel>
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                  <Border Classes="keycap">
+                                    <TextBlock Text="{Binding}" />
+                                  </Border>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Classes="listening" Text="{local:Loc settings.hotkey.listening}" IsVisible="{Binding IsListening}" />
+                          </Panel>
                         </TextBox.InnerLeftContent>
                         <TextBox.InnerRightContent>
                           <Button Classes="bar small" Click="OnClearClick" ToolTip.Tip="{local:Loc settings.hotkey.clear}"

@@ -58,6 +58,17 @@ public static class Program
             sound.RecordSystemSound = true;
             sound.RecordMicrophone = true;
             SaveSettings(Path.Combine(folder, $"share-settings-audio-{name}.png"), sound, SettingsSection.Recording);
+            SaveSettings(Path.Combine(folder, $"share-settings-focus-rail-{name}.png"), model, SettingsSection.Sharing, prepare: root => root.GetVisualDescendants().OfType<ListBoxItem>().First().Focus(NavigationMethod.Tab));
+            SaveSettings(Path.Combine(folder, $"share-settings-focus-segmented-{name}.png"), model, SettingsSection.Sharing, prepare: root =>
+                root.GetVisualDescendants().OfType<ListBox>().First(list => list.Classes.Contains("segmented")).GetVisualDescendants().OfType<ListBoxItem>().First().Focus(NavigationMethod.Tab));
+            SaveSettings(Path.Combine(folder, $"share-settings-focus-switch-{name}.png"), model, SettingsSection.Recording, prepare: root => root.GetVisualDescendants().OfType<ToggleSwitch>().First().Focus(NavigationMethod.Tab));
+            SaveSettings(Path.Combine(folder, $"share-settings-combo-open-{name}.png"), model, SettingsSection.Links, prepare: root => root.GetVisualDescendants().OfType<ComboBox>().First().IsDropDownOpen = true);
+            SaveSettings(Path.Combine(folder, $"share-settings-scrolled-end-{name}.png"), model, SettingsSection.Sharing, prepare: root => root.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd());
+            SettingsViewModel failing = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
+            typeof(SettingsViewModel).GetProperty(nameof(SettingsViewModel.SaveError))!.SetValue(failing, "The settings were not saved: access to the path is denied.");
+            SaveSettings(Path.Combine(folder, $"share-settings-save-error-{name}.png"), failing, SettingsSection.Hotkeys);
+            SettingsViewModel discordLinks = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), DiscordSettings.ProviderName, webhookStored: true);
+            SaveSettings(Path.Combine(folder, $"share-settings-discord-links-{name}.png"), discordLinks, SettingsSection.Links);
             SettingsViewModel unset = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), unset: true);
             SaveSettings(Path.Combine(folder, $"share-settings-notsetup-{name}.png"), unset);
             model.Endpoint = "not an address";
@@ -141,7 +152,7 @@ public static class Program
         return new SettingsViewModel(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3", "discord"]);
     }
 
-    private static void SaveSettings(string file, SettingsViewModel model, SettingsSection section = SettingsSection.Sharing, bool recordFirstChord = false)
+    private static void SaveSettings(string file, SettingsViewModel model, SettingsSection section = SettingsSection.Sharing, bool recordFirstChord = false, Action<Control>? prepare = null)
     {
         // The window's own content goes into a host so the 2x is a layout transform, as for the recent list.
         model.SelectedSection = section;
@@ -154,6 +165,12 @@ public static class Program
         Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, Width = settings.Width * 2, Height = settings.Height * 2, CanResize = false };
         window.Show();
         Dispatcher.UIThread.RunJobs();
+        if (prepare is not null)
+        {
+            prepare(content);
+            Dispatcher.UIThread.RunJobs();
+        }
+
         if (recordFirstChord)
         {
             content.GetVisualDescendants().OfType<TextBox>().First(box => box.Classes.Contains("chord")).Focus();
