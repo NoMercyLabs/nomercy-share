@@ -62,7 +62,7 @@ public sealed class HotkeyBinderTests
         _hotkeys.Taken.Add(HotkeyChord.Parse("Win+Shift+S"));
         Binder().Start();
 
-        Assert.Equal("Hotkey Win+Shift+S is in use by another app", _bar.Notice);
+        Assert.Equal("Hotkey Shift+Win+S is in use by another app", _bar.Notice);
         Assert.Equal(4, _hotkeys.Registered.Count);
     }
 
@@ -73,7 +73,7 @@ public sealed class HotkeyBinderTests
         _hotkeys.Taken.Add(HotkeyChord.Parse("PrintScreen"));
         Binder().Start();
 
-        Assert.Equal("Hotkeys Win+Shift+S, PrintScreen are in use by another app", _bar.Notice);
+        Assert.Equal("Hotkeys Shift+Win+S, PrintScreen are in use by another app", _bar.Notice);
     }
 
     [Fact]

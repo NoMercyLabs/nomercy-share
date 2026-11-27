@@ -9,7 +9,7 @@ namespace NoMercy.Share.Platform.Windows;
 
 /// <summary>
 /// RegisterHotKey on a hidden message-only window. Create it, register and dispose it on the UI thread:
-/// that thread's message loop delivers the presses. No keyboard hook is installed.
+/// that thread's message loop delivers the presses. A Win chord the shell refuses is served by a keyboard hook instead.
 /// </summary>
 public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
 {
@@ -19,6 +19,7 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
 
     private readonly nint _window;
     private readonly Dictionary<int, BarAction> _registered = [];
+    private KeyboardHook? _hook;
     private bool _disposed;
 
     public Win32GlobalHotkeys()
@@ -44,22 +45,31 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
         ObjectDisposedException.ThrowIf(_disposed, this);
         Release();
         List<HotkeyRegistration> results = [];
+        Dictionary<BarAction, HotkeyChord> hooked = [];
         int id = 0;
         foreach ((BarAction action, HotkeyChord chord) in chords)
         {
             id++;
-            bool registered = WindowsKeyCodes.TryVirtualKey(chord.Key, out uint key)
+            bool known = WindowsKeyCodes.TryVirtualKey(chord.Key, out uint key);
+            bool registered = known
                 && NativeMethods.RegisterHotKey(_window, id, WindowsKeyCodes.Modifiers(chord.Modifiers) | NativeMethods.ModNoRepeat, key);
             if (registered)
             {
                 _registered[id] = action;
             }
+            else if (known && chord.Modifiers.HasFlag(HotkeyModifiers.Win))
+            {
+                hooked[action] = chord; // the shell owns most Win chords, so the keyboard hook serves them instead
+            }
 
             results.Add(new HotkeyRegistration(action, chord, registered));
         }
 
-        return results;
+        return hooked.Count == 0 ? results : [.. results.Select(result => hooked.ContainsKey(result.Action) ? result with { Registered = InstallHook(hooked) } : result)];
     }
+
+    /// <summary>True while the keyboard hook is installed, which happens only when a chord needs it.</summary>
+    public bool HookInstalled => _hook is not null;
 
     public void Dispose()
     {
@@ -78,8 +88,16 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
         NativeMethods.DestroyWindow(_window);
     }
 
+    private bool InstallHook(Dictionary<BarAction, HotkeyChord> hooked)
+    {
+        _hook ??= KeyboardHook.TryInstall(new HookChordMatcher(hooked), _window);
+        return _hook is not null;
+    }
+
     private void Release()
     {
+        _hook?.Dispose();
+        _hook = null;
         foreach (int id in _registered.Keys)
         {
             NativeMethods.UnregisterHotKey(_window, id);
@@ -90,11 +108,22 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
 
     private void Raise(int id)
     {
-        if (!_registered.TryGetValue(id, out BarAction action))
+        if (_registered.TryGetValue(id, out BarAction action))
         {
-            return;
+            Raise(action);
         }
+    }
 
+    private void RaiseHooked(BarAction action)
+    {
+        if (_hook is not null)
+        {
+            Raise(action);
+        }
+    }
+
+    private void Raise(BarAction action)
+    {
         try
         {
             Pressed?.Invoke(this, action);
@@ -133,7 +162,7 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
     private static nint WindowProc(nint window, uint message, nint wParam, nint lParam)
     {
-        if (message != NativeMethods.WmHotkey)
+        if (message is not (NativeMethods.WmHotkey or NativeMethods.WmHookedChord))
         {
             return NativeMethods.DefWindowProc(window, message, wParam, lParam);
         }
@@ -144,7 +173,15 @@ public sealed unsafe class Win32GlobalHotkeys : IGlobalHotkeys
             Owners.TryGetValue(window, out owner);
         }
 
-        owner?.Raise((int)wParam);
+        if (message == NativeMethods.WmHotkey)
+        {
+            owner?.Raise((int)wParam);
+        }
+        else
+        {
+            owner?.RaiseHooked((BarAction)(int)wParam);
+        }
+
         return 0;
     }
 }

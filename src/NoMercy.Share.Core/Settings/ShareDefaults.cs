@@ -91,7 +91,7 @@ public static class ShareDefaults
     public const int RecordingStartupCheckMilliseconds = 1000;
 
     /// <summary>The global hotkeys, chosen to be familiar to people who know ShareX. An empty value turns a hotkey off.</summary>
-    public const string HotkeyRegion = "Ctrl+PrintScreen";
+    public const string HotkeyRegion = "Win+Shift+S";
 
     public const string HotkeyFullScreen = "PrintScreen";
 

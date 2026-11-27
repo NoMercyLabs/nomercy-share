@@ -39,6 +39,8 @@ public sealed partial class Win32GlobalHotkeysHookTests
 
     private static readonly HotkeyChord WinShiftS = HotkeyChord.Parse("Win+Shift+S");
 
+    private static readonly HotkeyChord Free = HotkeyChord.Parse("Ctrl+Alt+Shift+F10"); // the other hotkey tests use F11 and F12 at the same time
+
     private static Dictionary<BarAction, HotkeyChord> Chords(HotkeyChord chord) => new() { [BarAction.Region] = chord };
 
     [DesktopFact]
@@ -69,7 +71,7 @@ public sealed partial class Win32GlobalHotkeysHookTests
     {
         using Win32GlobalHotkeys hotkeys = new();
 
-        hotkeys.Register(Chords(HotkeyChord.Parse("Ctrl+Alt+Shift+F12")));
+        hotkeys.Register(Chords(Free));
 
         Assert.False(hotkeys.HookInstalled);
     }
@@ -81,7 +83,7 @@ public sealed partial class Win32GlobalHotkeysHookTests
         hotkeys.Register(Chords(WinShiftS));
         Assert.True(hotkeys.HookInstalled);
 
-        hotkeys.Register(Chords(HotkeyChord.Parse("Ctrl+Alt+Shift+F12")));
+        hotkeys.Register(Chords(Free));
 
         Assert.False(hotkeys.HookInstalled);
     }
@@ -110,13 +112,30 @@ public sealed partial class Win32GlobalHotkeysHookTests
         Pump(TimeSpan.FromSeconds(1));
 
         int[] opened = [.. SnippingProcessIds().Except(before)];
-        if (opened.Length > 0)
+        string front = ForegroundProcessName();
+        bool startOpened = front is "StartMenuExperienceHost" or "SearchHost" or "SearchApp";
+        if (opened.Length > 0 || startOpened)
         {
             SendKeys((VkEscape, false), (VkEscape, true));
         }
 
         Assert.Equal([BarAction.Region], raised);
         Assert.Empty(opened);
+        Assert.False(startOpened, $"The Start menu opened after the chord (foreground: {front}).");
+    }
+
+    private static string ForegroundProcessName()
+    {
+        GetWindowThreadProcessId(GetForegroundWindow(), out uint processId);
+        try
+        {
+            using Process process = Process.GetProcessById((int)processId);
+            return process.ProcessName;
+        }
+        catch (ArgumentException)
+        {
+            return string.Empty;
+        }
     }
 
     private static HashSet<int> SnippingProcessIds() =>
@@ -151,6 +170,12 @@ public sealed partial class Win32GlobalHotkeysHookTests
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool UnregisterHotKey(nint window, int id);
+
+    [LibraryImport("user32.dll")]
+    private static partial nint GetForegroundWindow();
+
+    [LibraryImport("user32.dll")]
+    private static partial uint GetWindowThreadProcessId(nint window, out uint processId);
 
     [LibraryImport("user32.dll", SetLastError = true)]
     private static partial uint SendInput(uint count, [In] Input[] inputs, int size);
