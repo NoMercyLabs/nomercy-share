@@ -47,6 +47,9 @@ public static class ShareDefaults
     /// <summary>The folder name under the user's Pictures folder that holds captures when settings name none.</summary>
     public const string CaptureFolderName = "NoMercy Share";
 
+    /// <summary>The folder name under the app's local data folder that holds captures when Windows refuses the captures folder.</summary>
+    public const string CaptureFallbackFolderName = "Captures";
+
     /// <summary>The capture file name: UTC and sortable, with milliseconds so two captures in one second differ.</summary>
     public const string CaptureFileNamePattern = "nomercy-share-{0:yyyyMMdd'T'HHmmssfff}Z";
 

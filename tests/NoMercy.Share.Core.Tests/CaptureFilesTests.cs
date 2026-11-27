@@ -76,6 +76,50 @@ public sealed class CaptureFilesTests
     }
 
     [Fact]
+    public void AFolderWindowsWillNotLetUsWriteFallsBackToTheAppFolder()
+    {
+        // Controlled folder access refuses the Pictures folder with an IOException; a folder under a file fails the same way.
+        string root = Path.Combine(Path.GetTempPath(), $"share-files-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "not-a-folder"), "x");
+            string blocked = Path.Combine(root, "not-a-folder", "caps");
+            string fallback = Path.Combine(root, "app", "Captures");
+            CaptureFiles files = new(new CaptureSettings { Folder = blocked }, "unused", () => Moment, fallback);
+
+            string path = files.NewPath();
+
+            Assert.Equal(Path.Combine(fallback, "nomercy-share-20261127T153045123Z.png"), path);
+            File.WriteAllText(path, "x");
+            Assert.Equal(["nomercy-share-20261127T153045123Z.png"], Directory.GetFiles(fallback).Select(Path.GetFileName));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void AWritableFolderLeavesNoTraceOfTheWriteCheck()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"share-files-{Guid.NewGuid():N}");
+        try
+        {
+            CaptureFiles files = new(new CaptureSettings { Folder = root }, "unused", () => Moment, Path.Combine(root, "fallback"));
+
+            string path = files.NewPath();
+
+            Assert.Equal(root, Path.GetDirectoryName(path));
+            Assert.Empty(Directory.GetFileSystemEntries(root));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void TheCaptureSettingsHaveNamedDefaults()
     {
         CaptureSettings settings = new();
