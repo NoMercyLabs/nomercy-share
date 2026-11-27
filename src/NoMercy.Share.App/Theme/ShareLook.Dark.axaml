@@ -6,8 +6,8 @@
   <SolidColorBrush x:Key="Share-Hover-Brush" Color="#1FFFFFFF" />
   <SolidColorBrush x:Key="Share-Pressed-Brush" Color="#33FFFFFF" />
   <SolidColorBrush x:Key="Share-Separator-Brush" Color="#2EFFFFFF" />
-  <!-- Fits inside the window margin (Nm-Space-6, 24): offset 4 + blur 12 stays within it. -->
   <!-- Dims the frozen screen outside the region selection. -->
   <SolidColorBrush x:Key="Share-Dim-Brush" Color="#99000000" />
+  <!-- Fits inside the window margin (Nm-Space-6, 24): offset 4 + blur 12 stays within it. -->
   <BoxShadows x:Key="Share-Shadow-Bar">0 4 12 0 #66000000</BoxShadows>
 </ResourceDictionary>
