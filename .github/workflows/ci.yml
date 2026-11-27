@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # A GitHub-hosted runner: this repo is public, so pull requests from forks never run on our own machines.
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - run: dotnet format NoMercy.Share.sln --verify-no-changes
+      - run: dotnet build NoMercy.Share.sln -c Release
+      # The S3Mock tests skip without Linux Docker and the desktop-capture tests skip without an interactive desktop.
+      - run: dotnet test NoMercy.Share.sln -c Release --no-build
