@@ -95,9 +95,9 @@ Click the link button to see the links you shared lately, newest first. Each row
 
 ## Settings
 
-The gear opens one window with four sections. **Save** checks every field and applies the change at once: the next share uses the new host, the next recording the new limits, and the hotkeys register again. **Cancel** changes nothing.
+The gear opens one window with four sections in the list on the left. Pick a section to see its page. **Save** checks every field and applies the change at once: the next share uses the new host, the next recording the new limits, and the hotkeys register again. **Cancel** changes nothing.
 
-![The Settings window with the Sharing, Links, Hotkeys and Recording sections filled in with example values.](docs/images/settings.png)
+![The Settings window on its Sharing page: the section list on the left, the Cloudflare R2 provider picked, and its fields filled in with example values.](docs/images/settings.png)
 
 | Section | What you set |
 | --- | --- |
