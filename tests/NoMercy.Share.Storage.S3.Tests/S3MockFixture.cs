@@ -23,7 +23,8 @@ public sealed class S3MockFixture : IAsyncLifetime
 
     private readonly string _container = $"share-s3-test-{Guid.NewGuid():N}"[..24];
 
-    public static bool DockerAvailable { get; } = Run("info", "--format", "{{.ServerVersion}}") == 0;
+    /// <summary>S3Mock is a Linux image, so a Docker engine in Windows-container mode (the GitHub Windows runner) counts as absent.</summary>
+    public static bool DockerAvailable { get; } = Execute("info", "--format", "{{.OSType}}") is (0, "linux");
 
     public Uri Endpoint { get; private set; } = new("http://127.0.0.1");
 
@@ -86,7 +87,9 @@ public sealed class S3MockFixture : IAsyncLifetime
         return port;
     }
 
-    private static int Run(params string[] arguments)
+    private static int Run(params string[] arguments) => Execute(arguments).ExitCode;
+
+    private static (int ExitCode, string Output) Execute(params string[] arguments)
     {
         ProcessStartInfo start = new("docker") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
         foreach (string argument in arguments)
@@ -97,14 +100,14 @@ public sealed class S3MockFixture : IAsyncLifetime
         try
         {
             using Process process = Process.Start(start)!;
-            process.StandardOutput.ReadToEnd();
+            string output = process.StandardOutput.ReadToEnd().Trim();
             process.StandardError.ReadToEnd();
             process.WaitForExit();
-            return process.ExitCode;
+            return (process.ExitCode, output);
         }
         catch (System.ComponentModel.Win32Exception)
         {
-            return -1;
+            return (-1, string.Empty);
         }
     }
 }
