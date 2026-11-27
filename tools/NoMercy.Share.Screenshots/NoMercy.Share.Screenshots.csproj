@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The proof run: renders the bar headless (Skia, no window on screen) to PNG and checks that its position is remembered. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Tmds.DBus.Protocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/NoMercy.Share.App/NoMercy.Share.App.csproj" />
+  </ItemGroup>
+</Project>

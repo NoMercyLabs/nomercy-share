@@ -1,0 +1,17 @@
+<!-- The theme: the NM tokens (copied unchanged from Arcanum's Arcanum.Ui.Components/Theme) plus this app's look, one dictionary per variant. -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Dark">
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://nomercy-share/Theme/NmTokens.Dark.axaml" />
+        <ResourceInclude Source="avares://nomercy-share/Theme/ShareLook.Dark.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Light">
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://nomercy-share/Theme/NmTokens.Light.axaml" />
+        <ResourceInclude Source="avares://nomercy-share/Theme/ShareLook.Light.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

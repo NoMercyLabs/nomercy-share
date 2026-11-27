@@ -1,0 +1,47 @@
+<!-- The look of the floating bar: round icon buttons, hover tint, a focus ring outside the button, accent only on focus and while active. -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:icons="using:NoMercy.Share.App.Icons">
+  <Style Selector="Button.bar">
+    <Setter Property="Width" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Full-Corner}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FocusAdorner" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.bar > icons|MoooomIcon">
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+  </Style>
+  <Style Selector="Button.bar:pointerover > icons|MoooomIcon, Button.bar:focus-visible > icons|MoooomIcon">
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+  </Style>
+  <Style Selector="Button.bar.active > icons|MoooomIcon">
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Accent-Brush}" />
+  </Style>
+  <Style Selector="Button.bar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
+  </Style>
+  <Style Selector="Button.bar:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BoxShadow" Value="{DynamicResource Share-Shadow-Focus}" />
+  </Style>
+  <Style Selector="Button.bar:pressed">
+    <Setter Property="RenderTransform" Value="translateY(1px)" />
+  </Style>
+  <Style Selector="Border.separator">
+    <Setter Property="Width" Value="1" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Margin" Value="6,0" />
+    <Setter Property="Background" Value="{DynamicResource Share-Separator-Brush}" />
+  </Style>
+  <Style Selector="Border.brand icons|MoooomIcon">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Muted-Brush}" />
+  </Style>
+</Styles>

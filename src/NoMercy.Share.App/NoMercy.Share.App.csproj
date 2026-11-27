@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Avalonia app: composition root, the floating bar and the theme. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>nomercy-share</AssemblyName>
+    <RootNamespace>NoMercy.Share.App</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <!-- Pins the patched D-Bus protocol under Avalonia.Desktop (see Directory.Packages.props). -->
+    <PackageReference Include="Tmds.DBus.Protocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NoMercy.Share.Core/NoMercy.Share.Core.csproj" />
+    <ProjectReference Include="../NoMercy.Share.Platform.Windows/NoMercy.Share.Platform.Windows.csproj" />
+    <ProjectReference Include="../NoMercy.Share.Storage.S3/NoMercy.Share.Storage.S3.csproj" />
+  </ItemGroup>
+</Project>
