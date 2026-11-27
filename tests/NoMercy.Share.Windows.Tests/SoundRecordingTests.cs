@@ -49,12 +49,18 @@ public sealed class SystemSoundFactAttribute : FactAttribute
     }
 }
 
-/// <summary>A recording fact that also needs a default microphone and a machine that is not CI.</summary>
+/// <summary>A recording fact that records the room, so it runs only when NOMERCY_SHARE_MIC_TEST=1 asks for it.</summary>
 public class MicrophoneFactAttribute : FactAttribute
 {
+    public const string OptInVariable = "NOMERCY_SHARE_MIC_TEST";
+
     public MicrophoneFactAttribute()
     {
-        if (!OperatingSystem.IsWindows() || !Environment.UserInteractive || Desktop.VirtualScreen().Width <= 0)
+        if (Environment.GetEnvironmentVariable(OptInVariable) != "1")
+        {
+            Skip = $"Records the microphone; set {OptInVariable}=1 to run it.";
+        }
+        else if (!OperatingSystem.IsWindows() || !Environment.UserInteractive || Desktop.VirtualScreen().Width <= 0)
         {
             Skip = "No interactive Windows desktop on this machine.";
         }
