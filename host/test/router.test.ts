@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handle } from '../src/router.js';
+import { handle, PREVIEW_BOT_AGENTS } from '../src/router.js';
 import { fakeBucket, textFile } from './fakeBucket.js';
 
 const NOW = new Date('2026-11-27T12:00:00Z');
@@ -82,6 +82,70 @@ describe('html or raw', () => {
     expect(response.status).toBe(206);
     expect(response.headers.get('content-range')).toBe('bytes 2-4/10');
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(PICTURE.slice(2, 5));
+  });
+});
+
+const BROWSER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
+
+function getAs(path: string, userAgent: string, accept?: string) {
+  const headers = new Headers({ 'user-agent': userAgent });
+
+  if (accept) {
+    headers.set('accept', accept);
+  }
+
+  return handle(new Request(`${ORIGIN}${path}`, { headers }), env);
+}
+
+describe('link preview bots', () => {
+  const bots = [
+    ['Discordbot', 'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'],
+    ['Twitterbot', 'Twitterbot/1.0'],
+    ['Slackbot-LinkExpanding', 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)'],
+    ['TelegramBot', 'TelegramBot (like TwitterBot)'],
+    ['facebookexternalhit', 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'],
+  ] as const;
+
+  it('lists every bot in one constant', () => {
+    expect([...PREVIEW_BOT_AGENTS]).toEqual(bots.map(([name]) => name));
+  });
+
+  it.each(bots)('serves the viewer with the og tags to %s even without text/html', async (_name, agent) => {
+    const response = await getAs('/exp-30d/live.png', agent, '*/*');
+    const html = await response.text();
+
+    expect(response.headers.get('content-type')).toContain('text/html');
+    expect(html).toContain('<meta property="og:image"');
+  });
+
+  it('serves the viewer to a bot that sends no Accept header', async () => {
+    const response = await getAs('/exp-30d/live.png', 'Mozilla/5.0 (compatible; Discordbot/2.0)');
+
+    expect(response.headers.get('content-type')).toContain('text/html');
+  });
+
+  it('matches the bot name in any letter case', async () => {
+    const response = await getAs('/exp-30d/live.png', 'discordbot/2.0');
+
+    expect(response.headers.get('content-type')).toContain('text/html');
+  });
+
+  it('keeps ?raw=1 raw for a bot', async () => {
+    const response = await getAs('/exp-30d/live.png?raw=1', 'Discordbot/2.0', 'text/html');
+
+    expect(response.headers.get('content-type')).toBe('image/png');
+  });
+
+  it('keeps a browser-like agent without text/html on the raw file', async () => {
+    const response = await getAs('/exp-30d/live.png', BROWSER_AGENT, 'image/avif,image/webp,*/*;q=0.8');
+
+    expect(response.headers.get('content-type')).toBe('image/png');
+  });
+
+  it('still serves the viewer to a browser that asks for html', async () => {
+    const response = await getAs('/exp-30d/live.png', BROWSER_AGENT, 'text/html');
+
+    expect(response.headers.get('content-type')).toContain('text/html');
   });
 });
 
