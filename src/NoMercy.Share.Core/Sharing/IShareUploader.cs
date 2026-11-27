@@ -14,6 +14,9 @@ public interface IShareUploader
     /// <summary>The name the storage settings use to select this provider, for example "r2".</summary>
     string ProviderName { get; }
 
+    /// <summary>False while no share host is set up at all; captures then stay local and the image goes on the clipboard.</summary>
+    bool IsConfigured => true;
+
     /// <summary>Throws <see cref="InvalidStorageSettingsException"/> naming the setting that cannot work. The share flow calls it before each upload.</summary>
     void Validate()
     {

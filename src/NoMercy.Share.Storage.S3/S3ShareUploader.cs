@@ -39,6 +39,8 @@ public sealed class S3ShareUploader(
 
     public string ProviderName => providerName;
 
+    public bool IsConfigured => settings.IsSetUp;
+
     public void Validate() => settings.Validate();
 
     public async Task<ShareLink> UploadAsync(string filePath, Expiry expiry, CancellationToken cancellationToken = default)

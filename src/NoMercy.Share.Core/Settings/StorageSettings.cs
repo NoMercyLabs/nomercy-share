@@ -43,6 +43,11 @@ public sealed record StorageSettings
     /// <summary>Appended to the object key to name the sidecar file that holds the expiry.</summary>
     public string SidecarSuffix { get; init; } = ShareDefaults.SidecarSuffix;
 
+    /// <summary>True once any share-host value is filled in. With none, captures stay local; with some, Validate names what is missing.</summary>
+    public bool IsSetUp =>
+        !string.IsNullOrWhiteSpace(Endpoint) || !string.IsNullOrWhiteSpace(Bucket)
+        || !string.IsNullOrWhiteSpace(PublicBaseUrl) || !string.IsNullOrWhiteSpace(CredentialName);
+
     /// <summary>The link to an object key.</summary>
     public Uri LinkFor(string key) => new($"{PublicBaseUrl.TrimEnd('/')}/{key}");
 

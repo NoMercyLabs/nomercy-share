@@ -19,6 +19,30 @@ public sealed class ShareFlowTests
         new FakeScreenRecorder(), new FakeWebPageCapture(), Flow(content));
 
     [Fact]
+    public async Task WithNoShareHostSetUpTheImageGoesOnTheClipboardAndNothingUploads()
+    {
+        _uploader.IsConfigured = false;
+
+        ShareLink? link = await Flow().ShareAsync(_png);
+
+        Assert.Null(link);
+        Assert.Empty(_uploader.Uploads);
+        Assert.Equal(["/tmp/shot.png"], _clipboard.Images);
+        Assert.Empty(_clipboard.Texts);
+    }
+
+    [Fact]
+    public async Task WithNoShareHostSetUpTheBarSaysTheImageWasCopied()
+    {
+        _uploader.IsConfigured = false;
+        BarViewModel bar = Bar();
+
+        await bar.RunAsync(BarAction.FullScreen);
+
+        Assert.Equal(Strings.Get("notice.clipboard.local"), bar.Notice);
+    }
+
+    [Fact]
     public async Task ALinkSettingPutsOnlyTheLinkOnTheClipboard()
     {
         await Flow().ShareAsync(_png);

@@ -74,6 +74,8 @@ internal sealed class FakeUploader(string name = "r2") : IShareUploader
 
     public Exception? ValidateThrows { get; set; }
 
+    public bool IsConfigured { get; set; } = true;
+
     public void Validate()
     {
         if (ValidateThrows is not null)

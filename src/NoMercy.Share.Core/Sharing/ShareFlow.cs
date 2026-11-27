@@ -12,8 +12,18 @@ public sealed class ShareFlow(IShareUploader uploader, IClipboard clipboard, Exp
     public bool PutsOnlyTheImage(CaptureResult capture) =>
         clipboardSettings.Content == ClipboardContent.Image && capture.ContentType.StartsWith(ImageContentTypePrefix, StringComparison.Ordinal);
 
-    public async Task<ShareLink> ShareAsync(CaptureResult capture, Expiry? perUpload = null, CancellationToken cancellationToken = default)
+    /// <summary>True while no share host is set up: a capture stays local and only its image goes on the clipboard.</summary>
+    public bool IsLocalOnly => !uploader.IsConfigured;
+
+    /// <summary>Uploads and copies what the settings choose; returns null when no share host is set up.</summary>
+    public async Task<ShareLink?> ShareAsync(CaptureResult capture, Expiry? perUpload = null, CancellationToken cancellationToken = default)
     {
+        if (IsLocalOnly)
+        {
+            await clipboard.SetImageAsync(capture.FilePath, cancellationToken);
+            return null;
+        }
+
         uploader.Validate();
         ShareLink link = await uploader.UploadAsync(capture.FilePath, expiry.Resolve(perUpload), cancellationToken);
 
