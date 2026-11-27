@@ -71,6 +71,15 @@ public static class ShareDefaults
     /// <summary>How long a new recording is watched for an ffmpeg that quits at once.</summary>
     public const int RecordingStartupCheckMilliseconds = 1000;
 
+    /// <summary>The global hotkeys, chosen to be familiar to people who know ShareX. An empty value turns a hotkey off.</summary>
+    public const string HotkeyRegion = "Ctrl+PrintScreen";
+
+    public const string HotkeyFullScreen = "PrintScreen";
+
+    public const string HotkeyWindow = "Alt+PrintScreen";
+
+    public const string HotkeyRecord = "Shift+PrintScreen";
+
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
 }

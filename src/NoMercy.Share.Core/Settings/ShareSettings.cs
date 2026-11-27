@@ -26,4 +26,6 @@ public sealed record ShareSettings
     public CaptureSettings Capture { get; init; } = new();
 
     public RecordingSettings Recording { get; init; } = new();
+
+    public HotkeySettings Hotkeys { get; init; } = new();
 }

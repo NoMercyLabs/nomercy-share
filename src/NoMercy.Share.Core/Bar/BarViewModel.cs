@@ -75,6 +75,9 @@ public sealed class BarViewModel : ObservableObject
 
     public void ClearNotice() => Notice = null;
 
+    /// <summary>Shows text the caller made, such as the hotkeys that could not be registered.</summary>
+    public void ShowMessage(string text) => Notice = text;
+
     /// <summary>The window calls this each second while recording, so the timer redraws.</summary>
     public void RefreshElapsed() => OnChanged(nameof(ElapsedText));
 

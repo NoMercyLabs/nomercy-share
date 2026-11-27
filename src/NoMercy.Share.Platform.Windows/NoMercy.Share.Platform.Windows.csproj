@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The Windows implementations of the platform interfaces. Screen capture is built; recording, web page and hotkeys are still stubs. -->
+  <!-- The Windows implementations of the platform interfaces. Screen capture, recording and hotkeys are built; web page capture is still a stub. -->
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

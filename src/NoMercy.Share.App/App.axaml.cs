@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Platform.Windows;
 using NoMercy.Share.Storage.S3;
@@ -27,6 +28,7 @@ public sealed class App : Application
             _window = new BarWindow(services.GetRequiredService<BarViewModel>(), services.GetRequiredService<BarPositionStore>(),
                 services.GetRequiredService<ShareSettings>().Bar);
             desktop.MainWindow = _window;
+            services.GetRequiredService<HotkeyBinder>().Start();
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
             desktop.Exit += (_, _) => services.Dispose();
         }
@@ -46,6 +48,7 @@ public sealed class App : Application
         services.AddSingleton(settings.Clipboard);
         services.AddSingleton(settings.Capture);
         services.AddSingleton(settings.Recording);
+        services.AddSingleton(settings.Hotkeys);
         services.AddSingleton<BarPositionStore>();
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
         services.AddSingleton<IRegionSelector>(

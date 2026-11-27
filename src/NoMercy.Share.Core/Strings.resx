@@ -32,6 +32,13 @@
   <data name="error.ffmpeg.timeout" xml:space="preserve"><value>ffmpeg did not finish in time and was stopped.</value></data>
   <data name="error.provider.unknown" xml:space="preserve"><value>Unknown storage provider "{0}". Known providers: {1}.</value></data>
   <data name="notice.upload.failed" xml:space="preserve"><value>Upload failed: {0}. The file is kept.</value></data>
+  <data name="notice.hotkey.taken" xml:space="preserve"><value>Hotkey {0} is in use by another app</value></data>
+  <data name="notice.hotkey.taken.many" xml:space="preserve"><value>Hotkeys {0} are in use by another app</value></data>
+  <data name="notice.hotkey.invalid" xml:space="preserve"><value>Hotkey "{0}" cannot be used: {1}</value></data>
+  <data name="error.hotkey.empty" xml:space="preserve"><value>a hotkey needs a key, for example Ctrl+PrintScreen.</value></data>
+  <data name="error.hotkey.modifier" xml:space="preserve"><value>"{0}" is not a modifier. Use Ctrl, Alt, Shift or Win.</value></data>
+  <data name="error.hotkey.duplicate" xml:space="preserve"><value>"{0}" is named twice.</value></data>
+  <data name="error.hotkey.key" xml:space="preserve"><value>"{0}" is not a key name.</value></data>
   <data name="error.setting.missing" xml:space="preserve"><value>Setting "{0}" is empty. Set it in settings.json.</value></data>
   <data name="error.setting.invalid" xml:space="preserve"><value>Setting "{0}" cannot be used: {1}</value></data>
   <data name="error.setting.range" xml:space="preserve"><value>it must be between {0} and {1}.</value></data>
