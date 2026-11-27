@@ -1,4 +1,6 @@
+using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Tests;
@@ -140,4 +142,40 @@ internal sealed class FakeCaptureHost : ICaptureHost
         Events.Add("show");
         return Task.CompletedTask;
     }
+}
+
+internal sealed class FakeGlobalHotkeys : IGlobalHotkeys
+{
+    private EventHandler<BarAction>? _pressed;
+
+    public Dictionary<BarAction, HotkeyChord> Registered { get; } = [];
+
+    /// <summary>Chords another app holds; registering one reports it as not registered.</summary>
+    public HashSet<HotkeyChord> Taken { get; } = [];
+
+    public bool Disposed { get; private set; }
+
+    public int PressedSubscribers => _pressed?.GetInvocationList().Length ?? 0;
+
+    public event EventHandler<BarAction>? Pressed
+    {
+        add => _pressed += value;
+        remove => _pressed -= value;
+    }
+
+    public void Press(BarAction action) => _pressed?.Invoke(this, action);
+
+    public IReadOnlyList<HotkeyRegistration> Register(IReadOnlyDictionary<BarAction, HotkeyChord> chords)
+    {
+        List<HotkeyRegistration> results = [];
+        foreach ((BarAction action, HotkeyChord chord) in chords)
+        {
+            Registered[action] = chord;
+            results.Add(new HotkeyRegistration(action, chord, !Taken.Contains(chord)));
+        }
+
+        return results;
+    }
+
+    public void Dispose() => Disposed = true;
 }
