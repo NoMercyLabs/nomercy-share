@@ -9,9 +9,14 @@ public static class FfmpegArguments
 
     private const string RecordQuality = "18";
 
-    private const string SqueezePreset = "veryfast";
-
     private const string QuietLog = "warning";
+
+    /// <summary>The test picture of a probe: small, black, a few frames; enough for an encoder to open its hardware.</summary>
+    private const string ProbeSource = "color=c=black:s=256x144:r=30";
+
+    private const string ProbeFrames = "5";
+
+    private const string ProbeRate = "500k";
 
     /// <summary>Records one monitor region with Desktop Duplication into a quick, near-lossless file. ffmpeg stops cleanly when it reads "q" on its input.</summary>
     public static IReadOnlyList<string> Record(RecordingTarget target, int frameRate, string outputPath, bool flushEachPacket = false) =>
@@ -26,9 +31,10 @@ public static class FfmpegArguments
     ];
 
     /// <summary>Squeezes the recording to the plan in one pass: the bitrate is held to the budget, and the file starts playing before it has downloaded. Sound files are extra inputs, mixed into one AAC stream.</summary>
-    public static IReadOnlyList<string> Compress(string inputPath, string outputPath, VideoPlan plan, IReadOnlyList<AudioTrack>? sound = null, int audioKbps = 0)
+    public static IReadOnlyList<string> Compress(string inputPath, string outputPath, VideoPlan plan, IReadOnlyList<AudioTrack>? sound = null, int audioKbps = 0, VideoEncoder? encoder = null)
     {
         sound ??= [];
+        encoder ??= VideoEncoder.From(new Settings.RecordingSettings());
         string rate = string.Create(CultureInfo.InvariantCulture, $"{plan.VideoKbps}k");
         string buffer = string.Create(CultureInfo.InvariantCulture, $"{plan.VideoKbps * 2L}k");
         List<string> args = ["-hide_banner", "-loglevel", QuietLog, "-nostats", "-nostdin", "-i", inputPath];
@@ -43,12 +49,9 @@ public static class FfmpegArguments
             args.AddRange(["-filter_complex", Mix(sound.Count)]);
         }
 
-        args.AddRange(
-        [
-            "-c:v", "libx264", "-preset", SqueezePreset,
-            "-b:v", rate, "-maxrate", rate, "-bufsize", buffer,
-            "-pix_fmt", "yuv420p", "-movflags", "+faststart"
-        ]);
+        args.AddRange(encoder.Arguments());
+        args.AddRange(RateArguments(encoder, rate, buffer));
+        args.AddRange(["-pix_fmt", encoder.PixelFormat, "-movflags", "+faststart"]);
         args.AddRange(sound.Count switch
         {
             0 => ["-an"],
@@ -58,6 +61,20 @@ public static class FfmpegArguments
         args.AddRange(["-y", outputPath]);
         return args;
     }
+
+    /// <summary>Encodes a few black frames to nothing with the encoder and the same options a squeeze uses; exit 0 means it works on this PC.</summary>
+    public static IReadOnlyList<string> Probe(VideoEncoder encoder) =>
+    [
+        "-hide_banner", "-loglevel", "error", "-nostats", "-nostdin",
+        "-f", "lavfi", "-i", ProbeSource, "-frames:v", ProbeFrames,
+        .. encoder.Arguments(), .. RateArguments(encoder, ProbeRate, ProbeRate),
+        "-pix_fmt", encoder.PixelFormat,
+        "-f", "null", "-"
+    ];
+
+    /// <summary>The bitrate held to the budget; the peak only where the encoder takes one.</summary>
+    private static string[] RateArguments(VideoEncoder encoder, string rate, string buffer) =>
+        encoder.TakesPeakRate ? ["-b:v", rate, "-maxrate", rate, "-bufsize", buffer] : ["-b:v", rate];
 
     /// <summary>The filter that pads each sound file to start at time zero and mixes them at full level; the first file sets the length.</summary>
     private static string Mix(int count)

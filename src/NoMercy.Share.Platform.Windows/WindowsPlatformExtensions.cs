@@ -23,6 +23,7 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IUrlOpener>(new ShellUrlOpener());
         services.AddSingleton<IForegroundGrant, WindowsForegroundGrant>();
         services.AddSingleton<IFolderAccess, WindowsFolderAccess>();
+        services.AddSingleton<IEncoderProbe>(sp => new FfmpegEncoderProbe(() => sp.GetRequiredService<LiveSettings>().Current.Recording));
         return services;
     }
 }

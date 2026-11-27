@@ -104,7 +104,7 @@ The gear opens one window with four sections in the list on the left. Pick a sec
 | Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). |
 | Links | The default expiry: never, or 1, 7, 30 or 90 days. |
 | Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
-| Recording | The largest video to share, the frame rate, and the two sound switches. |
+| Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, and the two sound switches. |
 
 Your secret access key is stored in the Windows Credential Manager, never in a file. The box shows "Saved" afterwards and stays empty. Leave it empty and the stored key stays.
 

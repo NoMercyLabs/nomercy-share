@@ -173,6 +173,7 @@
   <!-- Inputs: 36 high pills like the bar buttons, the text 12 in from the round end. -->
   <Style Selector="Window.settings TextBox, Window.settings ComboBox">
     <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-9}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
     <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Full-Corner}" />
     <Setter Property="Padding" Value="12,0" />
@@ -191,7 +192,7 @@
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Muted-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
     <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Margin" Value="{DynamicResource Nm-Space-3-Thickness}" />
+    <Setter Property="Margin" Value="0,0,12,0" />
   </Style>
 
   <!-- A chord is drawn as key caps; the box itself stays the text field that records the keys, its own text hidden. -->

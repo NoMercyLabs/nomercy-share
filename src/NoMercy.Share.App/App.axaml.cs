@@ -75,7 +75,8 @@ public sealed class App : Application
 
         SettingsViewModel model = new(
             services.GetRequiredService<SettingsFile>(), services.GetRequiredService<LiveSettings>(), services.GetRequiredService<ICredentialStore>(),
-            services.GetRequiredService<HotkeyBinder>(), [.. services.GetServices<IShareUploader>().Select(uploader => uploader.ProviderName)]);
+            services.GetRequiredService<HotkeyBinder>(), [.. services.GetServices<IShareUploader>().Select(uploader => uploader.ProviderName)],
+            services.GetService<IEncoderProbe>());
         _settingsWindow = new SettingsWindow(model);
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();

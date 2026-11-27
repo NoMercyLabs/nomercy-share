@@ -170,14 +170,24 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
         return new CaptureResult(mp4, "video/mp4", outcome.Plan.Width, outcome.Plan.Height, outcome.Bytes, capBytes);
     }
 
-    /// <summary>One squeeze pass. A retry writes over the file of the pass before it.</summary>
+    /// <summary>One squeeze pass with the chosen encoder. A GPU encode that fails is done again on the CPU, so a driver problem never loses the recording. A retry writes over the file of the pass before it.</summary>
     private async Task SqueezeAsync(string raw, string mp4, VideoPlan plan, IReadOnlyList<AudioTrack> tracks, CancellationToken cancellationToken)
     {
-        using FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, mp4, plan, tracks, _settings.AudioBitrateKbps));
-        int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(_settings.CompressTimeoutSeconds), cancellationToken);
-        if (exit != 0)
+        VideoEncoder encoder = VideoEncoder.From(_settings);
+        if (await EncodeAsync(raw, mp4, plan, tracks, encoder, cancellationToken) is { } failure)
         {
-            throw squeeze.Failure(exit);
+            if (encoder.IsCpu || await EncodeAsync(raw, mp4, plan, tracks, encoder.OnCpu(), cancellationToken) is not null)
+            {
+                throw failure;
+            }
         }
+    }
+
+    /// <summary>One encode; null when it worked, else the failure that says why.</summary>
+    private async Task<RecordingException?> EncodeAsync(string raw, string mp4, VideoPlan plan, IReadOnlyList<AudioTrack> tracks, VideoEncoder encoder, CancellationToken cancellationToken)
+    {
+        using FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, mp4, plan, tracks, _settings.AudioBitrateKbps, encoder));
+        int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(_settings.CompressTimeoutSeconds), cancellationToken);
+        return exit == 0 ? null : squeeze.Failure(exit);
     }
 }

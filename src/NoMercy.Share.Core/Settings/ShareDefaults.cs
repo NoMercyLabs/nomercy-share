@@ -74,6 +74,16 @@ public static class ShareDefaults
 
     public const int RecordingMaxHeight = 1080;
 
+    /// <summary>The largest picture sizes the settings window offers, as width and height; 0 by 0 is the original size.</summary>
+    public static readonly IReadOnlyList<(int Width, int Height)> RecordingSizeChoices = [(1280, 720), (1920, 1080), (2560, 1440), (3840, 2160), (0, 0)];
+
+    /// <summary>H.264 on the CPU at the fast speed: the encode every recording had before these were settings.</summary>
+    public const string RecordingCodec = "h264";
+
+    public const string RecordingEncoder = "cpu";
+
+    public const string RecordingSpeed = "fast";
+
     public const int RecordingAudioBitrateKbps = 128;
 
     public const bool RecordingSystemSound = false;

@@ -174,6 +174,63 @@ public sealed class FfmpegScreenRecorderTests : IDisposable
             new RecordingSettings { FfmpegPath = fake, StartupCheckMilliseconds = startupMilliseconds });
     }
 
+    /// <summary>Every codec, on every encoder that passes the probe on this PC, gives a file of that codec. The CPU always passes.</summary>
+    [RecordingFact]
+    public async Task EachCodecOnEachEncoderThisPcHasGivesAFileOfThatCodec()
+    {
+        RecordingSettings basics = new() { FfmpegPath = FfmpegTools.Ffmpeg()!, StartupCheckMilliseconds = 200 };
+        FfmpegEncoderProbe probe = new(() => basics);
+        List<string> tried = [];
+        foreach (string codec in VideoEncoder.Codecs)
+        {
+            IReadOnlyList<string> families = await probe.WorkingFamiliesAsync(codec);
+            Assert.Contains(VideoEncoder.Cpu, families);
+            foreach (string family in families)
+            {
+                CaptureResult result = await RecordOneSecondAsync(basics with { Codec = codec, Encoder = family });
+                using JsonDocument file = JsonDocument.Parse(Probe(result.FilePath));
+                Assert.Equal(codec, file.RootElement.GetProperty("streams")[0].GetProperty("codec_name").GetString());
+                tried.Add($"{codec}/{family}");
+                File.Delete(result.FilePath);
+            }
+        }
+
+        Console.WriteLine($"encoded: {string.Join(", ", tried)}");
+    }
+
+    /// <summary>A GPU encoder that is not in this PC fails its encode; the recording is encoded on the CPU instead of being lost.</summary>
+    [RecordingFact]
+    public async Task AGpuEncodeThatFailsIsDoneAgainOnTheCpu()
+    {
+        RecordingSettings basics = new() { FfmpegPath = FfmpegTools.Ffmpeg()!, StartupCheckMilliseconds = 200 };
+        string? absent = (await Task.WhenAll(new[] { "amd", "intel", "nvidia" }.Select(async family =>
+            (family, works: (await new FfmpegEncoderProbe(() => basics).WorkingFamiliesAsync("h264")).Contains(family)))))
+            .FirstOrDefault(entry => !entry.works).family;
+        if (absent is null)
+        {
+            Console.WriteLine("Every GPU family works on this PC, so none can fail; nothing to test here.");
+            return;
+        }
+
+        Console.WriteLine($"{absent} is not in this PC: its encode must fail and fall back to the CPU.");
+
+        CaptureResult result = await RecordOneSecondAsync(basics with { Encoder = absent! });
+
+        using JsonDocument file = JsonDocument.Parse(Probe(result.FilePath));
+        Assert.Equal("h264", file.RootElement.GetProperty("streams")[0].GetProperty("codec_name").GetString());
+    }
+
+    private async Task<CaptureResult> RecordOneSecondAsync(RecordingSettings recording)
+    {
+        ScreenRect screen = Desktop.VirtualScreen();
+        FfmpegScreenRecorder recorder = new(
+            new CaptureFiles(new CaptureSettings { Folder = _folder }, "unused", () => DateTimeOffset.UtcNow),
+            new FixedRegion(new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)), recording);
+        await recorder.StartAsync(new RecordingOptions());
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        return await recorder.StopAsync();
+    }
+
     private static string Probe(string file)
     {
         ProcessStartInfo start = new(FfmpegTools.Ffprobe()!) { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };

@@ -17,9 +17,19 @@ public sealed record RecordingSettings
 
     public int FrameRate { get; init; } = ShareDefaults.RecordingFrameRate;
 
+    /// <summary>The widest picture a recording is shared at; 0 (with <see cref="MaxHeight"/> 0) keeps the screen's own size.</summary>
     public int MaxWidth { get; init; } = ShareDefaults.RecordingMaxWidth;
 
     public int MaxHeight { get; init; } = ShareDefaults.RecordingMaxHeight;
+
+    /// <summary>The video codec of the shared file: "h264", "hevc" or "av1".</summary>
+    public string Codec { get; init; } = ShareDefaults.RecordingCodec;
+
+    /// <summary>What encodes it: "cpu", "nvidia", "intel" or "amd". A GPU encode that fails is done again on the CPU.</summary>
+    public string Encoder { get; init; } = ShareDefaults.RecordingEncoder;
+
+    /// <summary>"fast", "balanced" or "quality": a slower encode gives a sharper picture at the same size.</summary>
+    public string Speed { get; init; } = ShareDefaults.RecordingSpeed;
 
     /// <summary>The audio bitrate, taken off the size budget when a recording has sound.</summary>
     public int AudioBitrateKbps { get; init; } = ShareDefaults.RecordingAudioBitrateKbps;

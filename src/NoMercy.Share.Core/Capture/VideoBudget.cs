@@ -24,7 +24,9 @@ public static class VideoBudget
         double audioKbps = includeAudio ? settings.AudioBitrateKbps : 0;
         int sizeKbps = Math.Max(1, (int)((settings.MaxSizeMegabytes * settings.SizeHeadroom * KilobitsPerMegabyte / seconds) - audioKbps));
 
-        double fit = Math.Min(1, Math.Min((double)settings.MaxWidth / sourceWidth, (double)settings.MaxHeight / sourceHeight));
+        double fit = settings.MaxWidth <= 0 || settings.MaxHeight <= 0
+            ? 1 // the original size: no cap
+            : Math.Min(1, Math.Min((double)settings.MaxWidth / sourceWidth, (double)settings.MaxHeight / sourceHeight));
         double affordablePixels = sizeKbps * 1000.0 / (settings.TargetBitsPerPixel * settings.FrameRate);
         double shrink = Math.Min(1, Math.Sqrt(affordablePixels / ((double)sourceWidth * fit * sourceHeight * fit)));
         int width = EvenFloor(sourceWidth * fit * shrink);

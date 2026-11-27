@@ -61,6 +61,23 @@
   <data name="settings.error.missing.publicbase" xml:space="preserve"><value>Enter the public link base URL.</value></data>
   <data name="settings.recording.size" xml:space="preserve"><value>Max size</value></data>
   <data name="settings.recording.fps" xml:space="preserve"><value>Frame rate</value></data>
+  <data name="settings.recording.resolution" xml:space="preserve"><value>Max resolution</value></data>
+  <data name="settings.recording.resolution.original" xml:space="preserve"><value>Original size</value></data>
+  <data name="settings.recording.codec" xml:space="preserve"><value>Codec</value></data>
+  <data name="settings.recording.codec.h264" xml:space="preserve"><value>H.264</value></data>
+  <data name="settings.recording.codec.hevc" xml:space="preserve"><value>HEVC (H.265)</value></data>
+  <data name="settings.recording.codec.av1" xml:space="preserve"><value>AV1</value></data>
+  <data name="settings.recording.codec.helper" xml:space="preserve"><value>H.264 plays everywhere. HEVC and AV1 look sharper at the same size, but not every browser or app plays them.</value></data>
+  <data name="settings.recording.encoder" xml:space="preserve"><value>Encoder</value></data>
+  <data name="settings.recording.encoder.cpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="settings.recording.encoder.nvidia" xml:space="preserve"><value>NVIDIA</value></data>
+  <data name="settings.recording.encoder.intel" xml:space="preserve"><value>Intel Quick Sync</value></data>
+  <data name="settings.recording.encoder.amd" xml:space="preserve"><value>AMD</value></data>
+  <data name="settings.recording.encoder.missing" xml:space="preserve"><value>{0} did not pass the test on this PC, so the CPU is used.</value></data>
+  <data name="settings.recording.speed" xml:space="preserve"><value>Speed</value></data>
+  <data name="settings.recording.speed.fast" xml:space="preserve"><value>Fast</value></data>
+  <data name="settings.recording.speed.balanced" xml:space="preserve"><value>Balanced</value></data>
+  <data name="settings.recording.speed.quality" xml:space="preserve"><value>Best quality</value></data>
   <data name="settings.unit.mb" xml:space="preserve"><value>MB</value></data>
   <data name="settings.unit.fps" xml:space="preserve"><value>fps</value></data>
   <data name="settings.sections" xml:space="preserve"><value>Settings sections</value></data>  <data name="settings.recording.systemsound" xml:space="preserve"><value>Record system sound</value></data>
@@ -68,7 +85,7 @@
   <data name="settings.save" xml:space="preserve"><value>Save</value></data>
   <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="settings.save.failed" xml:space="preserve"><value>The settings were not saved: {0}</value></data>
-  <data name="error.setting.positive" xml:space="preserve"><value>{0} must be a number above 0.</value></data>
+  <data name="error.setting.positive" xml:space="preserve"><value>Enter a number above 0.</value></data>
   <data name="error.credential.needed" xml:space="preserve"><value>Enter the access key id and the secret access key.</value></data>
   <data name="error.credential.secret" xml:space="preserve"><value>Enter the secret access key again for this key id.</value></data>
   <data name="notice.failed" xml:space="preserve"><value>That did not work. Try again.</value></data>

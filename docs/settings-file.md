@@ -41,7 +41,10 @@ An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share open
 | `Recording.FfmpegPath` | blank | The ffmpeg file to run. Blank looks for ffmpeg on the PATH. |
 | `Recording.MaxSizeMegabytes` | 50 | The largest recording that gets shared. A longer clip is squeezed harder. |
 | `Recording.FrameRate` | 30 | Frames per second. |
-| `Recording.MaxWidth`, `Recording.MaxHeight` | 1920, 1080 | The largest video size. |
+| `Recording.MaxWidth`, `Recording.MaxHeight` | 1920, 1080 | The largest video size. 0 and 0 keep the screen's own size. Settings offers 720p, 1080p, 1440p, 4K and the original size; another size you type here is kept. |
+| `Recording.Codec` | `h264` | The video codec: `h264`, `hevc` or `av1`. H.264 plays everywhere; HEVC and AV1 look sharper at the same size, but not every browser or app plays them. |
+| `Recording.Encoder` | `cpu` | What encodes the video: `cpu`, `nvidia`, `intel` or `amd`. Settings lists only the ones that pass a test encode on your PC. If a GPU encode fails, the recording is encoded again on the CPU. |
+| `Recording.Speed` | `fast` | `fast`, `balanced` or `quality`. A slower encode gives a sharper picture at the same file size. |
 | `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. |
 | `Recording.AudioBitrateKbps` | 128 | The audio bitrate, taken off the size budget when a recording has sound. |
 | `Recording.SizeHeadroom` | 0.95 | The part of the size limit the video may use. |

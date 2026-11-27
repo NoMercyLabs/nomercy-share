@@ -205,8 +205,19 @@
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsRecording}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.recording}" />
             <Border Classes="group">
-              <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
+              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
+                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.resolution}" />
+                  <ComboBox ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding SelectedResolution}" AutomationProperties.Name="{local:Loc settings.recording.resolution}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="settings:ResolutionChoice">
+                        <TextBlock Text="{Binding Label}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                  <TextBlock Classes="field-error" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.recording.size}" />
                   <TextBox Text="{Binding MaxSizeMegabytes}" AutomationProperties.Name="{local:Loc settings.recording.size}">
                     <TextBox.InnerRightContent>
@@ -215,7 +226,7 @@
                   </TextBox>
                   <TextBlock Classes="field-error" Text="{Binding MaxSizeError}" />
                 </StackPanel>
-                <StackPanel Grid.Column="1" Classes="field">
+                <StackPanel Grid.Column="2" Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.recording.fps}" />
                   <TextBox Text="{Binding FrameRate}" AutomationProperties.Name="{local:Loc settings.recording.fps}">
                     <TextBox.InnerRightContent>
@@ -225,6 +236,59 @@
                   <TextBlock Classes="field-error" Text="{Binding FrameRateError}" />
                 </StackPanel>
               </Grid>
+            </Border>
+            <!-- The encode of the shared file: the same pill choice as the provider. Only encoders that passed a test encode on this PC are listed. -->
+            <Border Classes="group">
+              <StackPanel Spacing="{DynamicResource Nm-Space-4}">
+                <StackPanel Classes="field">
+                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.codec}" />
+                  <ListBox Classes="segmented" ItemsSource="{Binding CodecChoices}" SelectedItem="{Binding SelectedCodec}" AutomationProperties.Name="{local:Loc settings.recording.codec}">
+                    <ListBox.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                      </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                      <DataTemplate x:DataType="settings:OptionChoice">
+                        <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" />
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
+                  <TextBlock Classes="status note-text" Text="{local:Loc settings.recording.codec.helper}" />
+                </StackPanel>
+                <StackPanel Classes="field">
+                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.encoder}" />
+                  <ListBox Classes="segmented" ItemsSource="{Binding EncoderChoices}" SelectedItem="{Binding SelectedEncoder}" AutomationProperties.Name="{local:Loc settings.recording.encoder}">
+                    <ListBox.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                      </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                      <DataTemplate x:DataType="settings:OptionChoice">
+                        <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" />
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
+                  <TextBlock Classes="status note-text" Text="{Binding EncoderNote}" IsVisible="{Binding EncoderNote, Converter={x:Static ObjectConverters.IsNotNull}}"
+                             AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+                <StackPanel Classes="field">
+                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.speed}" />
+                  <ListBox Classes="segmented" ItemsSource="{Binding SpeedChoices}" SelectedItem="{Binding SelectedSpeed}" AutomationProperties.Name="{local:Loc settings.recording.speed}">
+                    <ListBox.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                      </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                      <DataTemplate x:DataType="settings:OptionChoice">
+                        <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" />
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
+                </StackPanel>
+              </StackPanel>
             </Border>
             <Border Classes="group">
               <StackPanel>

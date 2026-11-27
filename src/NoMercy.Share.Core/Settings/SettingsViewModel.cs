@@ -1,5 +1,6 @@
 using System.Globalization;
 using NoMercy.Share.Core.Bar;
+using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Discord;
 using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Sharing;
@@ -39,6 +40,14 @@ public sealed class SettingsViewModel : ObservableObject
     private string _frameRate;
     private bool _recordSystemSound;
     private bool _recordMicrophone;
+    private readonly IEncoderProbe? _probe;
+    private ResolutionChoice _selectedResolution;
+    private OptionChoice _selectedCodec;
+    private OptionChoice _selectedSpeed;
+    private OptionChoice _selectedEncoder;
+    private IReadOnlyList<OptionChoice> _encoderChoices;
+    private string _wantedEncoder;
+    private string? _encoderNote;
     private string? _endpointError;
     private string? _bucketError;
     private string? _regionError;
@@ -49,8 +58,9 @@ public sealed class SettingsViewModel : ObservableObject
     private string? _saveError;
     private SettingsSection _selectedSection;
 
-    public SettingsViewModel(SettingsFile file, LiveSettings live, ICredentialStore credentials, HotkeyBinder binder, IReadOnlyList<string> providers)
+    public SettingsViewModel(SettingsFile file, LiveSettings live, ICredentialStore credentials, HotkeyBinder binder, IReadOnlyList<string> providers, IEncoderProbe? encoders = null)
     {
+        _probe = encoders;
         _file = file;
         _live = live;
         _credentials = credentials;
@@ -75,6 +85,60 @@ public sealed class SettingsViewModel : ObservableObject
         _frameRate = current.Recording.FrameRate.ToString(CultureInfo.InvariantCulture);
         _recordSystemSound = current.Recording.Audio.SystemSound;
         _recordMicrophone = current.Recording.Audio.Microphone;
+
+        RecordingSettings recording = current.Recording;
+        ResolutionChoice savedSize = recording.MaxWidth <= 0 || recording.MaxHeight <= 0 ? new(0, 0) : new(recording.MaxWidth, recording.MaxHeight);
+        IReadOnlyList<ResolutionChoice> sizes = [.. ShareDefaults.RecordingSizeChoices.Select(size => new ResolutionChoice(size.Width, size.Height))];
+        ResolutionChoices = sizes.Contains(savedSize) ? sizes : [.. sizes, savedSize]; // a size set by hand stays a choice, so saving never drops it
+        _selectedResolution = savedSize;
+        VideoEncoder encoder = VideoEncoder.From(recording);
+        CodecChoices = [.. VideoEncoder.Codecs.Select(value => new OptionChoice(CodecGroup, value))];
+        SpeedChoices = [.. VideoEncoder.Speeds.Select(value => new OptionChoice(SpeedGroup, value))];
+        _selectedCodec = CodecChoices.First(choice => choice.Value == encoder.Codec);
+        _selectedSpeed = SpeedChoices.First(choice => choice.Value == encoder.Speed);
+        _wantedEncoder = encoder.Family;
+        _encoderChoices = [.. VideoEncoder.Families.Where(family => family == VideoEncoder.Cpu || (_probe is null && family == _wantedEncoder)).Select(EncoderChoice)];
+        _selectedEncoder = _encoderChoices.First(choice => choice.Value == _wantedEncoder || choice.Value == VideoEncoder.Cpu);
+        EncodersChecked = CheckEncodersAsync();
+    }
+
+    private const string CodecGroup = "settings.recording.codec";
+
+    private const string SpeedGroup = "settings.recording.speed";
+
+    private const string EncoderGroup = "settings.recording.encoder";
+
+    private static OptionChoice EncoderChoice(string family) => new(EncoderGroup, family);
+
+    /// <summary>The encoders that passed the test encode for the picked codec replace the list; the saved one stays picked when it passed.</summary>
+    private async Task CheckEncodersAsync()
+    {
+        if (_probe is null)
+        {
+            return;
+        }
+
+        string codec = SelectedCodec.Value;
+        IReadOnlyList<string> working;
+        try
+        {
+            working = await _probe.WorkingFamiliesAsync(codec);
+        }
+        catch (Exception error) when (error is IOException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            working = [VideoEncoder.Cpu]; // no ffmpeg to test with: the CPU is what a recording would try
+        }
+
+        if (codec != SelectedCodec.Value)
+        {
+            return; // a newer codec pick runs its own check
+        }
+
+        EncoderChoices = [.. VideoEncoder.Families.Where(family => family == VideoEncoder.Cpu || working.Contains(family)).Select(EncoderChoice)];
+        OptionChoice? wanted = EncoderChoices.FirstOrDefault(choice => choice.Value == _wantedEncoder);
+        _selectedEncoder = wanted ?? EncoderChoices[0];
+        OnChanged(nameof(SelectedEncoder));
+        EncoderNote = wanted is null ? Strings.Get("settings.recording.encoder.missing", EncoderChoice(_wantedEncoder).Label) : null;
     }
 
     /// <summary>Raised after a save or a cancel; the window closes.</summary>
@@ -244,6 +308,73 @@ public sealed class SettingsViewModel : ObservableObject
         get => _recordMicrophone;
         set => Set(ref _recordMicrophone, value);
     }
+
+    public IReadOnlyList<ResolutionChoice> ResolutionChoices { get; }
+
+    public ResolutionChoice SelectedResolution
+    {
+        get => _selectedResolution;
+        set => Set(ref _selectedResolution, value);
+    }
+
+    public IReadOnlyList<OptionChoice> CodecChoices { get; }
+
+    /// <summary>A new codec runs the encoder test again, since a GPU can do one codec and not another.</summary>
+    public OptionChoice SelectedCodec
+    {
+        get => _selectedCodec;
+        set
+        {
+            if (value is null || value == _selectedCodec)
+            {
+                return;
+            }
+
+            Set(ref _selectedCodec, value);
+            EncodersChecked = CheckEncodersAsync();
+        }
+    }
+
+    public IReadOnlyList<OptionChoice> SpeedChoices { get; }
+
+    public OptionChoice SelectedSpeed
+    {
+        get => _selectedSpeed;
+        set => Set(ref _selectedSpeed, value);
+    }
+
+    /// <summary>The CPU, plus each GPU encoder that passed a test encode on this PC for the picked codec.</summary>
+    public IReadOnlyList<OptionChoice> EncoderChoices
+    {
+        get => _encoderChoices;
+        private set => Set(ref _encoderChoices, value);
+    }
+
+    public OptionChoice SelectedEncoder
+    {
+        get => _selectedEncoder;
+        set
+        {
+            if (value is null)
+            {
+                return; // the list was replaced; the check picks again
+            }
+
+            _wantedEncoder = value.Value;
+            EncoderNote = null;
+            Set(ref _selectedEncoder, value);
+        }
+    }
+
+    /// <summary>Says when the saved encoder did not pass the test, and what is used instead.</summary>
+    public string? EncoderNote
+    {
+        get => _encoderNote;
+        private set => Set(ref _encoderNote, value);
+    }
+
+    /// <summary>The running encoder test; done when the list is up to date.</summary>
+    public Task EncodersChecked { get; private set; }
 
     /// <summary>Whether links will be made, from what is typed now.</summary>
     public string SharingStatus
@@ -578,10 +709,23 @@ public sealed class SettingsViewModel : ObservableObject
     {
         bool sizeOk = double.TryParse(MaxSizeMegabytes, NumberStyles.Float, CultureInfo.InvariantCulture, out double size) && double.IsFinite(size) && size > 0;
         bool rateOk = int.TryParse(FrameRate, NumberStyles.Integer, CultureInfo.InvariantCulture, out int rate) && rate > 0;
-        MaxSizeError = sizeOk ? null : Strings.Get("error.setting.positive", Strings.Get("settings.recording.size"));
-        FrameRateError = rateOk ? null : Strings.Get("error.setting.positive", Strings.Get("settings.recording.fps"));
+        // The field's own label names it, so the error stays short enough for a third of the row.
+        MaxSizeError = sizeOk ? null : Strings.Get("error.setting.positive");
+        FrameRateError = rateOk ? null : Strings.Get("error.setting.positive");
         AudioSettings audio = current.Audio with { SystemSound = RecordSystemSound, Microphone = RecordMicrophone };
-        return sizeOk && rateOk ? current with { MaxSizeMegabytes = size, FrameRate = rate, Audio = audio } : current;
+        return sizeOk && rateOk
+            ? current with
+            {
+                MaxSizeMegabytes = size,
+                FrameRate = rate,
+                Audio = audio,
+                MaxWidth = SelectedResolution.Width,
+                MaxHeight = SelectedResolution.Height,
+                Codec = SelectedCodec.Value,
+                Encoder = SelectedEncoder.Value,
+                Speed = SelectedSpeed.Value
+            }
+            : current;
     }
 
     private HotkeySettings PlanHotkeys(HotkeySettings current)

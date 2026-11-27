@@ -101,4 +101,14 @@ public sealed class VideoBudgetTests
         Assert.Equal((1280, 720), (plan.Width, plan.Height));
         Assert.Equal(5529, plan.VideoKbps); // 0.1 * 1280 * 720 * 60 / 1000; the size budget (7782) is larger
     }
+
+    [Fact]
+    public void OriginalSizeKeepsA4kScreenAt4kWhenTheBudgetAllows()
+    {
+        RecordingSettings original = new() { MaxWidth = 0, MaxHeight = 0, MaxSizeMegabytes = 500 };
+
+        VideoPlan plan = VideoBudget.Plan(10, 3840, 2160, original);
+
+        Assert.Equal((3840, 2160), (plan.Width, plan.Height));
+    }
 }
