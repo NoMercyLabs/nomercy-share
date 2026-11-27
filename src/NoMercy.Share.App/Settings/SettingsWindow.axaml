@@ -75,8 +75,8 @@
               </ListBox.ItemTemplate>
             </ListBox>
 
-            <Border Classes="card" IsVisible="{Binding ShowsStorageFields}">
-              <StackPanel Spacing="{DynamicResource Nm-Space-6}">
+            <Border Classes="card form" IsVisible="{Binding ShowsStorageFields}">
+              <StackPanel Spacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.endpoint}" />
                   <TextBox Text="{Binding Endpoint}" AutomationProperties.Name="{local:Loc settings.endpoint}" />
@@ -102,7 +102,7 @@
               </StackPanel>
             </Border>
 
-            <Border Classes="card" IsVisible="{Binding ShowsStorageFields}">
+            <Border Classes="card form" IsVisible="{Binding ShowsStorageFields}">
               <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.keyid}" />
@@ -148,11 +148,11 @@
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsHotkeys}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.hotkeys}" />
-            <Border Classes="card">
+            <Border Classes="card form">
               <ItemsControl ItemsSource="{Binding Hotkeys}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
-                    <StackPanel Spacing="{DynamicResource Nm-Space-6}" />
+                    <StackPanel Spacing="{DynamicResource Nm-Space-2}" />
                   </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
@@ -197,7 +197,7 @@
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsRecording}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.recording}" />
-            <Border Classes="card">
+            <Border Classes="card form">
               <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.recording.size}" />

@@ -63,7 +63,7 @@ public static class Program
                 root.GetVisualDescendants().OfType<ListBox>().First(list => list.Classes.Contains("segmented")).GetVisualDescendants().OfType<ListBoxItem>().First().Focus(NavigationMethod.Tab));
             SaveSettings(Path.Combine(folder, $"share-settings-focus-switch-{name}.png"), model, SettingsSection.Recording, prepare: root => root.GetVisualDescendants().OfType<ToggleSwitch>().First().Focus(NavigationMethod.Tab));
             SaveSettings(Path.Combine(folder, $"share-settings-combo-open-{name}.png"), model, SettingsSection.Links, prepare: root => root.GetVisualDescendants().OfType<ComboBox>().First().IsDropDownOpen = true);
-            SaveSettings(Path.Combine(folder, $"share-settings-scrolled-end-{name}.png"), model, SettingsSection.Sharing, prepare: root => root.GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd());
+            SaveSettings(Path.Combine(folder, $"share-settings-scrolled-end-{name}.png"), model, SettingsSection.Sharing, prepare: root => root.GetVisualDescendants().OfType<ScrollViewer>().First(viewer => viewer.Extent.Height > viewer.Viewport.Height).ScrollToEnd());
             SettingsViewModel failing = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
             typeof(SettingsViewModel).GetProperty(nameof(SettingsViewModel.SaveError))!.SetValue(failing, "The settings were not saved: access to the path is denied.");
             SaveSettings(Path.Combine(folder, $"share-settings-save-error-{name}.png"), failing, SettingsSection.Hotkeys);

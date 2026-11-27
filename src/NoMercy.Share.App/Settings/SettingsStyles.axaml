@@ -130,15 +130,20 @@
   <Style Selector="StackPanel.note TextBlock.status">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
   </Style>
-  <!-- Takes no height: the error is drawn under its input, in the gap between field groups, so showing it moves nothing. -->
+  <!-- Every field keeps one error line of room under its input, empty or not, so showing an error moves nothing and never leaves its card. -->
   <Style Selector="TextBlock.field-error">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Red-11-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
     <Setter Property="TextWrapping" Value="NoWrap" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-    <Setter Property="VerticalAlignment" Value="Top" />
-    <Setter Property="Margin" Value="4,-2,0,-16" />
+    <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-4}" />
+    <!-- The same inset as the field label, so the error lines up with it and keeps room from the card edge. -->
+    <Setter Property="Margin" Value="{DynamicResource Nm-Space-1-Thickness}" />
     <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+  </Style>
+  <!-- A card of fields: its last field's error line (Nm-Space-4 plus its inset) is the bottom room, so the bottom padding is 0 and top and bottom read the same. -->
+  <Style Selector="Border.card.form">
+    <Setter Property="Padding" Value="16,16,16,0" />
   </Style>
   <Style Selector="TextBlock.save-error">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Red-11-Brush}" />
