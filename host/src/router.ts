@@ -16,6 +16,21 @@ const SIDECAR_SUFFIX = '.json';
 const HTML = 'text/html; charset=utf-8';
 const PAGE_SECURITY = 'default-src \'none\'; img-src \'self\'; media-src \'self\'; style-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'';
 
+// Link preview bots fetch with a generic Accept header but read the Open Graph tags from the viewer page.
+export const PREVIEW_BOT_AGENTS = [
+  'Discordbot',
+  'Twitterbot',
+  'Slackbot-LinkExpanding',
+  'TelegramBot',
+  'facebookexternalhit',
+] as const;
+
+function isPreviewBot(userAgent: string | null) {
+  const agent = (userAgent ?? '').toLowerCase();
+
+  return PREVIEW_BOT_AGENTS.some((bot) => agent.includes(bot.toLowerCase()));
+}
+
 function prefersHtml(accept: string | null) {
   const parts = (accept ?? '').split(',');
 
@@ -96,7 +111,8 @@ async function serve(request: Request, env: RouterEnv, key: string) {
   }
 
   const url = new URL(request.url);
-  const wantsViewer = prefersHtml(request.headers.get('accept')) && url.searchParams.get('raw') !== '1';
+  const asksForViewer = prefersHtml(request.headers.get('accept')) || isPreviewBot(request.headers.get('user-agent'));
+  const wantsViewer = asksForViewer && url.searchParams.get('raw') !== '1';
 
   if (wantsViewer) {
     const head = await env.bucket.head(key);
