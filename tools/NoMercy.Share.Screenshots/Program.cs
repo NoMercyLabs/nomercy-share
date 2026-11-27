@@ -10,8 +10,10 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using NoMercy.Share.App;
+using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
@@ -34,7 +36,57 @@ public static class Program
         bool remembered = CheckPositionRemembered(folder, store);
         RenderRegionOverlay(folder);
         bool popupFollows = RenderRecent(folder);
+        RenderSettings(folder);
         return remembered && popupFollows ? 0 : 1;
+    }
+
+    /// <summary>The settings window at 2x, dark and light, with made-up values; and once more with a bad endpoint, an empty bucket and a bad chord.</summary>
+    private static void RenderSettings(string folder)
+    {
+        foreach ((ThemeVariant theme, string name) in new[] { (ThemeVariant.Dark, "dark"), (ThemeVariant.Light, "light") })
+        {
+            Application.Current!.RequestedThemeVariant = theme;
+            SettingsViewModel model = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
+            SaveSettings(Path.Combine(folder, $"share-settings-{name}.png"), model);
+            model.Endpoint = "not an address";
+            model.Bucket = "";
+            model.Hotkeys[2].Chord = "Ctrl+Nonsense";
+            model.MaxSizeMegabytes = "abc";
+            model.Save();
+            SaveSettings(Path.Combine(folder, $"share-settings-errors-{name}.png"), model);
+        }
+    }
+
+    private static SettingsViewModel SettingsModel(string temp)
+    {
+        SettingsFile file = new(Path.Combine(temp, "settings.json"));
+        file.Save(new ShareSettings
+        {
+            Storage = new StorageSettings { Endpoint = "https://storage.example.test", Bucket = "made-up-bucket", PublicBaseUrl = "https://share.example.test", CredentialName = "made-up" },
+            Expiry = new ExpirySettings { DefaultDays = 7 }
+        });
+        FakeCredentialStore credentials = new();
+        credentials.Stored["made-up"] = new StoredCredential("made-up-key-id", "made-up-secret");
+        BarViewModel bar = new(new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings()),
+            new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()));
+        return new SettingsViewModel(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3"]);
+    }
+
+    private static void SaveSettings(string file, SettingsViewModel model)
+    {
+        // The window's own content goes into a host so the 2x is a layout transform, as for the recent list.
+        SettingsWindow settings = new(model);
+        Control content = (Control)settings.Content!;
+        settings.Content = null;
+        content.Width = settings.Width;
+        LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = content };
+        Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, Width = settings.Width * 2, Height = 2200, CanResize = false };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        using RenderTargetBitmap bitmap = Render(window, 1, 0, window.Bounds.Width);
+        bitmap.Save(file);
+        Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
+        window.Close();
     }
 
     /// <summary>The recent links list, dark and light, with three made-up links and empty, at 2x; also checks the bar's popup opens and closes with the list.</summary>

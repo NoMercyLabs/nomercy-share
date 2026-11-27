@@ -5,7 +5,7 @@
         Title="{local:Loc settings.title}" Width="520" Height="680" MinWidth="440" MinHeight="360" WindowStartupLocation="CenterScreen">
   <DockPanel>
     <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,1,0,0"
-            Padding="{DynamicResource Nm-Space-4-Thickness}">
+            Padding="{DynamicResource Nm-Space-6-Thickness}">
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource Nm-Space-2}">
         <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" />
         <Button Classes="footer accent" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
