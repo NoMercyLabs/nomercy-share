@@ -8,6 +8,7 @@ describe('dataUrlToBase64', () => {
 
   it('keeps a long payload whole', () => {
     const payload = 'A'.repeat(100000);
+
     expect(dataUrlToBase64(`data:image/png;base64,${payload}`)).toBe(payload);
   });
 

@@ -1,0 +1,108 @@
+/* NM dark tokens: Nm-Bg, Nm-Surface, Nm-Border, Nm-Text-Primary, Nm-Accent, Nm-Radius-Lg. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --surface: #161616;
+  --surface-hover: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #ededed;
+  --text-secondary: #888888;
+  --accent: #0bd8b6;
+  --accent-hover: #0eb39e;
+  --accent-fg: #0a0a0a;
+  --error: #ff9592;
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 280px;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 system-ui, 'Segoe UI', sans-serif;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+button.primary:hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.status {
+  margin: 0;
+  min-height: 20px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.status.error {
+  color: var(--error);
+}
+
+.status.done {
+  color: var(--accent);
+}

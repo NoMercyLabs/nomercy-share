@@ -1,20 +1,28 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ICONS } from '../src/icons';
 
-const here = (path: string): string => new URL(path, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+interface Manifest {
+  key?: string;
+  [name: string]: object | string | number | undefined;
+}
 
-const manifest: unknown = JSON.parse(readFileSync(here('../manifest.json'), 'utf8'));
-const publicKey = readFileSync(here('../manifest-key.txt'), 'utf8').trim();
+const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url));
+const read = (path: string): string => readFileSync(here(path), 'utf8');
 
-function field(name: string): unknown {
-  return typeof manifest === 'object' && manifest !== null ? Reflect.get(manifest, name) : undefined;
+const manifest: Manifest = JSON.parse(read('../manifest.json'));
+const publicKey = read('../manifest-key.txt').trim();
+
+function field(name: string): object | string | number | undefined {
+  return manifest[name];
 }
 
 /** Chrome derives the extension id from the first 16 bytes of the SHA-256 of the DER key, each nibble written as a to p. */
 function extensionId(base64Key: string): string {
   const hash = createHash('sha256').update(Buffer.from(base64Key, 'base64')).digest('hex').slice(0, 32);
+
   return [...hash].map((digit) => String.fromCharCode(97 + Number.parseInt(digit, 16))).join('');
 }
 
@@ -25,7 +33,7 @@ describe('manifest', () => {
 
   it('gives the extension the id the app registers for its native host', () => {
     expect(extensionId(publicKey)).toBe('pffggmajnklhkjjgldpojacknecfkmlc');
-    expect(extensionId(String(field('key')))).toBe('pffggmajnklhkjjgldpojacknecfkmlc');
+    expect(extensionId(manifest.key ?? '')).toBe('pffggmajnklhkjjgldpojacknecfkmlc');
   });
 
   it('asks for exactly the permissions the capture needs', () => {
@@ -48,6 +56,7 @@ describe('manifest', () => {
 describe('icons', () => {
   it('are the generated Moooom paths of the app', () => {
     const generated = readFileSync(here('../../src/NoMercy.Share.App/Icons/MoooomIconData.g.cs'), 'utf8');
+
     for (const path of Object.values(ICONS)) {
       expect(generated).toContain(`"${path}"`);
     }

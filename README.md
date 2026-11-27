@@ -32,6 +32,18 @@ It runs Edge (else Chrome) headless with its own empty profile over the DevTools
 | `SettleMilliseconds` | 500 | The wait after the load, for late layout. |
 | `MaxFullPageHeight` | 16384 | A taller page or element is cut off here. |
 
+## Browser extension
+
+The extension in `extension/` captures the open tab in Edge or Chrome and hands the picture to the app, which shares it like any other capture. The popup has three buttons: Full page, Visible area and Pick element (hover a part of the page, click it, Escape cancels). The link goes to the clipboard when the app has a share host set up. Without one the picture is saved on this PC and the popup names the file.
+
+1. Build it: `npm ci` and `npm run build` in `extension/`.
+2. Open `edge://extensions` (or `chrome://extensions`), turn on Developer mode, choose Load unpacked and pick `extension/dist`.
+3. Start NoMercy Share once. It registers the native host for Edge and Chrome (current user only), which lets the extension start the app. Until then the popup says "Start NoMercy Share once so the browser can find it."
+
+The extension asks for `activeTab`, `scripting`, `nativeMessaging`, `debugger`, `clipboardWrite` and `contextMenus`, and for no host access. Full page and Pick element attach the browser debugger to the tab for the capture only, so the browser shows its "started debugging" bar for a moment. Pages taller than 16384 CSS pixels are cut off there. Browser pages, the extension stores and local files are refused.
+
+The key in `extension/manifest-key.txt` fixes the extension id (`pffggmajnklhkjjgldpojacknecfkmlc`) that the app lists in the native host manifest.
+
 ## Upload and expiry
 
 `Storage.Provider` is `r2` or `s3` (the same S3 client; R2 is the default). It uses the AWS SDK for .NET with a custom `Storage.Endpoint` and path-style addressing: the SDK already signs, retries and reads S3 errors, so a hand-written SigV4 client would be more code to keep correct. R2 needs `Storage.Region` = `auto` (the default).

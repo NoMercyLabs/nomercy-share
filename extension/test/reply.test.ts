@@ -3,7 +3,11 @@ import { describeFailure, describeReply } from '../src/reply';
 
 describe('describeReply', () => {
   it('reports a link', () => {
-    expect(describeReply({ ok: true, link: 'https://share.example/abc123', local: false })).toEqual({
+    expect(describeReply({
+      ok: true,
+      link: 'https://share.example/abc123',
+      local: false,
+    })).toEqual({
       kind: 'link',
       link: 'https://share.example/abc123',
       text: 'Link copied.',
@@ -11,14 +15,22 @@ describe('describeReply', () => {
   });
 
   it('reports a local save by the file name of a Windows path', () => {
-    expect(describeReply({ ok: true, path: 'C:\\Users\\someone\\Pictures\\shot-001.png', local: true })).toEqual({
+    expect(describeReply({
+      ok: true,
+      path: 'C:\\Users\\someone\\Pictures\\shot-001.png',
+      local: true,
+    })).toEqual({
       kind: 'local',
       text: 'Saved on this PC: shot-001.png.',
     });
   });
 
   it('reports a local save by the file name of a path with slashes', () => {
-    expect(describeReply({ ok: true, path: '/home/someone/shot-002.png', local: true }).text).toBe('Saved on this PC: shot-002.png.');
+    expect(describeReply({
+      ok: true,
+      path: '/home/someone/shot-002.png',
+      local: true,
+    }).text).toBe('Saved on this PC: shot-002.png.');
   });
 
   it('shows the error text the app gave', () => {
@@ -31,8 +43,10 @@ describe('describeReply', () => {
 
   it('answers an unexpected reply with a fixed text', () => {
     const text = 'NoMercy Share sent an unexpected reply.';
+
     expect(describeReply(undefined)).toEqual({ kind: 'error', text });
-    expect(describeReply('hello')).toEqual({ kind: 'error', text });
+    expect(describeReply(null)).toEqual({ kind: 'error', text });
+    expect(describeReply({})).toEqual({ kind: 'error', text });
     expect(describeReply({ ok: false })).toEqual({ kind: 'error', text });
   });
 });

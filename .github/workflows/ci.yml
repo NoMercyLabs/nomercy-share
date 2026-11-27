@@ -57,3 +57,23 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+
+  extension:
+    # The Edge and Chrome extension: type check, strict lint, tests and the bundle.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
