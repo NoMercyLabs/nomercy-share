@@ -1,4 +1,4 @@
-<!-- The look of the floating bar: round icon buttons, hover tint, a focus ring outside the button, accent only on focus and while active. -->
+<!-- The look of the floating bar: round icon buttons, hover tint, a focus ring inside the button edge (an outer ring is clipped by the button's square bounds), accent only on focus and while active. -->
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:icons="using:NoMercy.Share.App.Icons">
   <Style Selector="Button.bar">

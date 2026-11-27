@@ -5,5 +5,5 @@
   <SolidColorBrush x:Key="Share-Hover-Brush" Color="#1FFFFFFF" />
   <SolidColorBrush x:Key="Share-Separator-Brush" Color="#2EFFFFFF" />
   <BoxShadows x:Key="Share-Shadow-Bar">0 6 20 0 #66000000</BoxShadows>
-  <BoxShadows x:Key="Share-Shadow-Focus">0 0 0 2 #0BD8B6</BoxShadows>
+  <BoxShadows x:Key="Share-Shadow-Focus">inset 0 0 0 2 #0BD8B6</BoxShadows>
 </ResourceDictionary>
