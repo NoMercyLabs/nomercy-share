@@ -12,6 +12,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The same stand-ins the Core tests use. -->
+    <Compile Include="../NoMercy.Share.Core.Tests/Fakes.cs" Link="Fakes.cs" />
     <ProjectReference Include="../../src/NoMercy.Share.App/NoMercy.Share.App.csproj" />
   </ItemGroup>
 </Project>

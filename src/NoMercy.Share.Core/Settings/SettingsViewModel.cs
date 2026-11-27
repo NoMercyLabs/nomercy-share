@@ -47,6 +47,7 @@ public sealed class SettingsViewModel : ObservableObject
     private string? _maxSizeError;
     private string? _frameRateError;
     private string? _saveError;
+    private SettingsSection _selectedSection;
 
     public SettingsViewModel(SettingsFile file, LiveSettings live, ICredentialStore credentials, HotkeyBinder binder, IReadOnlyList<string> providers)
     {
@@ -84,6 +85,42 @@ public sealed class SettingsViewModel : ObservableObject
     public IReadOnlyList<ExpiryChoice> ExpiryChoices { get; }
 
     public IReadOnlyList<HotkeyRow> Hotkeys { get; }
+
+    /// <summary>The section the window shows; it opens on Sharing.</summary>
+    public SettingsSection SelectedSection
+    {
+        get => _selectedSection;
+        set
+        {
+            Set(ref _selectedSection, value);
+            OnChanged(nameof(SelectedSectionIndex));
+            OnChanged(nameof(ShowsSharing));
+            OnChanged(nameof(ShowsLinks));
+            OnChanged(nameof(ShowsHotkeys));
+            OnChanged(nameof(ShowsRecording));
+        }
+    }
+
+    /// <summary>The same choice as a list position, for the section list.</summary>
+    public int SelectedSectionIndex
+    {
+        get => (int)_selectedSection;
+        set
+        {
+            if (Enum.IsDefined(typeof(SettingsSection), value))
+            {
+                SelectedSection = (SettingsSection)value;
+            }
+        }
+    }
+
+    public bool ShowsSharing => SelectedSection == SettingsSection.Sharing;
+
+    public bool ShowsLinks => SelectedSection == SettingsSection.Links;
+
+    public bool ShowsHotkeys => SelectedSection == SettingsSection.Hotkeys;
+
+    public bool ShowsRecording => SelectedSection == SettingsSection.Recording;
 
     /// <summary>Shown in the empty secret box when a credential is stored; the secret itself is never loaded.</summary>
     public string SecretPlaceholder { get; }
@@ -295,6 +332,7 @@ public sealed class SettingsViewModel : ObservableObject
         HotkeySettings hotkeys = PlanHotkeys(current.Hotkeys);
         if (HasErrors)
         {
+            ShowFirstSectionWithError();
             return;
         }
 
@@ -358,6 +396,24 @@ public sealed class SettingsViewModel : ObservableObject
     private bool HasErrors =>
         new[] { EndpointError, BucketError, RegionError, PublicBaseUrlError, CredentialError, DiscordWebhookError, MaxSizeError, FrameRateError }.Any(error => error is not null)
         || Hotkeys.Any(row => row.Error is not null);
+
+    /// <summary>Only one section is on screen, so a mistake in another one would go unseen; the window moves to it.</summary>
+    private void ShowFirstSectionWithError()
+    {
+        bool sharing = new[] { EndpointError, BucketError, RegionError, PublicBaseUrlError, CredentialError, DiscordWebhookError }.Any(error => error is not null);
+        if (sharing)
+        {
+            SelectedSection = SettingsSection.Sharing;
+        }
+        else if (Hotkeys.Any(row => row.Error is not null))
+        {
+            SelectedSection = SettingsSection.Hotkeys;
+        }
+        else if (MaxSizeError is not null || FrameRateError is not null)
+        {
+            SelectedSection = SettingsSection.Recording;
+        }
+    }
 
     private void ClearErrors()
     {

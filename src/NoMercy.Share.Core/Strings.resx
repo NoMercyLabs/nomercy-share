@@ -58,9 +58,11 @@
   <data name="settings.error.missing.bucket" xml:space="preserve"><value>Enter the bucket name.</value></data>
   <data name="settings.error.missing.region" xml:space="preserve"><value>Enter the region.</value></data>
   <data name="settings.error.missing.publicbase" xml:space="preserve"><value>Enter the public link base URL.</value></data>
-  <data name="settings.recording.size" xml:space="preserve"><value>Max size (MB)</value></data>
-  <data name="settings.recording.fps" xml:space="preserve"><value>Frame rate (fps)</value></data>
-  <data name="settings.recording.systemsound" xml:space="preserve"><value>Record system sound</value></data>
+  <data name="settings.recording.size" xml:space="preserve"><value>Max size</value></data>
+  <data name="settings.recording.fps" xml:space="preserve"><value>Frame rate</value></data>
+  <data name="settings.unit.mb" xml:space="preserve"><value>MB</value></data>
+  <data name="settings.unit.fps" xml:space="preserve"><value>fps</value></data>
+  <data name="settings.sections" xml:space="preserve"><value>Settings sections</value></data>  <data name="settings.recording.systemsound" xml:space="preserve"><value>Record system sound</value></data>
   <data name="settings.recording.microphone" xml:space="preserve"><value>Record microphone</value></data>
   <data name="settings.save" xml:space="preserve"><value>Save</value></data>
   <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>

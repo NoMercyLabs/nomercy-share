@@ -48,17 +48,25 @@ public static class Program
         {
             Application.Current!.RequestedThemeVariant = theme;
             SettingsViewModel model = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
-            SaveSettings(Path.Combine(folder, $"share-settings-{name}.png"), model);
+            foreach (SettingsSection section in Enum.GetValues<SettingsSection>())
+            {
+                SaveSettings(Path.Combine(folder, $"share-settings-look-{section.ToString().ToLowerInvariant()}-{name}.png"), model, section);
+            }
+
+            SaveSettings(Path.Combine(folder, $"share-settings-look-hotkeys-record-{name}.png"), model, SettingsSection.Hotkeys, recordFirstChord: true);
             SettingsViewModel sound = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
             sound.RecordSystemSound = true;
             sound.RecordMicrophone = true;
-            SaveSettings(Path.Combine(folder, $"share-settings-audio-{name}.png"), sound);
+            SaveSettings(Path.Combine(folder, $"share-settings-audio-{name}.png"), sound, SettingsSection.Recording);
+            SettingsViewModel unset = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), unset: true);
+            SaveSettings(Path.Combine(folder, $"share-settings-notsetup-{name}.png"), unset);
             model.Endpoint = "not an address";
             model.Bucket = "";
             model.Hotkeys[2].Chord = "Ctrl+Nonsense";
             model.MaxSizeMegabytes = "abc";
             model.Save();
-            SaveSettings(Path.Combine(folder, $"share-settings-errors-{name}.png"), model);
+            SaveSettings(Path.Combine(folder, $"share-settings-errors-{name}.png"), model, SettingsSection.Sharing);
+            SaveSettings(Path.Combine(folder, $"share-settings-errors-recording-{name}.png"), model, SettingsSection.Recording);
 
             SettingsViewModel on = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), DiscordSettings.ProviderName, webhookStored: true);
             SaveSettings(Path.Combine(folder, $"share-settings-discordprovider-{name}.png"), on);
@@ -100,23 +108,29 @@ public static class Program
         window.Close();
     }
 
-    private static SettingsViewModel SettingsModel(string temp, string provider = "r2", bool webhookStored = false)
+    private static SettingsViewModel SettingsModel(string temp, string provider = "r2", bool webhookStored = false, bool unset = false)
     {
         SettingsFile file = new(Path.Combine(temp, "settings.json"));
         file.Save(new ShareSettings
         {
-            Storage = new StorageSettings
-            {
-                Provider = provider,
-                Endpoint = "https://storage.example.test",
-                Bucket = "made-up-bucket",
-                PublicBaseUrl = "https://share.example.test",
-                CredentialName = "made-up"
-            },
+            Storage = unset
+                ? new StorageSettings { Provider = provider }
+                : new StorageSettings
+                {
+                    Provider = provider,
+                    Endpoint = "https://storage.example.test",
+                    Bucket = "made-up-bucket",
+                    PublicBaseUrl = "https://share.example.test",
+                    CredentialName = "made-up"
+                },
             Expiry = new ExpirySettings { DefaultDays = 7 }
         });
         FakeCredentialStore credentials = new();
-        credentials.Stored["made-up"] = new StoredCredential("made-up-key-id", "made-up-secret");
+        if (!unset)
+        {
+            credentials.Stored["made-up"] = new StoredCredential("made-up-key-id", "made-up-secret");
+        }
+
         if (webhookStored)
         {
             credentials.Stored[ShareDefaults.DiscordCredentialName] = new StoredCredential("webhook", "https://discord.com/api/webhooks/000/made-up-token");
@@ -127,17 +141,25 @@ public static class Program
         return new SettingsViewModel(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3", "discord"]);
     }
 
-    private static void SaveSettings(string file, SettingsViewModel model)
+    private static void SaveSettings(string file, SettingsViewModel model, SettingsSection section = SettingsSection.Sharing, bool recordFirstChord = false)
     {
         // The window's own content goes into a host so the 2x is a layout transform, as for the recent list.
+        model.SelectedSection = section;
         SettingsWindow settings = new(model);
         Control content = (Control)settings.Content!;
         settings.Content = null;
         content.Width = settings.Width;
+        content.Height = settings.Height;
         LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = content };
-        Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, Width = settings.Width * 2, Height = 2200, CanResize = false };
+        Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, Width = settings.Width * 2, Height = settings.Height * 2, CanResize = false };
         window.Show();
         Dispatcher.UIThread.RunJobs();
+        if (recordFirstChord)
+        {
+            content.GetVisualDescendants().OfType<TextBox>().First(box => box.Classes.Contains("chord")).Focus();
+            Dispatcher.UIThread.RunJobs();
+        }
+
         using RenderTargetBitmap bitmap = Render(window, 1, 0, window.Bounds.Width);
         bitmap.Save(file);
         Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
