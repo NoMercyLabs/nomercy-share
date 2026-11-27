@@ -1,4 +1,4 @@
-using NoMercy.Share.Core.Destinations;
+using NoMercy.Share.Core.Discord;
 
 namespace NoMercy.Share.Core.Tests;
 

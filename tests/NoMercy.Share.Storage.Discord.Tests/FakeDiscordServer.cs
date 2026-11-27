@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace NoMercy.Share.Core.Tests;
+namespace NoMercy.Share.Storage.Discord.Tests;
 
 /// <summary>A local HttpListener standing in for Discord. Answers come from a queue; the last one repeats.</summary>
 internal sealed class FakeDiscordServer : IDisposable
@@ -21,7 +21,7 @@ internal sealed class FakeDiscordServer : IDisposable
 
     public Uri Address { get; }
 
-    public List<(string Method, string Path, string ContentType, string Body)> Requests { get; } = [];
+    public List<(string Method, string Path, string Query, string ContentType, string Body)> Requests { get; } = [];
 
     public void Answer(int status, string body = "", TimeSpan delay = default) => _answers.Enqueue((status, body, delay));
 
@@ -58,7 +58,7 @@ internal sealed class FakeDiscordServer : IDisposable
             string body = await reader.ReadToEndAsync();
             lock (Requests)
             {
-                Requests.Add((context.Request.HttpMethod, context.Request.Url!.AbsolutePath, context.Request.ContentType ?? string.Empty, body));
+                Requests.Add((context.Request.HttpMethod, context.Request.Url!.AbsolutePath, context.Request.Url.Query, context.Request.ContentType ?? string.Empty, body));
             }
 
             (int status, string answer, TimeSpan delay) = NextAnswer();
