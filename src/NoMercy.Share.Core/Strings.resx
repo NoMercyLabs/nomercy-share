@@ -17,6 +17,36 @@
   <data name="bar.settings" xml:space="preserve"><value>Settings</value></data>
   <data name="bar.close" xml:space="preserve"><value>Close NoMercy Share</value></data>
   <data name="notice.later" xml:space="preserve"><value>Coming in a later step</value></data>
+  <data name="settings.title" xml:space="preserve"><value>NoMercy Share settings</value></data>
+  <data name="settings.section.sharing" xml:space="preserve"><value>Sharing</value></data>
+  <data name="settings.section.links" xml:space="preserve"><value>Links</value></data>
+  <data name="settings.section.hotkeys" xml:space="preserve"><value>Hotkeys</value></data>
+  <data name="settings.section.recording" xml:space="preserve"><value>Recording</value></data>
+  <data name="settings.sharing.on" xml:space="preserve"><value>Links go to {0}</value></data>
+  <data name="settings.sharing.off" xml:space="preserve"><value>Not set up: captures stay on this PC</value></data>
+  <data name="settings.sharing.partial" xml:space="preserve"><value>Not complete yet: captures stay on this PC until every field is filled in</value></data>
+  <data name="settings.provider" xml:space="preserve"><value>Provider</value></data>
+  <data name="settings.endpoint" xml:space="preserve"><value>Endpoint</value></data>
+  <data name="settings.bucket" xml:space="preserve"><value>Bucket</value></data>
+  <data name="settings.region" xml:space="preserve"><value>Region</value></data>
+  <data name="settings.publicbase" xml:space="preserve"><value>Public link base URL</value></data>
+  <data name="settings.keyid" xml:space="preserve"><value>Access key id</value></data>
+  <data name="settings.secret" xml:space="preserve"><value>Secret access key</value></data>
+  <data name="settings.secret.saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="settings.expiry" xml:space="preserve"><value>Default expiry</value></data>
+  <data name="settings.expiry.never" xml:space="preserve"><value>Never</value></data>
+  <data name="settings.expiry.day" xml:space="preserve"><value>{0} day</value></data>
+  <data name="settings.expiry.days" xml:space="preserve"><value>{0} days</value></data>
+  <data name="settings.hotkey.off" xml:space="preserve"><value>Off</value></data>
+  <data name="settings.hotkey.clear" xml:space="preserve"><value>Turn this hotkey off</value></data>
+  <data name="settings.recording.size" xml:space="preserve"><value>Max size (MB)</value></data>
+  <data name="settings.recording.fps" xml:space="preserve"><value>Frame rate (fps)</value></data>
+  <data name="settings.save" xml:space="preserve"><value>Save</value></data>
+  <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="settings.save.failed" xml:space="preserve"><value>The settings were not saved: {0}</value></data>
+  <data name="error.setting.positive" xml:space="preserve"><value>{0} must be a number above 0</value></data>
+  <data name="error.credential.needed" xml:space="preserve"><value>Enter the access key id and the secret access key</value></data>
+  <data name="error.credential.secret" xml:space="preserve"><value>Enter the secret access key again for this key id</value></data>
   <data name="notice.failed" xml:space="preserve"><value>That did not work. Try again.</value></data>
   <data name="notice.copied" xml:space="preserve"><value>Link copied</value></data>
   <data name="notice.clipboard" xml:space="preserve"><value>Copied to clipboard</value></data>

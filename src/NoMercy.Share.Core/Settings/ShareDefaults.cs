@@ -26,6 +26,9 @@ public static class ShareDefaults
 
     public const string SidecarSuffix = ".json";
 
+    /// <summary>The credential store name the settings window uses when the settings name none.</summary>
+    public const string CredentialName = "nomercy-share";
+
     /// <summary>How many days a link lives unless the upload says otherwise. Null in the settings means never.</summary>
     public const int ExpiryDays = 30;
 

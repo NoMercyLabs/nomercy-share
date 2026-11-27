@@ -6,11 +6,13 @@ namespace NoMercy.Share.Core.Hotkeys;
 /// <summary>Registers the chords of the settings and runs the bar action of a pressed chord, the same path as a click on its button.</summary>
 public sealed class HotkeyBinder(IGlobalHotkeys hotkeys, BarViewModel bar, HotkeySettings settings) : IDisposable
 {
+    private HotkeySettings _settings = settings;
+
     public void Start()
     {
         Dictionary<BarAction, HotkeyChord> chords = [];
         List<string> notices = [];
-        foreach ((BarAction action, string text) in settings.Chords())
+        foreach ((BarAction action, string text) in _settings.Chords())
         {
             if (HotkeyChord.TryParse(text, out HotkeyChord? chord, out string? error))
             {
@@ -22,6 +24,7 @@ public sealed class HotkeyBinder(IGlobalHotkeys hotkeys, BarViewModel bar, Hotke
             }
         }
 
+        hotkeys.Pressed -= OnPressed;
         hotkeys.Pressed += OnPressed;
         string[] taken = [.. hotkeys.Register(chords).Where(result => !result.Registered).Select(result => result.Chord.ToString()).Distinct()];
         if (taken.Length > 0)
@@ -33,6 +36,13 @@ public sealed class HotkeyBinder(IGlobalHotkeys hotkeys, BarViewModel bar, Hotke
         {
             bar.ShowMessage(string.Join(" ", notices));
         }
+    }
+
+    /// <summary>Registers the chords of new settings in place of the old ones.</summary>
+    public void Apply(HotkeySettings next)
+    {
+        _settings = next;
+        Start();
     }
 
     public void Dispose()

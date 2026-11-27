@@ -1,0 +1,178 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:NoMercy.Share.App" xmlns:icons="using:NoMercy.Share.App.Icons"
+        xmlns:settings="using:NoMercy.Share.Core.Settings"
+        x:Class="NoMercy.Share.App.SettingsWindow" x:DataType="settings:SettingsViewModel" Classes="settings"
+        Title="{local:Loc settings.title}" Width="520" Height="680" MinWidth="440" MinHeight="360" WindowStartupLocation="CenterScreen">
+  <DockPanel>
+    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,1,0,0"
+            Padding="{DynamicResource Nm-Space-4-Thickness}">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource Nm-Space-2}">
+        <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" />
+        <Button Classes="footer accent" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
+      </StackPanel>
+    </Border>
+    <ScrollViewer>
+      <StackPanel Grid.IsSharedSizeScope="True" Margin="{DynamicResource Nm-Space-6-Thickness}" Spacing="{DynamicResource Nm-Space-8}">
+
+        <StackPanel Spacing="{DynamicResource Nm-Space-3}">
+          <TextBlock Classes="section" Text="{local:Loc settings.section.sharing}" />
+          <Border Classes="section-line" />
+          <TextBlock Classes="status" Text="{Binding SharingStatus}" AutomationProperties.LiveSetting="Polite" />
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.provider}" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding Providers}" SelectedItem="{Binding Provider}" AutomationProperties.Name="{local:Loc settings.provider}" />
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.endpoint}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox Text="{Binding Endpoint}" AutomationProperties.Name="{local:Loc settings.endpoint}" />
+              <TextBlock Classes="field-error" Text="{Binding EndpointError}" IsVisible="{Binding EndpointError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.bucket}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox Text="{Binding Bucket}" AutomationProperties.Name="{local:Loc settings.bucket}" />
+              <TextBlock Classes="field-error" Text="{Binding BucketError}" IsVisible="{Binding BucketError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.region}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox Text="{Binding Region}" AutomationProperties.Name="{local:Loc settings.region}" />
+              <TextBlock Classes="field-error" Text="{Binding RegionError}" IsVisible="{Binding RegionError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.publicbase}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox Text="{Binding PublicBaseUrl}" AutomationProperties.Name="{local:Loc settings.publicbase}" />
+              <TextBlock Classes="field-error" Text="{Binding PublicBaseUrlError}" IsVisible="{Binding PublicBaseUrlError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.keyid}" />
+            <TextBox Grid.Column="1" Text="{Binding AccessKeyId}" AutomationProperties.Name="{local:Loc settings.keyid}" />
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.secret}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox PasswordChar="•" Text="{Binding SecretAccessKey}" PlaceholderText="{Binding SecretPlaceholder}" AutomationProperties.Name="{local:Loc settings.secret}" />
+              <TextBlock Classes="field-error" Text="{Binding CredentialError}" IsVisible="{Binding CredentialError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="{DynamicResource Nm-Space-3}">
+          <TextBlock Classes="section" Text="{local:Loc settings.section.links}" />
+          <Border Classes="section-line" />
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.expiry}" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding ExpiryChoices}" SelectedItem="{Binding SelectedExpiry}" AutomationProperties.Name="{local:Loc settings.expiry}">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="settings:ExpiryChoice">
+                  <TextBlock Text="{Binding Label}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </Grid>
+        </StackPanel>
+
+        <StackPanel Spacing="{DynamicResource Nm-Space-3}">
+          <TextBlock Classes="section" Text="{local:Loc settings.section.hotkeys}" />
+          <Border Classes="section-line" />
+          <ItemsControl ItemsSource="{Binding Hotkeys}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="{DynamicResource Nm-Space-3}" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="settings:HotkeyRow">
+                <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Classes="field-label" Text="{Binding Label}" />
+                  <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource Nm-Space-1}">
+                      <TextBox IsReadOnly="True" Text="{Binding Chord}" PlaceholderText="{local:Loc settings.hotkey.off}" KeyDown="OnChordKeyDown"
+                               AutomationProperties.Name="{Binding Label}" />
+                      <Button Grid.Column="1" Classes="bar small" VerticalAlignment="Top" Margin="0,4,0,0" Click="OnClearClick"
+                              ToolTip.Tip="{local:Loc settings.hotkey.clear}" AutomationProperties.Name="{local:Loc settings.hotkey.clear}">
+                        <icons:MoooomIcon Kind="cross" />
+                      </Button>
+                    </Grid>
+                    <TextBlock Classes="field-error" Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel Spacing="{DynamicResource Nm-Space-3}">
+          <TextBlock Classes="section" Text="{local:Loc settings.section.recording}" />
+          <Border Classes="section-line" />
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.recording.size}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox Text="{Binding MaxSizeMegabytes}" AutomationProperties.Name="{local:Loc settings.recording.size}" />
+              <TextBlock Classes="field-error" Text="{Binding MaxSizeError}" IsVisible="{Binding MaxSizeError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnSpacing="{DynamicResource Nm-Space-4}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Label" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Classes="field-label" Text="{local:Loc settings.recording.fps}" />
+            <StackPanel Grid.Column="1" Spacing="{DynamicResource Nm-Space-1}">
+              <TextBox Text="{Binding FrameRate}" AutomationProperties.Name="{local:Loc settings.recording.fps}" />
+              <TextBlock Classes="field-error" Text="{Binding FrameRateError}" IsVisible="{Binding FrameRateError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+
+        <TextBlock Classes="field-error" Text="{Binding SaveError}" IsVisible="{Binding SaveError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

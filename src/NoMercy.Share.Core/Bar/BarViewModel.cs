@@ -58,7 +58,7 @@ public sealed class BarViewModel : ObservableObject
             [BarAction.Record] = ToggleRecordingAsync,
             [BarAction.WebPage] = CaptureWebPageAsync,
             [BarAction.Recent] = _ => ToggleRecent(),
-            [BarAction.Settings] = _ => ShowNotice("notice.later"),
+            [BarAction.Settings] = _ => RequestSettings(),
             [BarAction.Close] = _ => RequestClose()
         };
         ActionCommand = new BarCommand(parameter =>
@@ -130,6 +130,9 @@ public sealed class BarViewModel : ObservableObject
     }
 
     public event EventHandler? CloseRequested;
+
+    /// <summary>Raised when the settings button is pressed; the window opens the settings window. With no listener the button says "later".</summary>
+    public event EventHandler? SettingsRequested;
 
     public void ClearNotice() => Notice = null;
 
@@ -262,6 +265,17 @@ public sealed class BarViewModel : ObservableObject
             Trace.TraceError("Opening a recent link failed: {0}", error);
             Notice = Strings.Get("notice.failed");
         }
+    }
+
+    private Task RequestSettings()
+    {
+        if (SettingsRequested is null)
+        {
+            return ShowNotice("notice.later");
+        }
+
+        SettingsRequested.Invoke(this, EventArgs.Empty);
+        return Task.CompletedTask;
     }
 
     private Task RequestClose()

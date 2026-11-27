@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 using NoMercy.Share.Core;
@@ -11,6 +12,8 @@ namespace NoMercy.Share.Platform.Windows;
 public sealed unsafe partial class WindowsCredentialStore : ICredentialStore
 {
     private const uint GenericCredential = 1;
+
+    private const uint PersistLocalMachine = 2;
 
     public StoredCredential? Read(string name)
     {
@@ -29,6 +32,36 @@ public sealed unsafe partial class WindowsCredentialStore : ICredentialStore
         finally
         {
             CredFree(handle);
+        }
+    }
+
+    public void Write(string name, StoredCredential credential)
+    {
+        byte[] secret = Encoding.Unicode.GetBytes(credential.SecretAccessKey);
+        try
+        {
+            fixed (char* target = name)
+            fixed (char* user = credential.AccessKeyId)
+            fixed (byte* blob = secret)
+            {
+                CredentialW entry = new()
+                {
+                    Type = GenericCredential,
+                    TargetName = (nint)target,
+                    UserName = (nint)user,
+                    CredentialBlob = (nint)blob,
+                    CredentialBlobSize = (uint)secret.Length,
+                    Persist = PersistLocalMachine
+                };
+                if (!CredWrite(&entry, 0))
+                {
+                    throw new Win32Exception(Marshal.GetLastPInvokeError());
+                }
+            }
+        }
+        finally
+        {
+            Array.Clear(secret);
         }
     }
 
@@ -52,6 +85,10 @@ public sealed unsafe partial class WindowsCredentialStore : ICredentialStore
     [LibraryImport("advapi32.dll", EntryPoint = "CredReadW", StringMarshalling = StringMarshalling.Utf16)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CredRead(string target, uint type, uint flags, out nint credential);
+
+    [LibraryImport("advapi32.dll", EntryPoint = "CredWriteW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CredWrite(CredentialW* credential, uint flags);
 
     [LibraryImport("advapi32.dll")]
     private static partial void CredFree(nint buffer);

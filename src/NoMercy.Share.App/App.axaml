@@ -10,5 +10,6 @@
   <Application.Styles>
     <FluentTheme />
     <StyleInclude Source="avares://nomercy-share/Bar/BarStyles.axaml" />
+    <StyleInclude Source="avares://nomercy-share/Settings/SettingsStyles.axaml" />
   </Application.Styles>
 </Application>

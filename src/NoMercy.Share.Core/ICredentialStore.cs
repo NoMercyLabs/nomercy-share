@@ -11,4 +11,7 @@ public interface ICredentialStore
 {
     /// <summary>The credential with this name, or null when there is none.</summary>
     StoredCredential? Read(string name);
+
+    /// <summary>Stores the credential under this name, replacing one that is already there.</summary>
+    void Write(string name, StoredCredential credential);
 }

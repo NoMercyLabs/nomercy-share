@@ -11,17 +11,23 @@ namespace NoMercy.Share.Core;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Wires the bar. The caller registers the settings records (<see cref="StorageSettings"/>, <see cref="ExpirySettings"/>, <see cref="ClipboardSettings"/>),
+    /// Wires the bar. The caller registers <see cref="LiveSettings"/> (storage, expiry), <see cref="ClipboardSettings"/>,
     /// <see cref="CaptureSettings"/>, <see cref="HotkeySettings"/>, the platform interfaces (with <see cref="IGlobalHotkeys"/>), the <see cref="ICaptureHost"/> and every <see cref="IShareUploader"/>; the uploader named in the storage settings is the one used.
     /// </summary>
     public static IServiceCollection AddShareCore(this IServiceCollection services)
     {
-        services.AddSingleton(sp => new ShareFlow(
-            ShareUploaderSelector.Select(sp.GetServices<IShareUploader>(), sp.GetRequiredService<StorageSettings>()),
-            sp.GetRequiredService<IClipboard>(),
-            sp.GetRequiredService<ExpirySettings>(),
-            sp.GetRequiredService<ClipboardSettings>(),
-            sp.GetService<RecentLinks>()));
+        services.AddSingleton(sp =>
+        {
+            LiveSettings live = sp.GetRequiredService<LiveSettings>();
+            IShareUploader Uploader() => ShareUploaderSelector.Select(sp.GetServices<IShareUploader>(), live.Current.Storage);
+            _ = Uploader(); // a provider name nobody answers to fails when the bar is built, as before
+            return new ShareFlow(
+                Uploader,
+                sp.GetRequiredService<IClipboard>(),
+                () => live.Current.Expiry,
+                sp.GetRequiredService<ClipboardSettings>(),
+                sp.GetService<RecentLinks>());
+        });
         services.AddSingleton(sp => new CaptureFiles(
             sp.GetRequiredService<CaptureSettings>(),
             Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),

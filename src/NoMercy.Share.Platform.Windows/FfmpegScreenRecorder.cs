@@ -9,7 +9,7 @@ namespace NoMercy.Share.Platform.Windows;
 /// Records a region of one monitor with ffmpeg's Desktop Duplication filter, then squeezes the file under the size cap.
 /// The picture is silent: audio arrives in step 5b, so <see cref="RecordingOptions.IncludeAudio"/> is not read yet.
 /// </summary>
-public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector selector, RecordingSettings settings) : IScreenRecorder
+public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector selector, Func<RecordingSettings> current) : IScreenRecorder
 {
     private const string RawExtension = ".mkv";
 
@@ -20,6 +20,12 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
     private string? _rawPath;
     private RecordingTarget _target;
     private Stopwatch _clock = new();
+    private RecordingSettings _settings = current();
+
+    public FfmpegScreenRecorder(CaptureFiles files, IRegionSelector selector, RecordingSettings settings)
+        : this(files, selector, () => settings)
+    {
+    }
 
     public bool IsRecording => _recording is not null;
 
@@ -28,7 +34,8 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
     /// <summary>The user picks the region; Escape cancels and nothing starts.</summary>
     public async Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
-        string ffmpeg = FfmpegLocator.Find(settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH"))
+        _settings = current();
+        string ffmpeg = FfmpegLocator.Find(_settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH"))
             ?? throw new RecordingException(Strings.Get("error.ffmpeg.missing"));
         ScreenFrame frozen = await Task.Run(WindowsScreenCapture.FrozenVirtualScreen, cancellationToken);
         if (await selector.SelectAsync(frozen, cancellationToken) is not { IsEmpty: false } region)
@@ -45,9 +52,9 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
         _target = RecordingTarget.For(region, monitors);
         _rawPath = files.NewPath(RawExtension);
         _ffmpeg = ffmpeg;
-        FfmpegProcess recording = FfmpegProcess.Start(ffmpeg, FfmpegArguments.Record(_target, settings.FrameRate, _rawPath));
+        FfmpegProcess recording = FfmpegProcess.Start(ffmpeg, FfmpegArguments.Record(_target, _settings.FrameRate, _rawPath));
         _clock = Stopwatch.StartNew();
-        if (await recording.ExitsWithinAsync(TimeSpan.FromMilliseconds(settings.StartupCheckMilliseconds)))
+        if (await recording.ExitsWithinAsync(TimeSpan.FromMilliseconds(_settings.StartupCheckMilliseconds)))
         {
             using (recording)
             {
@@ -96,23 +103,23 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
         using (recording)
         {
             await recording.RequestStopAsync();
-            int exit = await recording.WaitAsync(TimeSpan.FromSeconds(settings.StopTimeoutSeconds), cancellationToken);
+            int exit = await recording.WaitAsync(TimeSpan.FromSeconds(_settings.StopTimeoutSeconds), cancellationToken);
             if (exit != 0)
             {
                 throw recording.Failure(exit);
             }
         }
 
-        VideoPlan plan = VideoBudget.Plan(seconds, _target.Width, _target.Height, settings);
+        VideoPlan plan = VideoBudget.Plan(seconds, _target.Width, _target.Height, _settings);
         string mp4 = files.NewPath(FinishedExtension);
-        SqueezeOutcome outcome = await SizeCapRetry.RunAsync(plan, settings, async attempt =>
+        SqueezeOutcome outcome = await SizeCapRetry.RunAsync(plan, _settings, async attempt =>
         {
             await SqueezeAsync(raw, mp4, attempt, cancellationToken);
             return new FileInfo(mp4).Length;
         });
 
         File.Delete(raw);
-        long capBytes = (long)(settings.MaxSizeMegabytes * 1024 * 1024);
+        long capBytes = (long)(_settings.MaxSizeMegabytes * 1024 * 1024);
         return new CaptureResult(mp4, "video/mp4", outcome.Plan.Width, outcome.Plan.Height, outcome.Bytes, capBytes);
     }
 
@@ -120,7 +127,7 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
     private async Task SqueezeAsync(string raw, string mp4, VideoPlan plan, CancellationToken cancellationToken)
     {
         using FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, mp4, plan));
-        int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(settings.CompressTimeoutSeconds), cancellationToken);
+        int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(_settings.CompressTimeoutSeconds), cancellationToken);
         if (exit != 0)
         {
             throw squeeze.Failure(exit);

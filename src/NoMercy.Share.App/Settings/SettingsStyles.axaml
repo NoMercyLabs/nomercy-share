@@ -1,0 +1,57 @@
+<!-- The look of the settings window: the bar's surfaces and NM tokens; the accent is only on the Save button and the focus ring. -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Window.settings">
+    <Setter Property="Background" Value="{DynamicResource Share-Bar-Brush}" />
+  </Style>
+  <Style Selector="TextBlock.section">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Lg}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Border.section-line">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource Share-Separator-Brush}" />
+  </Style>
+  <Style Selector="TextBlock.status">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="TextBlock.field-label">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="Margin" Value="0,8,0,0" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+  <Style Selector="TextBlock.field-error">
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Red-11-Brush}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+  </Style>
+  <Style Selector="Window.settings TextBox, Window.settings ComboBox">
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Lg-Corner}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="Window.settings Button.footer">
+    <Setter Property="MinWidth" Value="88" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Full-Corner}" />
+    <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+  </Style>
+  <Style Selector="Window.settings Button.footer:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+  </Style>
+  <Style Selector="Window.settings Button.footer.accent">
+    <Setter Property="Background" Value="{DynamicResource Nm-Accent-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Contrast-Brush}" />
+  </Style>
+  <Style Selector="Window.settings Button.footer.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Nm-Accent-Hover-Brush}" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Accent-Contrast-Brush}" />
+  </Style>
+</Styles>

@@ -14,7 +14,8 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IScreenCapture>(sp => new WindowsScreenCapture(
             sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(), sp.GetRequiredService<CaptureSettings>()));
         services.AddSingleton<IScreenRecorder>(sp => new FfmpegScreenRecorder(
-            sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(), sp.GetRequiredService<RecordingSettings>()));
+            sp.GetRequiredService<CaptureFiles>(), sp.GetRequiredService<IRegionSelector>(),
+            () => sp.GetRequiredService<LiveSettings>().Current.Recording));
         services.AddSingleton<ICredentialStore, WindowsCredentialStore>();
         services.AddSingleton<IGlobalHotkeys, Win32GlobalHotkeys>();
         services.AddSingleton<IUrlOpener>(new ShellUrlOpener());

@@ -198,7 +198,7 @@ public sealed class S3ShareUploaderTests(S3MockFixture mock) : IClassFixture<S3M
     public void BothProviderNamesAreRegistered()
     {
         ServiceCollection services = new();
-        services.AddSingleton(Settings());
+        services.AddSingleton(new LiveSettings(new ShareSettings { Storage = Settings() }));
         services.AddSingleton<ICredentialStore>(new FakeCredentialStore(Credential));
         services.AddS3Storage();
 

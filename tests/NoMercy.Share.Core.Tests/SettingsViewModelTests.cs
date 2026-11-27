@@ -181,6 +181,7 @@ public sealed class SettingsViewModelTests : IDisposable
     public void AStoredCredentialNameIsKeptAndNeverRenamed()
     {
         SettingsViewModel model = Open(SetUp("stored-name"));
+        model.AccessKeyId = KeyId;
         model.SecretAccessKey = Secret;
 
         model.Save();

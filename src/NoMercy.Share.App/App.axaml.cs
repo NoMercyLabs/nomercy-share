@@ -9,6 +9,7 @@ using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
 using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
+using NoMercy.Share.Core.Sharing;
 using NoMercy.Share.Platform.Windows;
 using NoMercy.Share.Storage.S3;
 
@@ -18,6 +19,7 @@ namespace NoMercy.Share.App;
 public sealed class App : Application
 {
     private BarWindow? _window;
+    private SettingsWindow? _settingsWindow;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -29,12 +31,30 @@ public sealed class App : Application
             _window = new BarWindow(services.GetRequiredService<BarViewModel>(), services.GetRequiredService<BarPositionStore>(),
                 services.GetRequiredService<ShareSettings>().Bar);
             desktop.MainWindow = _window;
+            services.GetRequiredService<BarViewModel>().SettingsRequested += (_, _) => ShowSettings(services);
             services.GetRequiredService<HotkeyBinder>().Start();
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
             desktop.Exit += (_, _) => services.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>Opens the settings window; a second request brings the open one to the front.</summary>
+    private void ShowSettings(IServiceProvider services)
+    {
+        if (_settingsWindow is not null)
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+
+        SettingsViewModel model = new(
+            services.GetRequiredService<SettingsFile>(), services.GetRequiredService<LiveSettings>(), services.GetRequiredService<ICredentialStore>(),
+            services.GetRequiredService<HotkeyBinder>(), [.. services.GetServices<IShareUploader>().Select(uploader => uploader.ProviderName)]);
+        _settingsWindow = new SettingsWindow(model);
+        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Show();
     }
 
     private static ServiceProvider BuildServices(Func<TopLevel?> owner)
@@ -44,11 +64,9 @@ public sealed class App : Application
         ServiceCollection services = new();
         services.AddSingleton(file);
         services.AddSingleton(settings);
-        services.AddSingleton(settings.Storage);
-        services.AddSingleton(settings.Expiry);
+        services.AddSingleton(new LiveSettings(settings));
         services.AddSingleton(settings.Clipboard);
         services.AddSingleton(settings.Capture);
-        services.AddSingleton(settings.Recording);
         services.AddSingleton(settings.Hotkeys);
         services.AddSingleton(settings.Recent);
         services.AddSingleton<BarPositionStore>();
