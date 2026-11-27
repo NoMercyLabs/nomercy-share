@@ -23,6 +23,8 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 
     public bool IsRecording => _recording is not null;
 
+    public event EventHandler<string>? Failed;
+
     /// <summary>The user picks the region; Escape cancels and nothing starts.</summary>
     public async Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
@@ -43,17 +45,54 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
         _target = RecordingTarget.For(region, monitors);
         _rawPath = files.NewPath(RawExtension);
         _ffmpeg = ffmpeg;
-        _recording = FfmpegProcess.Start(ffmpeg, FfmpegArguments.Record(_target, settings.FrameRate, _rawPath));
+        FfmpegProcess recording = FfmpegProcess.Start(ffmpeg, FfmpegArguments.Record(_target, settings.FrameRate, _rawPath));
         _clock = Stopwatch.StartNew();
+        if (await recording.ExitsWithinAsync(TimeSpan.FromMilliseconds(settings.StartupCheckMilliseconds)))
+        {
+            using (recording)
+            {
+                DeleteQuietly(_rawPath);
+                throw recording.EndedByItself();
+            }
+        }
+
+        _recording = recording;
+        _ = WatchAsync(recording, _rawPath);
+    }
+
+    /// <summary>Ends the recording state when ffmpeg quits without a stop: the half-written file goes and <see cref="Failed"/> says why.</summary>
+    private async Task WatchAsync(FfmpegProcess recording, string raw)
+    {
+        await recording.ExitedAsync();
+        if (Interlocked.CompareExchange(ref _recording, null, recording) != recording)
+        {
+            return; // StopAsync took the recording and reads the exit itself
+        }
+
+        string reason = recording.EndedByItself().Message;
+        recording.Dispose();
+        DeleteQuietly(raw);
+        Failed?.Invoke(this, reason);
+    }
+
+    private static void DeleteQuietly(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+            // A file that cannot go now is left for the user; the failure notice matters more.
+        }
     }
 
     /// <summary>Stops the recording, squeezes it to an mp4 and removes the raw file. A failure keeps the raw file and says why.</summary>
     public async Task<CaptureResult> StopAsync(CancellationToken cancellationToken = default)
     {
-        FfmpegProcess recording = _recording ?? throw new InvalidOperationException("No recording is running.");
+        FfmpegProcess recording = Interlocked.Exchange(ref _recording, null) ?? throw new InvalidOperationException("No recording is running.");
         string raw = _rawPath!;
         double seconds = _clock.Elapsed.TotalSeconds;
-        _recording = null;
         using (recording)
         {
             await recording.RequestStopAsync();
@@ -66,16 +105,25 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 
         VideoPlan plan = VideoBudget.Plan(seconds, _target.Width, _target.Height, settings);
         string mp4 = files.NewPath(FinishedExtension);
-        using (FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, mp4, plan)))
+        SqueezeOutcome outcome = await SizeCapRetry.RunAsync(plan, settings, async attempt =>
         {
-            int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(settings.CompressTimeoutSeconds), cancellationToken);
-            if (exit != 0)
-            {
-                throw squeeze.Failure(exit);
-            }
-        }
+            await SqueezeAsync(raw, mp4, attempt, cancellationToken);
+            return new FileInfo(mp4).Length;
+        });
 
         File.Delete(raw);
-        return new CaptureResult(mp4, "video/mp4", plan.Width, plan.Height);
+        long capBytes = (long)(settings.MaxSizeMegabytes * 1024 * 1024);
+        return new CaptureResult(mp4, "video/mp4", outcome.Plan.Width, outcome.Plan.Height, outcome.Bytes, capBytes);
+    }
+
+    /// <summary>One squeeze pass. A retry writes over the file of the pass before it.</summary>
+    private async Task SqueezeAsync(string raw, string mp4, VideoPlan plan, CancellationToken cancellationToken)
+    {
+        using FfmpegProcess squeeze = FfmpegProcess.Start(_ffmpeg!, FfmpegArguments.Compress(raw, mp4, plan));
+        int exit = await squeeze.WaitAsync(TimeSpan.FromSeconds(settings.CompressTimeoutSeconds), cancellationToken);
+        if (exit != 0)
+        {
+            throw squeeze.Failure(exit);
+        }
     }
 }

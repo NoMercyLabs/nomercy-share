@@ -65,6 +65,12 @@ public static class ShareDefaults
 
     public const int RecordingCompressTimeoutSeconds = 600;
 
+    /// <summary>How often a video over the size cap is encoded again at a lower bitrate.</summary>
+    public const int RecordingMaxCompressAttempts = 2;
+
+    /// <summary>How long a new recording is watched for an ffmpeg that quits at once.</summary>
+    public const int RecordingStartupCheckMilliseconds = 1000;
+
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
 }

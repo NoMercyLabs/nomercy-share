@@ -25,6 +25,7 @@
   <data name="overlay.size" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="notice.recording" xml:space="preserve"><value>Recording started</value></data>
   <data name="notice.recording.failed" xml:space="preserve"><value>Recording failed: {0}</value></data>
+  <data name="notice.recording.overcap" xml:space="preserve"><value>The video is {0} MB, over the {1} MB limit.</value></data>
   <data name="error.ffmpeg.missing" xml:space="preserve"><value>ffmpeg was not found. Set Recording.FfmpegPath in settings.json or put ffmpeg on the PATH.</value></data>
   <data name="error.ffmpeg.exited" xml:space="preserve"><value>ffmpeg stopped with code {0}. {1}</value></data>
   <data name="error.recording.region" xml:space="preserve"><value>The chosen region is not on a screen.</value></data>

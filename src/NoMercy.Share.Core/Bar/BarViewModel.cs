@@ -14,6 +14,7 @@ public sealed class BarViewModel : ObservableObject
     private readonly IScreenRecorder? _recorder;
     private readonly IWebPageCapture? _web;
     private readonly Func<DateTimeOffset> _clock;
+    private readonly SynchronizationContext? _context;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _busy;
@@ -26,6 +27,12 @@ public sealed class BarViewModel : ObservableObject
         _recorder = recorder;
         _web = web;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        _context = SynchronizationContext.Current; // the recorder fails on another thread; the window reads the bar on this one
+        if (recorder is not null)
+        {
+            recorder.Failed += OnRecorderFailed;
+        }
+
         _actions = new Dictionary<BarAction, Func<CancellationToken, Task>>
         {
             [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
@@ -111,6 +118,27 @@ public sealed class BarViewModel : ObservableObject
         }
     }
 
+    private void OnRecorderFailed(object? sender, string reason)
+    {
+        if (_context is null || SynchronizationContext.Current == _context)
+        {
+            ShowRecordingFailed(reason);
+        }
+        else
+        {
+            _context.Post(_ => ShowRecordingFailed(reason), null);
+        }
+    }
+
+    private void ShowRecordingFailed(string reason)
+    {
+        _recordingStartedAt = null;
+        Notice = Strings.Get("notice.recording.failed", reason);
+        OnChanged(nameof(IsRecording));
+        OnChanged(nameof(RecordLabel));
+        OnChanged(nameof(ElapsedText));
+    }
+
     private Task ShowNotice(string key)
     {
         Notice = Strings.Get(key);
@@ -164,7 +192,13 @@ public sealed class BarViewModel : ObservableObject
     {
         ShareOutcome outcome = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
         Notice = Strings.Get(NoticeKeyFor(outcome));
+        if (capture.IsOverCap)
+        {
+            Notice += " " + Strings.Get("notice.recording.overcap", Megabytes(capture.SizeBytes), Megabytes(capture.SizeCapBytes));
+        }
     }
+
+    private static string Megabytes(long bytes) => (bytes / (1024.0 * 1024)).ToString("0.#", CultureInfo.InvariantCulture);
 
     private static string NoticeKeyFor(ShareOutcome outcome)
     {

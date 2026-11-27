@@ -13,6 +13,8 @@ public static class VideoBudget
 
     private const double KilobitsPerMegabyte = 8 * 1024;
 
+    private const double BytesPerMegabyte = 1024 * 1024;
+
     private const double Epsilon = 1e-9;
 
     /// <summary>The picture size and video bitrate that keep a clip of this length under the size cap.</summary>
@@ -30,6 +32,13 @@ public static class VideoBudget
 
         int perPixelKbps = (int)(settings.TargetBitsPerPixel * width * height * settings.FrameRate / 1000);
         return new VideoPlan(width, height, Math.Max(1, Math.Min(sizeKbps, perPixelKbps)));
+    }
+
+    /// <summary>The plan for one more encode of a file that came out too big: the same picture, the bitrate times cap over actual size times the headroom.</summary>
+    public static VideoPlan Retry(VideoPlan previous, long actualBytes, RecordingSettings settings)
+    {
+        double capBytes = settings.MaxSizeMegabytes * BytesPerMegabyte;
+        return previous with { VideoKbps = Math.Max(1, (int)(previous.VideoKbps * (capBytes / actualBytes) * settings.SizeHeadroom)) };
     }
 
     /// <summary>The largest even whole number not above the value, at least 2.</summary>

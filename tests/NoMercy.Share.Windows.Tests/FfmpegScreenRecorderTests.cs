@@ -49,7 +49,7 @@ public sealed class FfmpegScreenRecorderTests : IDisposable
     {
         ScreenRect screen = Desktop.VirtualScreen();
         CaptureSettings capture = new() { Folder = _folder };
-        RecordingSettings recording = new() { FfmpegPath = FfmpegTools.Ffmpeg()! };
+        RecordingSettings recording = new() { FfmpegPath = FfmpegTools.Ffmpeg()!, StartupCheckMilliseconds = 200 }; // the start check is part of the recording time
         FfmpegScreenRecorder recorder = new(
             new CaptureFiles(capture, "unused", () => DateTimeOffset.UtcNow), new FixedRegion(new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)), recording);
 

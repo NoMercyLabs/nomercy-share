@@ -10,6 +10,9 @@ public interface IScreenRecorder
     /// <summary>True between a successful start and the stop.</summary>
     bool IsRecording { get; }
 
+    /// <summary>Raised, on any thread, when the recording ends by itself instead of by a stop. The text says why. <see cref="IsRecording"/> is false by then.</summary>
+    event EventHandler<string>? Failed;
+
     Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>Ends the recording and returns the finished video file.</summary>

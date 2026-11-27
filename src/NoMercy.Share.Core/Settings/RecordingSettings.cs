@@ -29,4 +29,10 @@ public sealed record RecordingSettings
 
     /// <summary>How long the squeeze may run before it is killed.</summary>
     public int CompressTimeoutSeconds { get; init; } = ShareDefaults.RecordingCompressTimeoutSeconds;
+
+    /// <summary>How many more times a video that is still over <see cref="MaxSizeMegabytes"/> is encoded; 0 means never.</summary>
+    public int MaxCompressAttempts { get; init; } = ShareDefaults.RecordingMaxCompressAttempts;
+
+    /// <summary>How long after the start ffmpeg is watched; quitting inside it fails the start.</summary>
+    public int StartupCheckMilliseconds { get; init; } = ShareDefaults.RecordingStartupCheckMilliseconds;
 }

@@ -80,6 +80,24 @@ internal sealed class FfmpegProcess : IDisposable
         return _process.ExitCode;
     }
 
+    /// <summary>Completes when ffmpeg has ended, however it ended. The last error lines have arrived by then.</summary>
+    public async Task ExitedAsync()
+    {
+        await _process.WaitForExitAsync();
+        _process.WaitForExit();
+    }
+
+    /// <summary>True when ffmpeg ended inside the window.</summary>
+    public async Task<bool> ExitsWithinAsync(TimeSpan window)
+    {
+        Task exited = ExitedAsync();
+        return await Task.WhenAny(exited, Task.Delay(window)) == exited;
+    }
+
+    /// <summary>Why ffmpeg ended by itself: its last error line, or the exit code when it wrote none.</summary>
+    public RecordingException EndedByItself() =>
+        LastLine.Length > 0 ? new RecordingException(LastLine) : Failure(_process.ExitCode);
+
     /// <summary>The failure message for an exit code that is not 0.</summary>
     public RecordingException Failure(int exitCode) => new(Strings.Get("error.ffmpeg.exited", exitCode, LastLine));
 
