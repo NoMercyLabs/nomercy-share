@@ -71,10 +71,12 @@ internal sealed class FakeWebPageCapture : IWebPageCapture
 {
     public List<WebCaptureRequest> Requests { get; } = [];
 
+    public Exception? Throws { get; set; }
+
     public Task<CaptureResult> CaptureAsync(WebCaptureRequest request, CancellationToken cancellationToken = default)
     {
         Requests.Add(request);
-        return Task.FromResult(new CaptureResult("/tmp/page.png", "image/png"));
+        return Throws is null ? Task.FromResult(new CaptureResult("/tmp/page.png", "image/png")) : Task.FromException<CaptureResult>(Throws);
     }
 }
 
