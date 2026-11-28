@@ -49,8 +49,15 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
         Failed?.Invoke(this, message);
     }
 
+    public RecordingOptions? Options { get; private set; }
+
+    /// <summary>Runs inside every start, so a test can look at the state at that moment.</summary>
+    public Action? OnStart { get; set; }
+
     public Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
+        Options = options;
+        OnStart?.Invoke();
         if (StartThrows is not null)
         {
             return Task.FromException(StartThrows);

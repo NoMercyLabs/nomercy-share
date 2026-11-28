@@ -11,5 +11,6 @@ public enum BarAction
     WebPage,
     Recent,
     Settings,
-    Close
+    Close,
+    Screenshot
 }

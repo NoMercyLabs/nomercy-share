@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Settings;
 
@@ -83,8 +84,9 @@ public partial class BarWindow : Window
         };
     }
 
-    public BarWindow(BarViewModel viewModel, BarPositionStore store, BarSettings settings) : this()
+    public BarWindow(BarViewModel viewModel, BarPositionStore store, BarSettings settings, ICaptureExclusion? exclusion = null) : this()
     {
+        _ = exclusion;
         DataContext = viewModel;
         _store = store;
         _settings = settings;

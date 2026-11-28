@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows.Input;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Recent;
+using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Bar;
@@ -46,8 +47,10 @@ public sealed class BarViewModel : ObservableObject
         IWebCaptureDialog? webDialog = null,
         CaptureFiles? files = null,
         IFolderAccess? folderAccess = null,
-        IFfmpegInstall? ffmpeg = null)
+        IFfmpegInstall? ffmpeg = null,
+        RecordingSoundStore? sound = null)
     {
+        _ = sound;
         _ffmpeg = ffmpeg;
         _webDialog = webDialog;
         _files = files;
@@ -108,6 +111,34 @@ public sealed class BarViewModel : ObservableObject
         CopyImageCommand = new BarCommand(_ => _ = CopyImageAsync());
         ShareLinkCommand = new BarCommand(_ => _ = ShareLinkAsync());
         DismissChoiceCommand = new BarCommand(_ => Choice = null);
+    }
+
+    public BarMenu Menu => BarMenu.None;
+
+    public bool IsScreenshotMenuOpen => false;
+
+    public bool IsRecordMenuOpen => false;
+
+    public bool IsRecordArea => false;
+
+    public bool IsRecordWindow => false;
+
+    public bool IsRecordFullScreen => false;
+
+    public bool IsMicrophoneOn => false;
+
+    public bool IsDesktopAudioOn => false;
+
+    public ICommand SelectRecordSourceCommand { get; } = new BarCommand(_ => { });
+
+    public ICommand ToggleMicrophoneCommand { get; } = new BarCommand(_ => { });
+
+    public ICommand ToggleDesktopAudioCommand { get; } = new BarCommand(_ => { });
+
+    public Task StartRecordingAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
     }
 
     public ICommand CopyImageCommand { get; }

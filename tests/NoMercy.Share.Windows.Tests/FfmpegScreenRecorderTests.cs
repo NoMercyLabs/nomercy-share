@@ -161,17 +161,32 @@ public sealed class FfmpegScreenRecorderTests : IDisposable
         Assert.True(result.SizeBytes > result.SizeCapBytes);
     }
 
+    [DesktopFact]
+    public async Task AFullScreenRecordingAsksForNoRegionAndTakesAWholeMonitor()
+    {
+        Directory.CreateDirectory(_folder);
+        string seen = Path.Combine(_folder, "arguments.txt");
+        FfmpegScreenRecorder recorder = FakeFfmpegRecorder(startupMilliseconds: 3000, script: $"echo %*> \"{seen}\"\r\nexit /b 2", region: null);
+
+        // A cancelled region would throw OperationCanceledException; reaching ffmpeg proves the picker was never asked.
+        await Assert.ThrowsAsync<RecordingException>(() => recorder.StartAsync(new RecordingOptions(Source: CaptureKind.FullScreen)));
+
+        Assert.Matches(@"offset_x=0:offset_y=0:video_size=\d{3,}x\d{3,}", File.ReadAllText(seen));
+    }
+
     /// <summary>A .cmd file stands in for ffmpeg. <c>%last%</c> in the script is the output path, the last argument.</summary>
-    private FfmpegScreenRecorder FakeFfmpegRecorder(int startupMilliseconds, string script)
+    private FfmpegScreenRecorder FakeFfmpegRecorder(int startupMilliseconds, string script) =>
+        FakeFfmpegRecorder(startupMilliseconds, script, new ScreenRect(Desktop.VirtualScreen().X + 10, Desktop.VirtualScreen().Y + 20, 320, 240));
+
+    private FfmpegScreenRecorder FakeFfmpegRecorder(int startupMilliseconds, string script, ScreenRect? region)
     {
         Directory.CreateDirectory(_folder);
         string fake = Path.Combine(_folder, "fake-ffmpeg.cmd");
         File.WriteAllText(fake, "@echo off\r\nfor %%a in (%*) do set \"last=%%~a\"\r\n" + script + "\r\n");
-        ScreenRect screen = Desktop.VirtualScreen();
         CaptureSettings capture = new() { Folder = Path.Combine(_folder, "out") };
         Directory.CreateDirectory(capture.Folder);
         return new FfmpegScreenRecorder(
-            new CaptureFiles(capture, "unused", () => DateTimeOffset.UtcNow), new FixedRegion(new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)),
+            new CaptureFiles(capture, "unused", () => DateTimeOffset.UtcNow), new FixedRegion(region),
             new RecordingSettings { FfmpegPath = fake, StartupCheckMilliseconds = startupMilliseconds });
     }
 

@@ -2,7 +2,8 @@ namespace NoMercy.Share.Core.Capture;
 
 /// <summary>How a recording starts.</summary>
 /// <param name="IncludeAudio">Record the microphone or system audio with the picture.</param>
-public sealed record RecordingOptions(bool IncludeAudio = false);
+/// <param name="Source">What is recorded: a dragged area, the active window's rectangle at the start, or the monitor under the cursor.</param>
+public sealed record RecordingOptions(bool IncludeAudio = false, CaptureKind Source = CaptureKind.Region);
 
 /// <summary>Records the screen to a video file. Each platform has its own implementation.</summary>
 public interface IScreenRecorder
