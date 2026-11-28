@@ -199,6 +199,9 @@ public sealed class WebCaptureViewModelTests
         WebCaptureViewModel model = Model();
 
         Assert.Equal(["Full page", "Visible area", "One element"], model.Modes.Select(mode => mode.Label));
-        Assert.Equal(["Desktop (1280 px)", "Phone (390 px)"], model.Devices.Select(device => device.Label));
+        Assert.Equal(["Phone", "Tablet", "Desktop", "1080p", "1440p", "4K"], model.Devices.Select(device => device.Label));
+        Assert.Equal(
+            ["Phone (390 px)", "Tablet (834 px)", "Desktop (1280 px)", "1080p (1920 px)", "1440p (2560 px)", "4K (3840 px)"],
+            model.Devices.Select(device => device.Description));
     }
 }

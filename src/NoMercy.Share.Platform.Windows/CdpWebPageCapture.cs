@@ -72,10 +72,10 @@ public sealed class CdpWebPageCapture(CaptureFiles files, Func<WebCaptureSetting
         await connection.SendAsync("Page.enable", null, token);
         await connection.SendAsync("Emulation.setDeviceMetricsOverride", new
         {
-            width = device == WebCaptureDevice.Phone ? current.PhoneWidth : current.DesktopWidth,
+            width = current.WidthOf(device),
             height = current.Height,
             deviceScaleFactor = current.ScaleFactor,
-            mobile = device == WebCaptureDevice.Phone
+            mobile = device is WebCaptureDevice.Phone or WebCaptureDevice.Tablet
         }, token);
         Task loaded = connection.NextEvent("Page.loadEventFired");
         JsonElement navigation = await connection.SendAsync("Page.navigate", new { url = page.AbsoluteUri }, token);

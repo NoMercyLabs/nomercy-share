@@ -83,8 +83,10 @@ The Web page button runs Edge (else Chrome) headless with its own empty profile 
 | Setting (`WebCapture`) | Default | What it does |
 | --- | --- | --- |
 | `BrowserPath` | blank | The browser file; blank finds Edge, then Chrome, in their standard folders. |
-| `DesktopWidth`, `PhoneWidth` | 1280, 390 | The page width in CSS pixels. |
-| `Height` | 800 | The height of the visible area. |
+| `PhoneWidth`, `TabletWidth` | 390, 834 | The page width of **Phone** and **Tablet**, in CSS pixels. Both load the page as a touch device. |
+| `DesktopWidth` | 1280 | The page width of **Desktop**, the choice the window opens with. |
+| `FullHdWidth`, `QuadHdWidth`, `UltraHdWidth` | 1920, 2560, 3840 | The page width of **1080p**, **1440p** and **4K**. |
+| `Height` | 800 | The height of the visible area, at every width. |
 | `ScaleFactor` | 2 | Picture pixels per CSS pixel. |
 | `LoadTimeoutSeconds` | 30 | How long a page gets to load. |
 | `SettleMilliseconds` | 500 | The wait after the load, for late layout. |

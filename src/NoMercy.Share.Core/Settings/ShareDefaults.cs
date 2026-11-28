@@ -141,6 +141,14 @@ public static class ShareDefaults
 
     public const int WebCapturePhoneWidth = 390;
 
+    public const int WebCaptureTabletWidth = 834;
+
+    public const int WebCaptureFullHdWidth = 1920;
+
+    public const int WebCaptureQuadHdWidth = 2560;
+
+    public const int WebCaptureUltraHdWidth = 3840;
+
     public const int WebCaptureHeight = 800;
 
     public const double WebCaptureScaleFactor = 2;

@@ -20,12 +20,21 @@
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
     <Setter Property="Cursor" Value="Hand" />
   </Style>
-  <!-- The screen reader's name of a pill is the label it shows. -->
+  <!-- The six widths do not fit on one line, so their row wraps. -->
+  <Style Selector="ListBox.width">
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <WrapPanel ItemSpacing="{DynamicResource Nm-Space-0-5}" LineSpacing="{DynamicResource Nm-Space-0-5}" />
+      </ItemsPanelTemplate>
+    </Setter>
+  </Style>
+  <!-- A mode pill is named by its label; a width pill also tells its pixels, in its name and its tooltip. -->
   <Style Selector="ListBox.mode > ListBoxItem" x:DataType="capture:WebModeChoice">
     <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
   </Style>
   <Style Selector="ListBox.width > ListBoxItem" x:DataType="capture:WebDeviceChoice">
-    <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+    <Setter Property="AutomationProperties.Name" Value="{Binding Description}" />
+    <Setter Property="ToolTip.Tip" Value="{Binding Description}" />
   </Style>
   <!-- Every pill holds the ring's 2 px, so focus moves nothing. -->
   <Style Selector="ListBox.choices > ListBoxItem /template/ ContentPresenter#PART_ContentPresenter, ListBox.choices > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">

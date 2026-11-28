@@ -192,8 +192,13 @@
   <data name="web.mode.full" xml:space="preserve"><value>Full page</value></data>
   <data name="web.mode.viewport" xml:space="preserve"><value>Visible area</value></data>
   <data name="web.mode.element" xml:space="preserve"><value>One element</value></data>
-  <data name="web.device.desktop" xml:space="preserve"><value>Desktop ({0} px)</value></data>
-  <data name="web.device.phone" xml:space="preserve"><value>Phone ({0} px)</value></data>
+  <data name="web.device.phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="web.device.tablet" xml:space="preserve"><value>Tablet</value></data>
+  <data name="web.device.desktop" xml:space="preserve"><value>Desktop</value></data>
+  <data name="web.device.fullhd" xml:space="preserve"><value>1080p</value></data>
+  <data name="web.device.quadhd" xml:space="preserve"><value>1440p</value></data>
+  <data name="web.device.ultrahd" xml:space="preserve"><value>4K</value></data>
+  <data name="web.device.described" xml:space="preserve"><value>{0} ({1} px)</value></data>
   <data name="web.error.address" xml:space="preserve"><value>Enter a full https:// address.</value></data>
   <data name="web.error.selector" xml:space="preserve"><value>Enter a CSS selector.</value></data>
   <data name="web.error.nomatch" xml:space="preserve"><value>No element matches that selector.</value></data>

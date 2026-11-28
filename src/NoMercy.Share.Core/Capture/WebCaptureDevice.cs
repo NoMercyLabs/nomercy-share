@@ -4,5 +4,9 @@ namespace NoMercy.Share.Core.Capture;
 public enum WebCaptureDevice
 {
     Desktop,
-    Phone
+    Phone,
+    Tablet,
+    FullHd,
+    QuadHd,
+    UltraHd
 }

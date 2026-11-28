@@ -25,9 +25,14 @@ public sealed class WebCaptureViewModel : ObservableObject
     {
         _capture = capture;
         Modes = [new WebModeChoice(WebCaptureKind.FullPage), new WebModeChoice(WebCaptureKind.Viewport), new WebModeChoice(WebCaptureKind.Element)];
-        Devices = [new WebDeviceChoice(WebCaptureDevice.Desktop, settings.DesktopWidth), new WebDeviceChoice(WebCaptureDevice.Phone, settings.PhoneWidth)];
+        WebCaptureDevice[] narrowestFirst =
+        [
+            WebCaptureDevice.Phone, WebCaptureDevice.Tablet, WebCaptureDevice.Desktop,
+            WebCaptureDevice.FullHd, WebCaptureDevice.QuadHd, WebCaptureDevice.UltraHd
+        ];
+        Devices = [.. narrowestFirst.Select(device => new WebDeviceChoice(device, settings.WidthOf(device)))];
         _selectedMode = Modes[0];
-        _selectedDevice = Devices[0];
+        _selectedDevice = Devices.Single(choice => choice.Device == WebCaptureDevice.Desktop);
         if (WebAddress.TryParse(clipboardText, out Uri? copied) && WebAddress.IsHttps(copied))
         {
             _address = clipboardText!.Trim();

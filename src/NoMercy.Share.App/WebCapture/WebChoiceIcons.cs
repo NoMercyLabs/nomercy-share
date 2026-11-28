@@ -14,5 +14,5 @@ internal static class WebChoiceIcons
     });
 
     public static readonly FuncValueConverter<WebCaptureDevice, string> Device =
-        new(device => device == WebCaptureDevice.Phone ? "mobilePhone" : "monitor");
+        new(device => device is WebCaptureDevice.Phone or WebCaptureDevice.Tablet ? "mobilePhone" : "monitor");
 }
