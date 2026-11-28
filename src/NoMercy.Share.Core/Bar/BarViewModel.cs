@@ -379,6 +379,8 @@ public sealed class BarViewModel : ObservableObject
         }
     }
 
+    public WebCaptureViewModel? WebPanel => null;
+
     /// <summary>The links as of the last time the list opened.</summary>
     public RecentList Recent { get; }
 

@@ -11,40 +11,114 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using NoMercy.Share.App.Icons;
+using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
+using NoMercy.Share.Core.Sharing;
 using NoMercy.Share.Core.Tests;
 
 namespace NoMercy.Share.App.Tests;
 
-/// <summary>The web capture window in the real dark theme: the bar's surface, rows of choice pills, one focus ring and the keys.</summary>
-public sealed class WebCaptureWindowRenderTests
+/// <summary>The web panel under the bar in the real dark theme: the bar's surface, rows of choice pills, one focus ring and the keys.</summary>
+public sealed class WebCapturePanelRenderTests
 {
     private const string RenderFolderVariable = "SHARE_RENDER_DIR";
     private const string LongFailure = "No Edge or Chrome was found. Set WebCapture.BrowserPath in settings.json to the browser you want to use, then try again.";
 
     [Fact]
-    public void TheWindowIsOneBarSurfaceWithoutAnOsFrame() => WithWindow((window, _, _) =>
+    public void TheGlobeShowsThePanelUnderTheRowInTheSameWindow() => WithWindow((window, _, _, _) =>
     {
-        Assert.Equal(Avalonia.Controls.WindowDecorations.None, window.WindowDecorations);
-        Border? surface = window.GetVisualDescendants().OfType<Border>().FirstOrDefault(border => border.Name == "Surface");
-        Assert.NotNull(surface);
+        Border surface = Surface(window);
+        Border pill = window.FindControl<Border>("Pill")!;
+        window.UpdateLayout();
+        Point under = surface.TranslatePoint(default, window)!.Value;
+        Point row = pill.TranslatePoint(default, window)!.Value;
+
+        Assert.Same(window, TopLevel.GetTopLevel(surface));
+        Assert.Equal(row.X, under.X);
+        Assert.Equal(row.Y + pill.Bounds.Height + 8, under.Y);
         Assert.Equal(Brush(window, "Share-Bar-Brush"), (surface.Background as ISolidColorBrush)?.Color);
         Assert.Equal(Brush(window, "Share-Ring-Brush"), (surface.BorderBrush as ISolidColorBrush)?.Color);
-        Assert.NotEqual(default, surface.BoxShadow);
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == "Capture a web page");
-        Render(window, "web-window-default.png");
+        Assert.Equal(pill.BoxShadow, surface.BoxShadow);
+        Assert.Contains(Texts(window), text => text == "Pages open signed out.");
+        Assert.DoesNotContain(Texts(window), text => text == "Capture a web page");
+        Assert.DoesNotContain(PanelOf(window).GetVisualDescendants().OfType<Button>(), button => AutomationProperties.GetName(button) is "Cancel" or "Close");
+        Render(window, "webpanel-default.png");
+    });
+
+    [Theory]
+    [InlineData("Screenshot")]
+    [InlineData("Record the screen")]
+    public void TheCameraAndTheVideoButtonCloseThePanel(string mode) => WithWindow((window, _, _, bar) =>
+    {
+        Click(window, BarButton(window, mode));
+
+        Assert.Null(bar.WebPanel);
+        Assert.Null(FindPanel(window));
+        Assert.True(window.IsVisible);
     });
 
     [Fact]
-    public void NoChoiceIsADropDown() => WithWindow((window, _, _) =>
+    public void TheCrossOfTheBarClosesThePanelAndHidesTheBar() => WithWindow((window, _, capture, bar) =>
+    {
+        Click(window, BarButton(window, "Close NoMercy Share"));
+
+        Assert.False(window.IsVisible);
+        Assert.Null(bar.WebPanel);
+        Assert.Empty(capture.Requests);
+    });
+
+    [Fact]
+    public void ClosingTheWindowSomeOtherWayCancelsThePanel() => WithWindow((window, _, _, bar) =>
+    {
+        window.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(bar.WebPanel);
+    });
+
+    [Fact]
+    public void AfterTheRecentListThereIsNoPanel() => WithWindow((window, _, _, bar) =>
+    {
+        Click(window, BarButton(window, "Recent links"));
+
+        Assert.True(bar.IsRecentOpen);
+        Assert.Null(FindPanel(window));
+    });
+
+    [Fact]
+    public void WhileBusyTheInputsAreDisabledAndEscapeStillWorks()
+    {
+        TaskCompletionSource<CaptureResult> loading = new();
+        WithWindow((window, model, _, bar) =>
+        {
+            Control address = Named(window, "Address");
+            Press(window, PhysicalKey.Enter);
+
+            Assert.True(model.IsBusy);
+            Assert.False(address.IsEffectivelyEnabled);
+            Assert.False(Named(window, "Capture").IsEffectivelyEnabled);
+            Assert.False(Pill(window, "Width", "Phone (390 px)").IsEffectivelyEnabled);
+            Assert.True(BarButton(window, "Screenshot").IsEffectivelyEnabled);
+
+            Press(window, PhysicalKey.Escape);
+
+            Assert.Null(bar.WebPanel);
+            Assert.True(bar.Row.IsScreenshotMode);
+            Assert.True(window.IsVisible);
+        }, new PendingWebCapture(loading));
+    }
+
+    [Fact]
+    public void NoChoiceIsADropDown() => WithWindow((window, _, _, _) =>
         Assert.Empty(window.GetVisualDescendants().OfType<ComboBox>()));
 
     [Theory]
     [InlineData(WebCaptureKind.FullPage)]
     [InlineData(WebCaptureKind.Viewport)]
     [InlineData(WebCaptureKind.Element)]
-    public void BothChoiceRowsShowEveryChoiceUnclipped(WebCaptureKind kind) => WithWindow((window, model, capture) =>
+    public void BothChoiceRowsShowEveryChoiceUnclipped(WebCaptureKind kind) => WithWindow((window, model, capture, _) =>
     {
         model.SelectedMode = model.Modes.Single(mode => mode.Kind == kind);
         Dispatcher.UIThread.RunJobs();
@@ -56,7 +130,7 @@ public sealed class WebCaptureWindowRenderTests
         if (kind == WebCaptureKind.Element)
         {
             Assert.NotNull(model.SelectorError);
-            Render(window, "web-window-element-errors.png");
+            Render(window, "webpanel-element-errors.png");
         }
 
         model.Address = "https://example.test/";
@@ -68,7 +142,7 @@ public sealed class WebCaptureWindowRenderTests
     });
 
     [Fact]
-    public void PickingAPillUpdatesTheViewModel() => WithWindow((window, model, _) =>
+    public void PickingAPillUpdatesTheViewModel() => WithWindow((window, model, _, _) =>
     {
         Click(window, Pill(window, "Mode", "One element"));
         Click(window, Pill(window, "Width", "Phone (390 px)"));
@@ -82,12 +156,12 @@ public sealed class WebCaptureWindowRenderTests
     });
 
     [Fact]
-    public void SixShortPillsFitTheSameWindowAndNameTheirPixelWidth() => WithWindow((window, _, _) =>
+    public void SixShortPillsFitThePanelAndNameTheirPixelWidth() => WithWindow((window, _, _, _) =>
     {
         window.UpdateLayout();
         ListBoxItem[] pills = [.. Row(window, "Width").GetVisualDescendants().OfType<ListBoxItem>()];
 
-        Assert.Equal(528, window.ClientSize.Width);
+        Assert.Equal(480, Surface(window).Bounds.Width);
         Assert.Equal(
             ["Phone", "Tablet", "Desktop", "1080p", "1440p", "4K"],
             pills.Select(pill => pill.GetVisualDescendants().OfType<TextBlock>().Single().Text));
@@ -100,7 +174,7 @@ public sealed class WebCaptureWindowRenderTests
     });
 
     [Fact]
-    public void TheArrowKeysMoveThroughAllSixWidths() => WithWindow((window, model, _) =>
+    public void TheArrowKeysMoveThroughAllSixWidths() => WithWindow((window, model, _, _) =>
     {
         Pill(window, "Width", "Desktop (1280 px)").Focus(NavigationMethod.Tab);
         Press(window, PhysicalKey.ArrowLeft);
@@ -117,7 +191,7 @@ public sealed class WebCaptureWindowRenderTests
     });
 
     [Fact]
-    public void TabReachesEveryControlAndArrowsMoveInsideARow() => WithWindow((window, model, _) =>
+    public void TabReachesEveryControlAndArrowsMoveInsideARow() => WithWindow((window, model, _, _) =>
     {
         Assert.Equal("Address", FocusedName(window));
         Press(window, PhysicalKey.Tab);
@@ -126,18 +200,17 @@ public sealed class WebCaptureWindowRenderTests
         Assert.Equal(WebCaptureKind.Viewport, model.SelectedMode.Kind);
 
         List<string?> reached = [];
-        for (int step = 0; step < 4; step++)
+        for (int step = 0; step < 2; step++)
         {
             Press(window, PhysicalKey.Tab);
             reached.Add(FocusedName(window));
         }
 
-        Assert.Equal(["Desktop (1280 px)", "Cancel", "Capture"], reached.Take(3));
-        Assert.Equal("Close", reached[3]);
+        Assert.Equal(["Desktop (1280 px)", "Capture"], reached);
     });
 
     [Fact]
-    public void EveryFocusedControlShowsExactlyOneRing() => WithWindow((window, model, _) =>
+    public void EveryFocusedControlShowsExactlyOneRing() => WithWindow((window, model, _, _) =>
     {
         model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
         Dispatcher.UIThread.RunJobs();
@@ -162,7 +235,7 @@ public sealed class WebCaptureWindowRenderTests
     });
 
     [Fact]
-    public void TheAddressHasFocusAndEnterCaptures() => WithWindow((window, model, capture) =>
+    public void TheAddressHasFocusAndEnterCapturesAndClosesThePanel() => WithWindow((window, model, capture, bar) =>
     {
         Assert.Equal("Address", FocusedName(window));
         Assert.Equal("https://example.test/articles/made-up", model.Address);
@@ -170,58 +243,95 @@ public sealed class WebCaptureWindowRenderTests
         Press(window, PhysicalKey.Enter);
 
         Assert.Single(capture.Requests);
-        Assert.False(window.IsVisible);
+        Assert.Null(bar.WebPanel);
+        Assert.Null(FindPanel(window));
+        Assert.NotNull(bar.Choice);
     });
 
-    [Fact]
-    public void EnterCapturesFromAChoicePill() => WithWindow((window, _, capture) =>
+    [Theory]
+    [InlineData("Full page")]
+    [InlineData("Capture")]
+    public void EnterCapturesFromAnyControl(string name) => WithWindow((window, _, capture, _) =>
     {
-        Pill(window, "Mode", "Full page").Focus(NavigationMethod.Tab);
+        Named(window, name).Focus(NavigationMethod.Tab);
         Press(window, PhysicalKey.Enter);
 
         Assert.Single(capture.Requests);
     });
 
     [Fact]
-    public void EscapeCancels() => WithWindow((window, _, capture) =>
+    public void EscapeClosesThePanelThenHidesTheBar() => WithWindow((window, _, capture, bar) =>
     {
+        Press(window, PhysicalKey.Escape);
+
+        Assert.Null(bar.WebPanel);
+        Assert.True(bar.Row.IsScreenshotMode);
+        Assert.True(window.IsVisible);
+
         Press(window, PhysicalKey.Escape);
 
         Assert.False(window.IsVisible);
         Assert.Empty(capture.Requests);
     });
 
-    [Fact]
-    public void TheCrossCancels() => WithWindow((window, _, capture) =>
-    {
-        Button? cross = window.GetVisualDescendants().OfType<Button>()
-            .FirstOrDefault(button => button.GetVisualDescendants().OfType<MoooomIcon>().Any(icon => icon.Kind == "cross"));
-        Assert.NotNull(cross);
-        Assert.Equal("Close", AutomationProperties.GetName(cross));
-
-        Click(window, cross);
-
-        Assert.False(window.IsVisible);
-        Assert.Empty(capture.Requests);
-    });
-
-    private static void WithWindow(Action<WebCaptureWindow, WebCaptureViewModel, FakeWebPageCapture> test) => HeadlessApp.Run(() =>
-    {
-        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
-        FakeWebPageCapture capture = new();
-        WebCaptureViewModel model = new(capture, new WebCaptureSettings(), "https://example.test/articles/made-up");
-        WebCaptureWindow window = new(model);
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        try
+    /// <summary>The bar with its web panel opened by the globe, an https address on the clipboard.</summary>
+    private static void WithWindow(Action<BarWindow, WebCaptureViewModel, FakeWebPageCapture, BarViewModel> test, IWebPageCapture? web = null) =>
+        HeadlessApp.Run(() =>
         {
-            test(window, model, capture);
-        }
-        finally
-        {
-            window.Close();
-        }
-    });
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+            string root = Path.Combine(Path.GetTempPath(), $"share-panel-render-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(root);
+            FakeWebPageCapture capture = new();
+            BarViewModel bar = new(
+                new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
+                new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
+                recorder: new FakeScreenRecorder(),
+                web: web ?? capture,
+                recent: new RecentLinks(Path.Combine(root, "recent.json"), new RecentSettings()),
+                clipboard: new FakeClipboard { Text = "https://example.test/articles/made-up" });
+            BarWindow window = new(bar, new BarPositionStore(new SettingsFile(Path.Combine(root, "position.json"))), new BarSettings());
+            try
+            {
+                window.Summon();
+                Dispatcher.UIThread.RunJobs();
+                _ = bar.RunAsync(BarAction.WebPage);
+                Dispatcher.UIThread.RunJobs();
+                Assert.NotNull(bar.WebPanel);
+                test(window, bar.WebPanel, capture, bar);
+            }
+            finally
+            {
+                window.Quit();
+                Directory.Delete(root, recursive: true);
+            }
+        });
+
+    private static Control? FindPanel(Window window) =>
+        window.GetVisualDescendants().OfType<Control>().FirstOrDefault(control => control.GetType().Name == "WebCapturePanel");
+
+    private static Control PanelOf(Window window)
+    {
+        Control? panel = FindPanel(window);
+        Assert.True(panel is not null, "the bar shows no web panel");
+        return panel;
+    }
+
+    private static Border Surface(Window window) => PanelOf(window).GetVisualDescendants().OfType<Border>().Single(border => border.Name == "Surface");
+
+    private static IEnumerable<string?> Texts(Window window) =>
+        PanelOf(window).GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text);
+
+    private static Control Named(Window window, string name) =>
+        PanelOf(window).GetVisualDescendants().OfType<Control>().First(control => AutomationProperties.GetName(control) == name);
+
+    private static Button BarButton(Window window, string name) =>
+        window.FindControl<Border>("Pill")!.GetVisualDescendants().OfType<Button>().Single(button => AutomationProperties.GetName(button) == name);
+
+    private sealed class PendingWebCapture(TaskCompletionSource<CaptureResult> loading) : IWebPageCapture
+    {
+        public Task<CaptureResult> CaptureAsync(WebCaptureRequest request, CancellationToken cancellationToken = default) =>
+            loading.Task.WaitAsync(cancellationToken);
+    }
 
     private static void AssertRowsAndTexts(Window window)
     {
