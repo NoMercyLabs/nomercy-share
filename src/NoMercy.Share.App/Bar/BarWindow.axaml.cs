@@ -311,7 +311,7 @@ public partial class BarWindow : Window
             Activate();
         }
 
-        if (e.PropertyName == nameof(BarViewModel.IsRecording) &&DataContext is BarViewModel bar)
+        if (e.PropertyName == nameof(BarViewModel.IsRecording) && DataContext is BarViewModel bar)
         {
             _elapsedTimer.IsEnabled = bar.IsRecording;
         }

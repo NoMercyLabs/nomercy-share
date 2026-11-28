@@ -188,11 +188,9 @@ public sealed class WebCaptureViewModel : ObservableObject
     /// <summary>Stops a capture that is running and closes the panel; nothing is shared.</summary>
     public void Cancel()
     {
-        StopRunning();
+        _running?.Cancel();
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
-
-    private void StopRunning() => _running?.Cancel();
 
     private void ShowFailure(WebCaptureException error)
     {
