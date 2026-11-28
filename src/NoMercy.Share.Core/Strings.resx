@@ -165,6 +165,7 @@
   <data name="recent.empty" xml:space="preserve"><value>No links yet. Capture something to share it.</value></data>
   <data name="recent.copy" xml:space="preserve"><value>Copy link</value></data>
   <data name="recent.open" xml:space="preserve"><value>Open in browser</value></data>
+  <data name="recent.delete" xml:space="preserve"><value>Delete</value></data>
   <data name="recent.age.now" xml:space="preserve"><value>just now</value></data>
   <data name="recent.age.minutes" xml:space="preserve"><value>{0} min ago</value></data>
   <data name="recent.age.hours" xml:space="preserve"><value>{0} h ago</value></data>

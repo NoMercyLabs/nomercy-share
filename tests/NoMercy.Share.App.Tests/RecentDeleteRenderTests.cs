@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -38,6 +39,8 @@ public sealed class RecentDeleteRenderTests
         });
         Assert.Single(rows.Select(buttons => buttons[^1].TranslatePoint(default, panel)!.Value.X).Distinct());
         Save(host, "delete-recent-list.png");
+        TextBlock[] paths = [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(text => text.Classes.Contains("row-path"))];
+        Assert.All(paths, path => Assert.False(path.TextLayout.TextLines[0].HasCollapsed, $"{path.Text} is cut off"));
     }));
 
     [Fact]
@@ -110,9 +113,10 @@ public sealed class RecentDeleteRenderTests
             return;
         }
 
-        PixelSize size = new((int)Math.Ceiling(window.Bounds.Width * PictureScale), (int)Math.Ceiling(window.Bounds.Height * PictureScale));
-        using RenderTargetBitmap bitmap = new(size, new Vector(96 * PictureScale, 96 * PictureScale));
-        bitmap.Render(window);
-        bitmap.Save(Path.Combine(folder, picture));
+        window.SetRenderScaling(PictureScale);
+        Dispatcher.UIThread.RunJobs();
+        using WriteableBitmap? frame = window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
+        frame.Save(Path.Combine(folder, picture));
     }
 }

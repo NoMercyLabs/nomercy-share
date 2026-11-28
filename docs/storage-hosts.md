@@ -27,7 +27,7 @@ cmdkey /generic:NAME /user:ACCESS_KEY_ID /pass:SECRET
 
 ### Expiry
 
-The host deletes expired files; the app does not. An upload goes under the smallest prefix that covers its lifetime (`exp-7d/` for 2 to 7 days; longer than the largest goes under the largest), and `never` goes under `keep/`. The object carries the metadata `x-amz-meta-expires-at` (UTC, for example `2026-12-04T10:00:00Z`, or `never`) and a sidecar `<key>.json` with the key, upload time, expiry, content type and size.
+The host deletes expired files; the app deletes a file only when you [delete its link](#deleting-a-shared-link). An upload goes under the smallest prefix that covers its lifetime (`exp-7d/` for 2 to 7 days; longer than the largest goes under the largest), and `never` goes under `keep/`. The object carries the metadata `x-amz-meta-expires-at` (UTC, for example `2026-12-04T10:00:00Z`, or `never`) and a sidecar `<key>.json` with the key, upload time, expiry, content type and size.
 
 The link's expiry is the prefix's deletion time, so it is never earlier than asked. The host needs one lifecycle rule per prefix. On R2, add "delete objects after N days" with the prefix `exp-1d/`, `exp-7d/`, `exp-30d/` and `exp-90d/` (N matching the days in the name). Nothing deletes `keep/`.
 
@@ -46,6 +46,18 @@ A failed upload keeps the PNG, shows `Upload failed: <reason>. The file is kept.
 | `Discord.TimeoutSeconds` | 10 | How long one upload may take. |
 
 Discord links are signed and expire (the `ex` value in the link, shown in the recent list), so `Expiry.DefaultDays` does not apply.
+
+## Deleting a shared link
+
+The trash button in the recent list asks first. Every provider is asked whether it made the link, not only the selected one, so a link stays deletable after you switch providers. The local capture file is never deleted.
+
+| Link | What a delete does | What it needs |
+| --- | --- | --- |
+| R2 or S3, under the current `PublicBaseUrl` | Deletes the object and then its sidecar. | A key that may delete objects, and the storage settings and credential the app has now. |
+| Discord, uploaded with its message id kept | Deletes the webhook message that holds the file. | The same webhook that uploaded it. |
+| Any other link, such as an older Discord upload | Removes the link from the list only. The upload stays online. | Nothing. |
+
+If the host refuses or cannot be reached, the link stays in the list and the bar says why. For Discord that includes "not found", because it can also mean the webhook changed. A browser can show its cached copy for up to one hour, and Discord can keep its preview.
 
 ## The share page
 

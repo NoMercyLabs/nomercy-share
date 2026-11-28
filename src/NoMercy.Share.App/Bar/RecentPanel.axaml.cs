@@ -49,4 +49,6 @@ public partial class RecentPanel : UserControl
     private void OnCopyClick(object? sender, RoutedEventArgs e) => Bar?.CopyRecentCommand.Execute((sender as Control)?.DataContext);
 
     private void OnOpenClick(object? sender, RoutedEventArgs e) => Bar?.OpenRecentCommand.Execute((sender as Control)?.DataContext);
+
+    private void OnDeleteClick(object? sender, RoutedEventArgs e) => Bar?.DeleteRecentCommand.Execute((sender as Control)?.DataContext);
 }
