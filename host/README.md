@@ -42,7 +42,28 @@ Every video share that has not expired can be embedded, `keep/` links for good. 
 <iframe src="https://share.nomercy.tv/keep/<id>.mp4" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
 ```
 
-Only this host and the origins in `EMBED_ORIGINS` may frame a video share. They can send `{ type: 'nm:command', action: 'play' }` (also `pause`, `seek` with `time`, `volume` with `level`, `mute`, `unmute`) and receive `nm:event` messages. In a frame the page shows only the player.
+Only this host and the origins in `EMBED_ORIGINS` may frame a video share. In a frame the page shows only the player. Only a listed origin can control it.
+
+A parent page:
+
+```html
+<iframe id="share" src="https://share.nomercy.tv/keep/<id>.mp4" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+<script>
+  const SHARE = 'https://share.nomercy.tv';
+  const frame = document.getElementById('share');
+  const tell = (action, extra = {}) => frame.contentWindow.postMessage({ type: 'nm:command', action, ...extra }, SHARE);
+
+  addEventListener('message', (event) => {
+    if (event.origin !== SHARE || event.data?.type !== 'nm:event') return;
+    console.log(event.data.name, event.data.data); // ready, play, pause, ended, time, volume, mute
+  });
+
+  // After "ready": tell('play'), tell('pause'), tell('seek', { time: 60 }),
+  // tell('volume', { level: 50 }) (0 to 100), tell('mute'), tell('unmute').
+</script>
+```
+
+A browser may refuse `play` until the viewer has clicked on one of the two pages.
 
 For local runs use `npx wrangler dev --local-upstream 127.0.0.1:8787`. Without it wrangler builds the file addresses from the live route.
 
