@@ -134,6 +134,7 @@ public sealed class BarViewModelRecentTests : IDisposable
         BarViewModel bar = await AskToDeleteTheNewest(host);
 
         Assert.Contains("older Discord uploads", bar.Ask?.Text);
+        Assert.Equal("Remove", bar.Ask?.YesLabel);
         await bar.Ask!.Yes();
 
         Assert.Empty(host.Deleted);

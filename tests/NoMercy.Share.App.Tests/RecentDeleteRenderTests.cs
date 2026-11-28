@@ -45,13 +45,13 @@ public sealed class RecentDeleteRenderTests
 
     [Fact]
     public void DeletingAnUploadTheHostCanRemoveAsksBeforeDeleting() => HeadlessApp.Run(() =>
-        AskFromTheFirstRow(deletes: true, "ask.delete.host", "delete-confirm-online.png"));
+        AskFromTheFirstRow(deletes: true, "ask.delete.host", "Delete", "delete-confirm-online.png"));
 
     [Fact]
     public void DeletingAnUploadTheHostCannotRemoveAsksToRemoveItFromTheList() => HeadlessApp.Run(() =>
-        AskFromTheFirstRow(deletes: false, "ask.delete.list", "delete-confirm-list-only.png"));
+        AskFromTheFirstRow(deletes: false, "ask.delete.list", "Remove", "delete-confirm-list-only.png"));
 
-    private static void AskFromTheFirstRow(bool deletes, string question, string picture) => WithRecent(deletes, (bar, panel, _) =>
+    private static void AskFromTheFirstRow(bool deletes, string question, string yes, string picture) => WithRecent(deletes, (bar, panel, _) =>
     {
         BarWindow window = new(bar, new BarPositionStore(new SettingsFile(Path.Combine(Path.GetTempPath(), $"share-delete-{Guid.NewGuid():N}", "position.json"))), new BarSettings());
         window.Summon();
@@ -64,7 +64,7 @@ public sealed class RecentDeleteRenderTests
         Assert.True(ask.IsEffectivelyVisible);
         Assert.Equal(Strings.Get(question), bar.Ask!.Text);
         Button[] answers = [.. ask.GetVisualDescendants().OfType<Button>()];
-        Assert.Equal(["Delete", "Cancel"], answers.Select(button => button.Content));
+        Assert.Equal([yes, "Cancel"], answers.Select(button => button.Content));
         Assert.All(answers, button => Assert.True(button.Bounds.Right <= ask.Bounds.Width && button.Bounds.Height >= MinimumRowButtonSize));
         TextBlock text = ask.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == bar.Ask.Text);
         Assert.True(text.Bounds.Height >= text.TextLayout.Height, "the question is cut off");

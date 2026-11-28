@@ -152,7 +152,7 @@
             IsVisible="{Binding Ask, Converter={x:Static ObjectConverters.IsNotNull}}">
       <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
         <TextBlock Text="{Binding Ask.Text, FallbackValue={x:Null}}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
-                   VerticalAlignment="Center" MaxWidth="360" Margin="12,0,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+                   VerticalAlignment="Center" MaxWidth="360" Margin="{DynamicResource Nm-Space-2-Thickness}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
         <Button x:Name="AllowButton" Classes="bar ask first" Command="{Binding AskYesCommand}" Content="{Binding Ask.YesLabel, FallbackValue={x:Null}}" />
         <Button Classes="bar ask" Command="{Binding AskNoCommand}" Content="{Binding Ask.NoLabel, FallbackValue={x:Null}}" />
       </StackPanel>

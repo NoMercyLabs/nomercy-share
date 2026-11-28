@@ -581,7 +581,7 @@ public sealed class BarViewModel : ObservableObject
         ShareDeletion? host = _deletion?.CanDeleteFromHost(link) == true ? _deletion : null;
         Ask = new BarAsk(
             Strings.Get(host is null ? "ask.delete.list" : "ask.delete.host"),
-            Strings.Get("ask.delete"),
+            Strings.Get(host is null ? "ask.remove" : "ask.delete"),
             () => DeleteRecentAsync(recent, host, link),
             () => Ask = null,
             Strings.Get("ask.cancel"));
