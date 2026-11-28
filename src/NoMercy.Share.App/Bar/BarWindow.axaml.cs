@@ -59,7 +59,7 @@ public partial class BarWindow : Window
 
     private void ShowWhileNeeded()
     {
-        bool needed = _called || DataContext is BarViewModel bar && (bar.Notice is not null || bar.Ask is not null || bar.IsRecording);
+        bool needed = _called || DataContext is BarViewModel bar && (bar.Notice is not null || bar.Ask is not null || bar.Choice is not null || bar.IsRecording);
         if (needed && !IsVisible)
         {
             Show();
@@ -175,7 +175,7 @@ public partial class BarWindow : Window
             _noticeTimer.Start();
         }
 
-        if (e.PropertyName is nameof(BarViewModel.Notice) or nameof(BarViewModel.Ask) or nameof(BarViewModel.IsRecording))
+        if (e.PropertyName is nameof(BarViewModel.Notice) or nameof(BarViewModel.Ask) or nameof(BarViewModel.Choice) or nameof(BarViewModel.IsRecording))
         {
             ShowWhileNeeded();
         }

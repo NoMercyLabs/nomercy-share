@@ -64,6 +64,20 @@
       <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
                  AutomationProperties.LiveSetting="Polite" />
     </Border>
+    <!-- What to do with the capture; nothing is uploaded until Copy link. -->
+    <Border x:Name="ChoicePanel" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+            CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
+            BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
+            IsVisible="{Binding Choice, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
+        <TextBlock Text="{Binding Choice.Text, FallbackValue={x:Null}}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
+                   VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive" />
+        <Button x:Name="CopyImageButton" Classes="bar ask first" Command="{Binding CopyImageCommand}" Content="{local:Loc choice.copyimage}"
+                IsVisible="{Binding Choice.CanCopyImage, FallbackValue=False}" />
+        <Button x:Name="CopyLinkButton" Classes="bar ask" Command="{Binding ShareLinkCommand}" Content="{local:Loc choice.copylink}" />
+        <Button Classes="bar ask" Command="{Binding DismissChoiceCommand}" Content="{local:Loc choice.done}" />
+      </StackPanel>
+    </Border>
     <!-- Stays until Allow or Not now; the notice timer never clears it. -->
     <Border x:Name="AccessAsk" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"

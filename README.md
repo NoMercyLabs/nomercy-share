@@ -1,6 +1,6 @@
 # NoMercy Share
 
-NoMercy Share puts a small floating bar on your Windows desktop. Click a button, and a screenshot, a screen recording or a picture of a web page is saved, uploaded to a host you choose, and the link is on your clipboard. Paste it into a chat and the other person sees the picture.
+NoMercy Share puts a small floating bar on your Windows desktop. Click a button, and a screenshot, a screen recording or a picture of a web page is saved. Then you choose: **Copy image** to paste the picture itself, or **Copy link** to upload it to a host you choose and paste its link into a chat. Nothing is uploaded until you pick the link.
 
 ![The NoMercy Share bar: a handle, then region, window, full screen, record, web page, recent links, settings and close buttons.](docs/images/bar.png)
 
@@ -25,7 +25,7 @@ The bar floats above your other windows. Drag it by the handle on the left edge 
 
 From left to right: the handle, then **Capture a region**, **Capture a window**, **Capture the full screen**, **Record the screen**, **Capture a web page**, **Recent links**, **Settings** and **Close**.
 
-After a capture the bar says what happened underneath it, for example "Link copied". A failed upload keeps the file on your PC and says why.
+After a capture a second bar underneath offers **Copy image** (pictures only), **Copy link** and **Done**. The bar then says what happened, for example "Link copied". A failed upload keeps the choice open, keeps the file on your PC and says why.
 
 ![The bar after a capture, with the notice "Link copied" under it.](docs/images/bar-capture-done.png)
 

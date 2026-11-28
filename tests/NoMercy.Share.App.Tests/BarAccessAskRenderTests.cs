@@ -33,7 +33,7 @@ public sealed class BarAccessAskRenderTests
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
-            Button[] buttons = [.. window.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("ask"))];
+            Button[] buttons = [.. window.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("ask") && button.IsEffectivelyVisible)];
             Assert.Equal(2, buttons.Length);
             Assert.All(buttons, button =>
             {

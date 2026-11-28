@@ -68,6 +68,7 @@ public sealed class BarViewModelRecordingTests
         await bar.RunAsync(BarAction.Record);
 
         await bar.RunAsync(BarAction.Record);
+        await bar.ShareLinkAsync();
 
         Assert.Null(bar.ElapsedText);
         Assert.Equal("/tmp/recording.mp4", Assert.Single(_uploader.Uploads).File);
@@ -148,6 +149,7 @@ public sealed class BarViewModelRecordingTests
         await bar.RunAsync(BarAction.Record);
 
         await bar.RunAsync(BarAction.Record);
+        await bar.ShareLinkAsync();
 
         Assert.Equal("/tmp/recording.mp4", Assert.Single(_uploader.Uploads).File);
         Assert.Contains("63.5 MB", bar.Notice, StringComparison.Ordinal);

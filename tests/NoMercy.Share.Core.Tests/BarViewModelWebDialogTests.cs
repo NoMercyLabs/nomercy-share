@@ -22,7 +22,10 @@ public sealed class BarViewModelWebDialogTests
     {
         FakeWebDialog dialog = new(new CaptureResult("/tmp/dialog.png", "image/png"));
 
-        await Bar(dialog).RunAsync(BarAction.WebPage);
+        BarViewModel bar = Bar(dialog);
+
+        await bar.RunAsync(BarAction.WebPage);
+        await bar.ShareLinkAsync();
 
         Assert.Same(_web, dialog.Capture);
         Assert.Empty(_web.Requests);

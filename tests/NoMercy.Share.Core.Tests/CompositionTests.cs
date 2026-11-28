@@ -37,6 +37,7 @@ public sealed class CompositionTests
 
         BarViewModel bar = provider.GetRequiredService<BarViewModel>();
         await bar.RunAsync(BarAction.WebPage);
+        await bar.ShareLinkAsync();
 
         Assert.Empty(r2.Uploads);
         Assert.Single(other.Uploads);
@@ -50,6 +51,7 @@ public sealed class CompositionTests
         using ServiceProvider provider = Build(new ShareSettings { Expiry = new ExpirySettings { DefaultDays = 7 } }, r2, other);
         BarViewModel bar = provider.GetRequiredService<BarViewModel>();
         await bar.RunAsync(BarAction.WebPage);
+        await bar.ShareLinkAsync();
 
         provider.GetRequiredService<LiveSettings>().Replace(new ShareSettings
         {
@@ -57,6 +59,7 @@ public sealed class CompositionTests
             Expiry = new ExpirySettings { DefaultDays = null }
         });
         await bar.RunAsync(BarAction.WebPage);
+        await bar.ShareLinkAsync();
 
         Assert.Equal(7, Assert.Single(r2.Uploads).Expiry.Lifetime?.TotalDays);
         Assert.Null(Assert.Single(other.Uploads).Expiry.Lifetime);

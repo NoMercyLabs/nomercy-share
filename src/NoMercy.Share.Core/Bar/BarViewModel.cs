@@ -24,6 +24,7 @@ public sealed class BarViewModel : ObservableObject
     private readonly IFolderAccess? _folderAccess;
     private readonly IFfmpegInstall? _ffmpeg;
     private BarAsk? _ask;
+    private CaptureChoice? _choice;
     private bool _accessAskDismissed;
     private bool _downloading;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
@@ -104,6 +105,22 @@ public sealed class BarViewModel : ObservableObject
         });
         AskYesCommand = new BarCommand(_ => _ = Ask?.Yes());
         AskNoCommand = new BarCommand(_ => Ask?.No());
+        CopyImageCommand = new BarCommand(_ => _ = CopyImageAsync());
+        ShareLinkCommand = new BarCommand(_ => _ = ShareLinkAsync());
+        DismissChoiceCommand = new BarCommand(_ => Choice = null);
+    }
+
+    public ICommand CopyImageCommand { get; }
+
+    public ICommand ShareLinkCommand { get; }
+
+    public ICommand DismissChoiceCommand { get; }
+
+    /// <summary>The capture that waits for "copy image" or "copy link" under the bar, or null.</summary>
+    public CaptureChoice? Choice
+    {
+        get => _choice;
+        private set => Set(ref _choice, value);
     }
 
     /// <summary>The yes button of the question under the bar.</summary>
@@ -419,8 +436,11 @@ public sealed class BarViewModel : ObservableObject
         return Task.CompletedTask;
     }
 
-    private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken) =>
+    private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken)
+    {
+        Choice = null;
         await ShareAsync(await _capture.RunAsync(kind, cancellationToken), cancellationToken);
+    }
 
     private async Task CaptureWebPageAsync(CancellationToken cancellationToken)
     {
@@ -473,23 +493,65 @@ public sealed class BarViewModel : ObservableObject
     private static string Minutes(TimeSpan elapsed) =>
         string.Create(CultureInfo.InvariantCulture, $"{(int)Math.Max(0, elapsed.TotalMinutes):00}:{Math.Max(0, elapsed.Seconds):00}");
 
+    /// <summary>With a share host the capture waits for the user's choice; without one there is only the clipboard.</summary>
     private async Task ShareAsync(CaptureResult capture, CancellationToken cancellationToken)
     {
-        ShareOutcome outcome = await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
-        Notice = Strings.Get(NoticeKeyFor(outcome));
-        if (capture.IsOverCap)
+        if (_flow.CanShare)
         {
-            Notice += " " + Strings.Get("notice.recording.overcap", MegabyteText.FromBytes(capture.SizeBytes), MegabyteText.FromBytes(capture.SizeCapBytes));
+            Choice = new CaptureChoice(capture);
+            return;
         }
+
+        await _flow.ShareAsync(capture, cancellationToken: cancellationToken);
+        Notice = WithOverCapWarning(Strings.Get("notice.clipboard.local"), capture);
     }
 
-    private static string NoticeKeyFor(ShareOutcome outcome)
+    /// <summary>The picture itself goes on the clipboard; nothing is uploaded.</summary>
+    public Task CopyImageAsync() => ResolveChoiceAsync(async capture =>
     {
-        if (outcome.Link is null)
+        await _flow.CopyImageAsync(capture);
+        return "notice.picture.copied";
+    });
+
+    /// <summary>Uploads the capture and puts its link on the clipboard.</summary>
+    public Task ShareLinkAsync() => ResolveChoiceAsync(async capture =>
+    {
+        Notice = Strings.Get("notice.uploading");
+        await _flow.CopyLinkAsync(capture);
+        return "notice.copied";
+    });
+
+    /// <summary>Runs one answer to the choice. A failure keeps the choice, so the user can try again or pick the other.</summary>
+    private async Task ResolveChoiceAsync(Func<CaptureResult, Task<string>> answer)
+    {
+        if (_busy || Choice is not { } choice)
         {
-            return "notice.clipboard.local";
+            return;
         }
 
-        return outcome.Copied is { Image: true, Text: false } ? "notice.clipboard" : "notice.copied";
+        _busy = true;
+        try
+        {
+            string done = await answer(choice.Capture);
+            Choice = null;
+            Notice = WithOverCapWarning(Strings.Get(done), choice.Capture);
+        }
+        catch (ShareUploadException error)
+        {
+            Notice = Strings.Get("notice.upload.failed", error.Message);
+        }
+        catch (Exception error)
+        {
+            Trace.TraceError("The capture choice failed: {0}", error);
+            Notice = Strings.Get("notice.failed");
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
+
+    private static string WithOverCapWarning(string notice, CaptureResult capture) => capture.IsOverCap
+        ? notice + " " + Strings.Get("notice.recording.overcap", MegabyteText.FromBytes(capture.SizeBytes), MegabyteText.FromBytes(capture.SizeCapBytes))
+        : notice;
 }

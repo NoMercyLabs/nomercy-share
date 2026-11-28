@@ -23,7 +23,10 @@ public sealed class BarViewModelTests
     [Fact]
     public async Task TheRegionButtonCapturesARegionUploadsItAndPutsTheLinkOnTheClipboard()
     {
-        await Bar().RunAsync(BarAction.Region);
+        BarViewModel bar = Bar();
+
+        await bar.RunAsync(BarAction.Region);
+        await bar.ShareLinkAsync();
 
         Assert.Equal(["region"], _screen.Calls);
         Assert.Equal("/tmp/region.png", Assert.Single(_uploader.Uploads).File);
@@ -67,6 +70,7 @@ public sealed class BarViewModelTests
         Assert.Empty(_uploader.Uploads);
 
         await bar.RunAsync(BarAction.Record);
+        await bar.ShareLinkAsync();
         Assert.False(bar.IsRecording);
         Assert.Equal("/tmp/recording.mp4", Assert.Single(_uploader.Uploads).File);
     }
@@ -139,8 +143,10 @@ public sealed class BarViewModelTests
         bar.PropertyChanged += (_, e) => changes += e.PropertyName == nameof(BarViewModel.Notice) ? 1 : 0;
 
         await bar.RunAsync(BarAction.Region);
+        await bar.ShareLinkAsync();
         string? first = bar.Notice;
         await bar.RunAsync(BarAction.Region);
+        await bar.ShareLinkAsync();
 
         Assert.Equal(first, bar.Notice);
         Assert.True(changes >= 2, $"the window restarts its hide timer on a Notice change, but only {changes} change was raised");

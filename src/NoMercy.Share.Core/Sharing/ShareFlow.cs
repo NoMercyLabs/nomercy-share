@@ -14,6 +14,28 @@ public sealed class ShareFlow(
     {
     }
 
+    /// <summary>True when a share host is set up, so a capture can get a link.</summary>
+    public bool CanShare => currentUploader().IsConfigured;
+
+    /// <summary>Puts the picture itself on the clipboard; nothing is uploaded.</summary>
+    public Task CopyImageAsync(CaptureResult capture, CancellationToken cancellationToken = default) =>
+        clipboard.SetImageAsync(capture.FilePath, cancellationToken);
+
+    /// <summary>The user asked for a link: uploads and copies the link only, whatever the clipboard setting says.</summary>
+    public async Task<ShareLink> CopyLinkAsync(CaptureResult capture, CancellationToken cancellationToken = default)
+    {
+        ShareLink link = await UploadAsync(capture, null, cancellationToken);
+        await clipboard.SetTextAsync(link.Url.AbsoluteUri, cancellationToken);
+        return link;
+    }
+
+    private async Task<ShareLink> UploadAsync(CaptureResult capture, Expiry? perUpload, CancellationToken cancellationToken)
+    {
+        ShareLink link = await currentUploader().UploadAsync(capture.FilePath, currentExpiry().Resolve(perUpload), cancellationToken);
+        recent?.Record(link, capture);
+        return link;
+    }
+
     /// <summary>Shares one capture. With no share host set up nothing uploads and only the picture is copied.</summary>
     public async Task<ShareOutcome> ShareAsync(CaptureResult capture, Expiry? perUpload = null, CancellationToken cancellationToken = default)
     {
@@ -33,8 +55,7 @@ public sealed class ShareFlow(
             return new ShareOutcome(null, local);
         }
 
-        ShareLink link = await uploader.UploadAsync(capture.FilePath, currentExpiry().Resolve(perUpload), cancellationToken);
-        recent?.Record(link, capture);
+        ShareLink link = await UploadAsync(capture, perUpload, cancellationToken);
         ClipboardPlan plan = ClipboardPlan.For(clipboardSettings.Content, capture.ContentType);
         if (plan.Image)
         {

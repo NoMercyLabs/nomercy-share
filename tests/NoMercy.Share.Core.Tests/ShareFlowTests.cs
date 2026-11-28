@@ -106,6 +106,7 @@ public sealed class ShareFlowTests
         BarViewModel bar = Bar();
 
         await bar.RunAsync(BarAction.FullScreen);
+        await bar.ShareLinkAsync();
 
         Assert.Equal("Upload failed: access denied (403). The file is kept.", bar.Notice);
         Assert.Empty(_clipboard.Texts);
@@ -119,6 +120,7 @@ public sealed class ShareFlowTests
         BarViewModel bar = Bar();
 
         await bar.RunAsync(BarAction.FullScreen);
+        await bar.ShareLinkAsync();
 
         Assert.Contains("Storage.Endpoint", bar.Notice);
     }
@@ -129,6 +131,7 @@ public sealed class ShareFlowTests
         BarViewModel bar = Bar();
 
         await bar.RunAsync(BarAction.Region);
+        await bar.ShareLinkAsync();
 
         Assert.Equal("Link copied", bar.Notice);
         Assert.Equal(["https://share.example.test/abc"], _clipboard.Texts);
@@ -140,7 +143,8 @@ public sealed class ShareFlowTests
         BarViewModel bar = Bar(ClipboardContent.Image);
 
         await bar.RunAsync(BarAction.Region);
+        await bar.CopyImageAsync();
 
-        Assert.Equal("Copied to clipboard", bar.Notice);
+        Assert.Equal("Picture copied", bar.Notice);
     }
 }

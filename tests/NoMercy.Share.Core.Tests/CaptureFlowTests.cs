@@ -87,9 +87,10 @@ public sealed class CaptureFlowTests
         BarViewModel bar = Bar(ClipboardContent.Image);
 
         await bar.RunAsync(action);
+        await bar.CopyImageAsync();
 
         Assert.Equal([$"/tmp/{call}.png"], _clipboard.Images);
-        Assert.Equal("Copied to clipboard", bar.Notice);
+        Assert.Equal("Picture copied", bar.Notice);
     }
 
     [Fact]

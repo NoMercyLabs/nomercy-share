@@ -113,6 +113,13 @@
   <data name="ask.folder" xml:space="preserve"><value>Windows blocks NoMercy Share from saving in {0}. Allow the app?</value></data>
   <data name="ask.allow" xml:space="preserve"><value>Allow</value></data>
   <data name="ask.notnow" xml:space="preserve"><value>Not now</value></data>
+  <data name="choice.picture" xml:space="preserve"><value>Screenshot saved</value></data>
+  <data name="choice.video" xml:space="preserve"><value>Recording saved</value></data>
+  <data name="choice.copyimage" xml:space="preserve"><value>Copy image</value></data>
+  <data name="choice.copylink" xml:space="preserve"><value>Copy link</value></data>
+  <data name="choice.done" xml:space="preserve"><value>Done</value></data>
+  <data name="notice.picture.copied" xml:space="preserve"><value>Picture copied</value></data>
+  <data name="notice.uploading" xml:space="preserve"><value>Uploading…</value></data>
   <data name="settings.quit" xml:space="preserve"><value>Quit NoMercy Share</value></data>
   <data name="ask.ffmpeg" xml:space="preserve"><value>Screen recording needs FFmpeg. Download NoMercy FFmpeg (about 300 MB)?</value></data>
   <data name="ask.download" xml:space="preserve"><value>Download</value></data>
