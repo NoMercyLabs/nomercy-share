@@ -103,10 +103,10 @@
     <!-- Under the bar, its left edge in line with the bar's; the panel has its own 24-unit shadow margin, so the offsets undo it. -->
     <Popup x:Name="RecentPopup" IsOpen="{Binding IsRecentOpen, Mode=TwoWay}" PlacementTarget="{Binding #Pill}" Placement="BottomEdgeAlignedLeft"
            HorizontalOffset="-24" VerticalOffset="-16" IsLightDismissEnabled="True" OverlayInputPassThroughElement="{Binding #Pill}">
-      <local:RecentPanel />
+      <local:RecentPanel x:Name="Links" />
     </Popup>
     <ContentControl Content="{Binding WebPanel}" IsVisible="{Binding WebPanel, Converter={x:Static ObjectConverters.IsNotNull}}"
-                    HorizontalAlignment="Left" Margin="0,8,0,0">
+                    HorizontalAlignment="Left" Margin="0,8,0,0" Width="{Binding #Pill.Bounds.Width}">
       <ContentControl.ContentTemplate>
         <DataTemplate x:DataType="capture:WebCaptureViewModel">
           <local:WebCapturePanel />

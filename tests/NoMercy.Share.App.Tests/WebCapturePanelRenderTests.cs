@@ -193,7 +193,7 @@ public sealed class WebCapturePanelRenderTests
         window.UpdateLayout();
         ListBoxItem[] pills = [.. Row(window, "Width").GetVisualDescendants().OfType<ListBoxItem>()];
 
-        Assert.Equal(480, Surface(window).Bounds.Width);
+        Assert.Equal(window.FindControl<Border>("Pill")!.Bounds.Width, Surface(window).Bounds.Width);
         Assert.Equal(
             ["Phone", "Tablet", "Desktop", "1080p", "1440p", "4K"],
             pills.Select(pill => pill.GetVisualDescendants().OfType<TextBlock>().Single().Text));

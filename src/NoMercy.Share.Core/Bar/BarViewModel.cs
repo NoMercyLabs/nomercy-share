@@ -196,12 +196,21 @@ public sealed class BarViewModel : ObservableObject
     }
 
     /// <summary>The bar opens in the mode of the last action, or for a screenshot when there is none.</summary>
-    public void ReturnToLastMode() => Row.Mode = _lastAction?.Load().Task switch
+    public void ReturnToLastMode()
     {
-        LastActionTask.Recording => BarMode.Record,
-        LastActionTask.WebPage => BarMode.Web,
-        _ => BarMode.Screenshot
-    };
+        LastAction? last = _lastAction?.Load();
+        if (last is { Task: LastActionTask.Screenshot })
+        {
+            Row.ScreenshotSource = last.Source;
+        }
+
+        Row.Mode = last?.Task switch
+        {
+            LastActionTask.Recording => BarMode.Record,
+            LastActionTask.WebPage => BarMode.Web,
+            _ => BarMode.Screenshot
+        };
+    }
 
     /// <summary>Escape closes the recent list, else a waiting pick or the web panel (back to screenshot mode), else hides the bar.</summary>
     public void Escape()
@@ -605,6 +614,7 @@ public sealed class BarViewModel : ObservableObject
     private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken)
     {
         Row.Mode = BarMode.Screenshot;
+        Row.ScreenshotSource = kind;
         _lastAction?.Save(new LastAction(LastActionTask.Screenshot, kind));
         Choice = null;
         await ShareAsync(await TakeScreenshotAsync(kind, cancellationToken), cancellationToken);

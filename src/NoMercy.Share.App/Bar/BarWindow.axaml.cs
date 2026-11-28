@@ -143,6 +143,8 @@ public partial class BarWindow : Window
     {
         InitializeComponent();
         Handle.PointerPressed += OnHandlePressed;
+        // The links are a window of their own, so their width cannot bind to the row.
+        Pill.SizeChanged += (_, e) => Links.Card.Width = e.NewSize.Width;
         _elapsedTimer.Tick += (_, _) => (DataContext as BarViewModel)?.RefreshElapsed();
         _saveTimer.Tick += (_, _) => SavePosition();
         _noticeTimer.Tick += (_, _) =>

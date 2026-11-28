@@ -7,6 +7,7 @@ public sealed class BarRow : ObservableObject
 {
     private BarMode _mode;
     private CaptureKind _recordSource = CaptureKind.Region;
+    private CaptureKind _screenshotSource = CaptureKind.Region;
     private bool _isRecording;
 
     public BarMode Mode
@@ -20,6 +21,13 @@ public sealed class BarRow : ObservableObject
     {
         get => _recordSource;
         internal set => Update(ref _recordSource, value);
+    }
+
+    /// <summary>What the last screenshot took.</summary>
+    public CaptureKind ScreenshotSource
+    {
+        get => _screenshotSource;
+        internal set => Update(ref _screenshotSource, value);
     }
 
     internal bool IsRecording
@@ -41,7 +49,7 @@ public sealed class BarRow : ObservableObject
 
     public bool ShowsTargets => IsScreenshotMode || ShowsRecordControls;
 
-    /// <summary>Only record mode marks a target; in screenshot mode a click captures at once.</summary>
+    /// <summary>The marked target: what Start records, or in screenshot mode what the last screenshot took.</summary>
     public bool IsAreaPicked => IsPicked(CaptureKind.Region);
 
     public bool IsWindowPicked => IsPicked(CaptureKind.Window);
@@ -61,7 +69,7 @@ public sealed class BarRow : ObservableObject
 
     public string? FullScreenState => Selected(IsFullScreenPicked);
 
-    private bool IsPicked(CaptureKind target) => IsRecordMode && RecordSource == target;
+    private bool IsPicked(CaptureKind target) => ShowsTargets && target == (IsRecordMode ? RecordSource : ScreenshotSource);
 
     private static string? Selected(bool selected) => selected ? Strings.Get("row.selected") : null;
 
@@ -73,6 +81,6 @@ public sealed class BarRow : ObservableObject
         }
 
         field = value;
-        OnChanged(string.Empty); // every other property is computed from these three
+        OnChanged(string.Empty); // every other property is computed from the fields
     }
 }

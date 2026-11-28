@@ -3,7 +3,7 @@
              xmlns:bar="using:NoMercy.Share.Core.Bar" xmlns:recent="using:NoMercy.Share.Core.Recent"
              x:Class="NoMercy.Share.App.RecentPanel" x:DataType="bar:BarViewModel">
   <!-- The margin is room for the shadow: the popup window is as big as this control. -->
-  <Border Classes="recent-panel" Margin="{DynamicResource Nm-Space-6-Thickness}" Width="372"
+  <Border x:Name="Card" Classes="recent-panel" Margin="{DynamicResource Nm-Space-6-Thickness}" Width="372"
           Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
           CornerRadius="{DynamicResource Nm-Radius-2Xl-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
           Padding="{DynamicResource Nm-Space-1-Thickness}" AutomationProperties.Name="{local:Loc bar.recent}">

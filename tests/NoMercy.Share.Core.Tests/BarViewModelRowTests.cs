@@ -59,18 +59,39 @@ public sealed class BarViewModelRowTests : IDisposable
     }
 
     [Theory]
-    [InlineData(CaptureKind.Region, "region")]
-    [InlineData(CaptureKind.Window, "window")]
-    [InlineData(CaptureKind.FullScreen, "fullscreen")]
-    public async Task ATargetInScreenshotModeCapturesAtOnceAndNoTargetLooksPicked(CaptureKind target, string call)
+    [InlineData(CaptureKind.Region, "region", true, false, false)]
+    [InlineData(CaptureKind.Window, "window", false, true, false)]
+    [InlineData(CaptureKind.FullScreen, "fullscreen", false, false, true)]
+    public async Task ATargetInScreenshotModeCapturesAtOnceAndStaysMarked(CaptureKind target, string call, bool area, bool window, bool fullScreen)
     {
         BarViewModel bar = Bar();
-        Assert.Equal((false, false, false), Picked(bar));
+        Assert.Equal((true, false, false), Picked(bar));
 
         await bar.PickTargetAsync(target);
 
         Assert.Equal([call], _screen.Calls);
-        Assert.Equal((false, false, false), Picked(bar));
+        Assert.Equal((area, window, fullScreen), Picked(bar));
+    }
+
+    [Fact]
+    public void TheBarOpensWithTheLastScreenshotTargetMarked()
+    {
+        BarViewModel bar = Bar(last: new LastAction(LastActionTask.Screenshot, CaptureKind.Window));
+
+        Assert.Equal((false, true, false), Picked(bar));
+    }
+
+    [Fact]
+    public async Task ScreenshotAndRecordModeEachKeepTheirOwnTarget()
+    {
+        BarViewModel bar = Bar();
+        await bar.PickTargetAsync(CaptureKind.FullScreen);
+        await bar.RunAsync(BarAction.Record);
+        bar.PickTargetCommand.Execute(CaptureKind.Window);
+
+        await bar.RunAsync(BarAction.Screenshot);
+
+        Assert.Equal((false, false, true), Picked(bar));
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -124,6 +125,31 @@ public sealed class BarRowRenderTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(home, window.Position);
+    }));
+
+    [Theory]
+    [InlineData(BarAction.Screenshot)]
+    [InlineData(BarAction.Record)]
+    public void TheRecentLinksAreAsWideAsTheRow(BarAction mode) => HeadlessApp.Run(() => WithBar((window, bar) =>
+    {
+        Pump(bar.RunAsync(mode));
+
+        Pump(bar.RunAsync(BarAction.Recent));
+
+        Dispatcher.UIThread.RunJobs();
+        Border card = ((RecentPanel)window.FindControl<Popup>("RecentPopup")!.Child!).FindControl<Border>("Card")!;
+        // The headless platform does not lay out a popup, so the width the window gave the card is what can be read.
+        Assert.Equal(Row(window).Bounds.Width, card.Width);
+    }));
+
+    [Fact]
+    public void TheWebPanelIsAsWideAsTheRow() => HeadlessApp.Run(() => WithBar((window, bar) =>
+    {
+        _ = bar.RunAsync(BarAction.WebPage);
+        Dispatcher.UIThread.RunJobs();
+
+        WebCapturePanel panel = window.GetVisualDescendants().OfType<WebCapturePanel>().Single();
+        Assert.Equal(Row(window).Bounds.Width, panel.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "Surface").Bounds.Width);
     }));
 
     [Fact]

@@ -6,7 +6,7 @@
     <StyleInclude Source="avares://nomercy-share/WebCapture/WebCaptureStyles.axaml" />
   </UserControl.Styles>
   <!-- Joined under the bar with its fill, ring and shadow; the settings window's pill fields (class "settings"). -->
-  <Border Name="Surface" Width="480" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+  <Border Name="Surface" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
           CornerRadius="{DynamicResource Nm-Radius-3Xl-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
           Padding="{DynamicResource Nm-Space-3-Thickness}" AutomationProperties.Name="{local:Loc web.title}">
     <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}" Spacing="{DynamicResource Nm-Space-3}">
