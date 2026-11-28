@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run lint && npm run test",
+    "build:player": "esbuild client/player.ts --bundle --splitting --format=esm --target=es2022 --minify --entry-names=[name] --chunk-names=chunks/[name]-[hash] --outdir=public/_player",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build:player",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {

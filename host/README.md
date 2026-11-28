@@ -23,6 +23,7 @@ A missing or unreadable sidecar means the link does not expire.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `RAW_MAX_AGE_SECONDS` (wrangler.toml `[vars]`) | `3600` | The `max-age` of the raw file. |
+| `EMBED_ORIGINS` (wrangler.toml `[vars]`) | `https://nomercy.tv https://*.nomercy.tv` | Space separated https origins that may frame a video share and control it. `*.` means every subdomain. |
 
 ## Develop
 

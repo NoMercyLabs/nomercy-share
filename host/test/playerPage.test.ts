@@ -19,7 +19,7 @@ const inner = fakeBucket({
   'keep/song.mp3': { bytes: BYTES, contentType: 'audio/mpeg' },
   'keep/data.zip': { bytes: BYTES, contentType: 'application/zip' },
 });
-const bucket: ShareBucket = {
+const bucket = {
   head: (key) => {
     touched.push(key);
 
@@ -30,7 +30,7 @@ const bucket: ShareBucket = {
 
     return inner.get(key, options);
   },
-};
+} as const satisfies ShareBucket;
 
 function get(path: string, headers: Record<string, string> = { accept: 'text/html' }, embedOrigins = 'https://example.org https://*.example.org') {
   return handle(new Request(`${ORIGIN}${path}`, { headers }), {
@@ -122,6 +122,7 @@ describe('what a video share still does', () => {
       ['etag', '"etag-keep/clip.mp4"'],
       ['x-content-type-options', 'nosniff'],
     ]);
+
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(BYTES);
   });
 

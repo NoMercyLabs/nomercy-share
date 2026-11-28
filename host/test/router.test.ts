@@ -30,6 +30,7 @@ const env = {
   bucket,
   now: () => NOW,
   rawMaxAgeSeconds: 3600,
+  embedOrigins: '',
 };
 
 function get(path: string, accept?: string, method = 'GET') {

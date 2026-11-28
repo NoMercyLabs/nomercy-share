@@ -1,6 +1,8 @@
 import { homePage, noticePage, viewerPage } from './pages.js';
 import type { MediaKind } from './pages.js';
 import { readExpiry, expiryLine } from './expiry.js';
+import { readEmbedOrigins } from './embedOrigins.js';
+import { PAGE_SECURITY, videoPageSecurity } from './securityPolicy.js';
 import type { ShareBucket, StoredObject } from './storage.js';
 import { strings } from './strings.js';
 
@@ -8,13 +10,14 @@ export interface RouterEnv {
   bucket: ShareBucket;
   now: () => Date;
   rawMaxAgeSeconds: number;
+  /** Space separated origins that may frame a video share and control its player. */
+  embedOrigins: string;
 }
 
 // A share key is the expiry folder, a random id and an optional extension, as the app writes it.
 const KEY_PATTERN = /^(?:exp-\d+d|keep)\/[A-Za-z0-9]+(?:\.[a-z0-9]{1,8})?$/;
 const SIDECAR_SUFFIX = '.json';
 const HTML = 'text/html; charset=utf-8';
-const PAGE_SECURITY = 'default-src \'none\'; img-src \'self\'; media-src \'self\'; style-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'';
 
 // Link preview bots fetch with a generic Accept header but read the Open Graph tags from the viewer page.
 export const PREVIEW_BOT_AGENTS = [
@@ -42,10 +45,10 @@ function prefersHtml(accept: string | null) {
   });
 }
 
-function page(status: number, html: string) {
+function page(status: number, html: string, security = PAGE_SECURITY) {
   const headers = {
     'content-type': HTML,
-    'content-security-policy': PAGE_SECURITY,
+    'content-security-policy': security,
     'cache-control': 'no-cache',
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'no-referrer',
@@ -128,13 +131,20 @@ async function serve(request: Request, env: RouterEnv, key: string) {
       ? expiryLine(expiresAt, env.now())
       : null;
 
-    return page(200, viewerPage({
+    const embedOrigins = readEmbedOrigins(env.embedOrigins);
+    const html = viewerPage({
       kind,
       contentType,
       rawUrl,
       pageUrl: `${url.origin}/${key}`,
       expiryLine: line,
-    }));
+      embedOrigins,
+    });
+    const security = kind === 'video'
+      ? videoPageSecurity(embedOrigins)
+      : PAGE_SECURITY;
+
+    return page(200, html, security);
   }
 
   const wasRanged = request.headers.has('range');

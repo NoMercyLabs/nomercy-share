@@ -19,7 +19,7 @@ class RecordingKeys extends ShareKeyHandlerPlugin {
     Object.defineProperty(this, 'player', { value: { options: {} } });
     this.addDefaults();
 
-    return [...this.bound].toSorted();
+    return [...this.bound].sort();
   }
 }
 
@@ -62,7 +62,7 @@ describe('share player settings', () => {
       'MediaFastForward', 'MediaPause', 'MediaPlay', 'MediaPlayPause', 'MediaRewind', '[', ']',
       'alt+ArrowLeft', 'alt+ArrowRight', 'ctrl+ArrowLeft', 'ctrl+ArrowRight', 'f', 'i', 'm',
       'shift+ArrowLeft', 'shift+ArrowRight',
-    ].toSorted());
+    ].sort());
   });
 
   it.each([

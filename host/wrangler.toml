@@ -6,6 +6,14 @@ workers_dev = false
 
 routes = [{ pattern = "share.nomercy.tv/*", zone_name = "nomercy.tv" }]
 
+# The player bundle, built from the pinned npm packages before every dev run and deploy.
+[build]
+command = "npm run build:player"
+watch_dir = "client"
+
+[assets]
+directory = "./public"
+
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "nomercy-share"
@@ -13,3 +21,5 @@ bucket_name = "nomercy-share"
 [vars]
 # How long a browser or a chat app may keep the raw file before it asks again, in seconds.
 RAW_MAX_AGE_SECONDS = "3600"
+# Who may frame a video share and control its player: https origins, space separated; "*." means every subdomain.
+EMBED_ORIGINS = "https://nomercy.tv https://*.nomercy.tv"

@@ -1,5 +1,7 @@
 import { strings } from './strings.js';
 import { logoMark, styles } from './theme.js';
+import { playerStyles } from './playerTheme.js';
+import { videoStage } from './videoStage.js';
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'file';
 
@@ -10,6 +12,7 @@ export interface ViewerModel {
   rawUrl: string;
   pageUrl: string;
   expiryLine: string | null;
+  embedOrigins: readonly string[];
 }
 
 const HOME_URL = 'https://nomercy.tv';
@@ -33,7 +36,7 @@ function document(title: string, head: string, body: string) {
 <meta name="color-scheme" content="dark">
 <title>${escapeHtml(title)}</title>
 ${head}
-<style>${styles}</style>
+<style>${styles}${playerStyles}</style>
 </head>
 <body>
 ${body}
@@ -49,7 +52,11 @@ function mediaElement(model: ViewerModel) {
     case 'image':
       return `<img class="media" src="${raw}" alt="${strings.fileTitle}">`;
     case 'video':
-      return `<video class="media" src="${raw}" controls playsinline preload="metadata"></video>`;
+      return videoStage({
+        rawUrl: raw,
+        title: escapeHtml(strings.fileTitle),
+        embedOrigins: escapeHtml(model.embedOrigins.join(' ')),
+      });
     case 'audio':
       return `<audio class="media" src="${raw}" controls preload="metadata"></audio>`;
     case 'file':
