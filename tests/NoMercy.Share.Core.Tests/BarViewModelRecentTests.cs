@@ -23,13 +23,123 @@ public sealed class BarViewModelRecentTests : IDisposable
 
     public void Dispose() => Directory.Delete(_folder, recursive: true);
 
-    private BarViewModel Bar(bool withStore = true) => new(
+    private BarViewModel Bar(bool withStore = true, FakeUploader? host = null) => new(
         new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
         new ShareFlow(new FakeUploader(), _clipboard, new ExpirySettings(), new ClipboardSettings()),
         clock: () => Now,
         recent: withStore ? _store : null,
         opener: _opener,
-        clipboard: _clipboard);
+        clipboard: _clipboard,
+        deletion: host is null ? null : new ShareDeletion(() => [host]));
+
+    private async Task<BarViewModel> AskToDeleteTheNewest(FakeUploader host)
+    {
+        BarViewModel bar = Bar(host: host);
+        await bar.RunAsync(BarAction.Recent);
+        bar.DeleteRecentCommand.Execute(bar.RecentRows[0]);
+        return bar;
+    }
+
+    [Fact]
+    public async Task DeleteAsksFirstAndDeletesNothingYet()
+    {
+        AddLink("a");
+        FakeUploader host = new() { Deletes = true };
+
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+
+        Assert.False(bar.IsRecentOpen);
+        Assert.NotNull(bar.Ask);
+        Assert.Equal("Delete", bar.Ask.YesLabel);
+        Assert.Equal("Cancel", bar.Ask.NoLabel);
+        Assert.Empty(host.Deleted);
+        Assert.Single(_store.Load());
+    }
+
+    [Fact]
+    public async Task TheConfirmTextNamesTheBrowserCacheAndTheDiscordPreview()
+    {
+        AddLink("a");
+
+        BarViewModel bar = await AskToDeleteTheNewest(new FakeUploader { Deletes = true });
+
+        Assert.Contains("one hour", bar.Ask?.Text);
+        Assert.Contains("Discord", bar.Ask?.Text);
+        Assert.Contains("preview", bar.Ask?.Text);
+    }
+
+    [Fact]
+    public async Task CancelKeepsTheLinkAndCallsNoHost()
+    {
+        AddLink("a");
+        FakeUploader host = new() { Deletes = true };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+
+        bar.AskNoCommand.Execute(null);
+
+        Assert.Null(bar.Ask);
+        Assert.Empty(host.Deleted);
+        Assert.Single(_store.Load());
+    }
+
+    [Fact]
+    public async Task YesDeletesFromTheHostAndTakesTheLinkOffTheListButKeepsTheFile()
+    {
+        string file = Path.Combine(_folder, "shot.png");
+        File.WriteAllText(file, "made-up-picture-bytes");
+        _store.Add(new RecentLink("https://share.example.test/exp-30d/a.png", RecentKind.Image, "image/png", 10, Now, null, file));
+        FakeUploader host = new() { Deletes = true };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+
+        await bar.Ask!.Yes();
+
+        Assert.Equal("https://share.example.test/exp-30d/a.png", Assert.Single(host.Deleted).Url);
+        Assert.Empty(_store.Load());
+        Assert.True(File.Exists(file));
+        Assert.Null(bar.Ask);
+        Assert.Equal("Link deleted", bar.Notice);
+    }
+
+    [Fact]
+    public async Task ARefusedDeleteKeepsTheLinkAndSaysWhy()
+    {
+        AddLink("a");
+        BarViewModel bar = await AskToDeleteTheNewest(
+            new FakeUploader { Deletes = true, DeleteThrows = new ShareUploadException("the host said no") });
+
+        await bar.Ask!.Yes();
+
+        Assert.Single(_store.Load());
+        Assert.Equal("Not deleted: the host said no. The link stays in the list.", bar.Notice);
+    }
+
+    [Fact]
+    public async Task AnUnexpectedDeleteErrorKeepsTheLinkWithAPlainNotice()
+    {
+        AddLink("a");
+        BarViewModel bar = await AskToDeleteTheNewest(
+            new FakeUploader { Deletes = true, DeleteThrows = new InvalidOperationException("internal detail") });
+
+        await bar.Ask!.Yes();
+
+        Assert.Single(_store.Load());
+        Assert.Equal("That did not work. The link stays in the list.", bar.Notice);
+    }
+
+    [Fact]
+    public async Task WhenNoProviderCanDeleteOnlyTheListEntryGoes()
+    {
+        AddLink("a");
+        FakeUploader host = new() { Deletes = false };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+
+        Assert.Contains("older Discord uploads", bar.Ask?.Text);
+        await bar.Ask!.Yes();
+
+        Assert.Empty(host.Deleted);
+        Assert.Empty(_store.Load());
+        Assert.Equal("Removed from the list", bar.Notice);
+    }
 
     private void AddLink(string id) =>
         _store.Add(new RecentLink($"https://share.example.test/exp-30d/{id}.png", RecentKind.Image, "image/png", 10, Now.AddMinutes(-5), Now.AddDays(29), null));

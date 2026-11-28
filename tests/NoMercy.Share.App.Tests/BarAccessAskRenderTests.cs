@@ -35,6 +35,7 @@ public sealed class BarAccessAskRenderTests
 
             Button[] buttons = [.. window.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("ask") && button.IsEffectivelyVisible)];
             Assert.Equal(2, buttons.Length);
+            Assert.Equal(["Allow", "Not now"], buttons.Select(button => button.Content));
             Assert.All(buttons, button =>
             {
                 Assert.True(button.Focusable);

@@ -74,6 +74,10 @@ public sealed class BarChoiceRenderTests
         public Task<ShareLink> UploadAsync(string filePath, Expiry expiry, CancellationToken cancellationToken = default) =>
             Task.FromResult(new ShareLink(new Uri("https://share.example.test/abc"), null));
 
+        public bool CanDelete(Core.Recent.RecentLink link) => false;
+
+        public Task DeleteAsync(Core.Recent.RecentLink link, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
         public Task SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public Task<string?> GetTextAsync(CancellationToken cancellationToken = default) => Task.FromResult<string?>(null);

@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using NoMercy.Share.Core;
 using NoMercy.Share.Core.Discord;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -85,6 +86,10 @@ public sealed class DiscordShareUploader(
             return await ReadLinkAsync(response, cancellationToken);
         }
     }
+
+    public bool CanDelete(RecentLink link) => false;
+
+    public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     private ShareUploadException TooBig(long size) => new(Strings.Get(
         "error.discord.size", MegabyteText.FromBytes(size), MegabyteText.FromMegabytes(settings.Discord.MaxUploadMegabytes)));

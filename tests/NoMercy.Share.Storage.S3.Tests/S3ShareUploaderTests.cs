@@ -4,6 +4,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.DependencyInjection;
 using NoMercy.Share.Core;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -192,6 +193,80 @@ public sealed class S3ShareUploaderTests(S3MockFixture mock) : IClassFixture<S3M
             () => Uploader(Settings(), Credential).UploadAsync(Path.Combine(Path.GetTempPath(), "share-not-here.png"), Expiry.Never));
 
         Assert.Contains("gone", error.Message);
+    }
+
+    private static RecentLink Recent(string url, string? hostId = null) =>
+        new(url, RecentKind.Image, "image/png", 10, Now, null, null, hostId);
+
+    [DockerFact]
+    public async Task ADeleteRemovesThePictureAndTheSidecar()
+    {
+        string file = GeneratedPng(out _);
+        try
+        {
+            S3ShareUploader uploader = Uploader(Settings(), Credential);
+            ShareLink link = await uploader.UploadAsync(file, Expiry.InDays(7));
+            string key = link.Url.AbsolutePath.TrimStart('/');
+
+            await uploader.DeleteAsync(Recent(link.Url.AbsoluteUri));
+
+            using AmazonS3Client client = mock.Client();
+            await Assert.ThrowsAsync<NoSuchKeyException>(() => client.GetObjectAsync(S3MockFixture.Bucket, key));
+            await Assert.ThrowsAsync<NoSuchKeyException>(() => client.GetObjectAsync(S3MockFixture.Bucket, key + Settings().SidecarSuffix));
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    [DockerFact]
+    public async Task ADeleteWithNoSidecarLeftStillRemovesThePicture()
+    {
+        string file = GeneratedPng(out _);
+        try
+        {
+            S3ShareUploader uploader = Uploader(Settings(), Credential);
+            ShareLink link = await uploader.UploadAsync(file, Expiry.Never);
+            string key = link.Url.AbsolutePath.TrimStart('/');
+            using AmazonS3Client client = mock.Client();
+            await client.DeleteObjectAsync(S3MockFixture.Bucket, key + Settings().SidecarSuffix);
+
+            await uploader.DeleteAsync(Recent(link.Url.AbsoluteUri));
+
+            await Assert.ThrowsAsync<NoSuchKeyException>(() => client.GetObjectAsync(S3MockFixture.Bucket, key));
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    [Theory]
+    [InlineData("https://share.example.test", "https://share.example.test/exp-7d/abc.png", null, true)]
+    [InlineData("https://share.example.test/files/", "https://share.example.test/files/abc.png", null, true)]
+    [InlineData("https://share.example.test", "https://share.example.test.example.org/abc.png", null, false)]
+    [InlineData("https://share.example.test/files", "https://share.example.test/other/abc.png", null, false)]
+    [InlineData("https://share.example.test", "https://share.example.test/", null, false)]
+    [InlineData("https://share.example.test", "https://share.example.test/abc.png", "900000000000000001", false)]
+    [InlineData("", "https://share.example.test/abc.png", null, false)]
+    public void OnlyALinkUnderThePublicAddressCanBeDeleted(string publicBaseUrl, string url, string? hostId, bool expected)
+    {
+        S3ShareUploader uploader = Uploader(Settings() with { PublicBaseUrl = publicBaseUrl }, Credential);
+
+        Assert.Equal(expected, uploader.CanDelete(Recent(url, hostId)));
+    }
+
+    [Fact]
+    public async Task ADeleteThatCannotReachTheStorageThrowsWithNoSecret()
+    {
+        StorageSettings settings = Settings() with { Endpoint = "http://127.0.0.1:1" };
+
+        ShareUploadException error = await Assert.ThrowsAsync<ShareUploadException>(
+            () => Uploader(settings, Credential).DeleteAsync(Recent("https://share.example.test/abc.png")));
+
+        Assert.Contains("could not be reached", error.Message);
+        Assert.DoesNotContain(S3MockFixture.SecretAccessKey, error.ToString());
     }
 
     [Fact]

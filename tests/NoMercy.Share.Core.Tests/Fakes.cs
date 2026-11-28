@@ -1,6 +1,7 @@
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Tests;
@@ -108,6 +109,25 @@ internal sealed class FakeUploader(string name = "r2") : IShareUploader
 
         Uploads.Add((filePath, expiry));
         return Task.FromResult(new ShareLink(new Uri("https://share.example.test/abc"), null));
+    }
+
+    public bool Deletes { get; set; }
+
+    public Exception? DeleteThrows { get; set; }
+
+    public List<RecentLink> Deleted { get; } = [];
+
+    public bool CanDelete(RecentLink link) => Deletes;
+
+    public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default)
+    {
+        if (DeleteThrows is not null)
+        {
+            return Task.FromException(DeleteThrows);
+        }
+
+        Deleted.Add(link);
+        return Task.CompletedTask;
     }
 }
 

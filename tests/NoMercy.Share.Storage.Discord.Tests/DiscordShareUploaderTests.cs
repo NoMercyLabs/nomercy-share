@@ -1,4 +1,5 @@
 using NoMercy.Share.Core;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -88,6 +89,64 @@ public sealed class DiscordShareUploaderTests : IDisposable
         ShareLink link = await Uploader().UploadAsync(_file, Expiry.Never);
 
         Assert.Equal(expires, link.ExpiresAt);
+    }
+
+    private static RecentLink Recent(string? hostId) =>
+        new(Attachment, RecentKind.Image, "image/png", 10, DateTimeOffset.UnixEpoch, null, null, hostId);
+
+    [Fact]
+    public async Task TheMessageIdIsKeptForALaterDelete()
+    {
+        _server.Answer(200, Message(Attachment));
+
+        ShareLink link = await Uploader().UploadAsync(_file, Expiry.Never);
+
+        Assert.Equal("1", link.HostId);
+    }
+
+    [Fact]
+    public void OnlyAnUploadWithAMessageIdCanBeDeleted()
+    {
+        Assert.True(Uploader().CanDelete(Recent("900000000000000001")));
+        Assert.False(Uploader().CanDelete(Recent(null)));
+    }
+
+    [Fact]
+    public async Task ADeleteRemovesTheWebhookMessage()
+    {
+        _server.Answer(204);
+
+        await Uploader().DeleteAsync(Recent("900000000000000001"));
+
+        (string method, string path, _, _, _) = Assert.Single(_server.Requests);
+        Assert.Equal("DELETE", method);
+        Assert.Equal("/api/webhooks/000/made-up-token/messages/900000000000000001", path);
+    }
+
+    [Theory]
+    [InlineData(404)]
+    [InlineData(401)]
+    public async Task ADeleteDiscordRefusesThrowsWithNoWebhookAddress(int status)
+    {
+        _server.Answer(status);
+
+        ShareUploadException error = await Assert.ThrowsAsync<ShareUploadException>(
+            () => Uploader().DeleteAsync(Recent("900000000000000001")));
+
+        Assert.Contains(status.ToString(System.Globalization.CultureInfo.InvariantCulture), error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("made-up-token", error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ARateLimitedDeleteWaitsAndTriesOnceMore()
+    {
+        _server.Answer(429, """{"retry_after":0.5}""");
+        _server.Answer(204);
+
+        await Uploader().DeleteAsync(Recent("900000000000000001"));
+
+        Assert.Equal([TimeSpan.FromSeconds(0.5)], _waits);
+        Assert.Equal(2, _server.Requests.Count);
     }
 
     [Fact]

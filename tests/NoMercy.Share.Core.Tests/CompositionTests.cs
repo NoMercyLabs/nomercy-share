@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -26,6 +27,17 @@ public sealed class CompositionTests
 
         services.AddShareCore();
         return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public void ALinkCanBeDeletedByAProviderThatIsNotTheSelectedOne()
+    {
+        FakeUploader earlier = new("r2") { Deletes = true };
+        using ServiceProvider provider = Build(
+            new ShareSettings { Storage = new StorageSettings { Provider = "minio" } }, earlier, new FakeUploader("minio"));
+        RecentLink link = new("https://share.example.test/a.png", RecentKind.Image, "image/png", 10, DateTimeOffset.UnixEpoch, null, null);
+
+        Assert.True(provider.GetRequiredService<ShareDeletion>().CanDeleteFromHost(link));
     }
 
     [Fact]

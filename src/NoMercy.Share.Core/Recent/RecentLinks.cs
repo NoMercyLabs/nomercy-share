@@ -44,6 +44,12 @@ public sealed class RecentLinks(string path, RecentSettings settings, Func<DateT
         }
     }
 
+    /// <summary>Takes one link off the list. Throws when the file cannot be written; the old file stays whole.</summary>
+    public void Remove(RecentLink link)
+    {
+        _ = link;
+    }
+
     /// <summary>Records an upload that just succeeded. A list that cannot be written never fails the share.</summary>
     public void Record(ShareLink link, CaptureResult capture)
     {

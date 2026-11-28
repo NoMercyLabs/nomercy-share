@@ -92,6 +92,61 @@ public sealed class RecentLinksTests : IDisposable
     }
 
     [Fact]
+    public void RemoveDropsOnlyThatLinkAndTheFileKeepsTheChange()
+    {
+        RecentLinks store = Store();
+        store.Add(Link("a", Now.AddMinutes(-2)));
+        store.Add(Link("b", Now.AddMinutes(-1)));
+        store.Add(Link("c", Now));
+
+        store.Remove(Link("b", Now.AddMinutes(-1)));
+
+        Assert.Equal(["c", "a"], Ids(Store().Load()));
+    }
+
+    [Fact]
+    public void AListWrittenBeforeHostIdsLoadsEveryLink()
+    {
+        File.WriteAllText(FilePath, """
+            [
+              {
+                "Url": "https://share.example.test/exp-30d/one.png",
+                "Kind": 0,
+                "ContentType": "image/png",
+                "SizeBytes": 10,
+                "CreatedAt": "2026-11-27T11:00:00+00:00",
+                "ExpiresAt": "2026-12-27T11:00:00+00:00",
+                "FilePath": null
+              },
+              {
+                "Url": "https://cdn.example.test/attachments/1/2/two.png",
+                "Kind": 0,
+                "ContentType": "image/png",
+                "SizeBytes": 20,
+                "CreatedAt": "2026-11-27T10:00:00+00:00",
+                "ExpiresAt": null,
+                "FilePath": null
+              }
+            ]
+            """);
+
+        IReadOnlyList<RecentLink> links = Store().Load();
+
+        Assert.Equal(["one", "two"], Ids(links));
+        Assert.All(links, link => Assert.Null(link.HostId));
+    }
+
+    [Fact]
+    public void ARecordedUploadKeepsTheHostId()
+    {
+        Store().Record(
+            new ShareLink(new Uri("https://cdn.example.test/attachments/1/2/shot.png"), null, "900000000000000001"),
+            new CaptureResult(Path.Combine(_folder, "shot.png"), "image/png"));
+
+        Assert.Equal("900000000000000001", Assert.Single(Store().Load()).HostId);
+    }
+
+    [Fact]
     public void AnExpiredLinkStaysListedAndIsMarkedExpired()
     {
         RecentLinks store = Store();
@@ -259,5 +314,9 @@ public sealed class RecentLinksTests : IDisposable
 
         public Task<ShareLink> UploadAsync(string filePath, Expiry expiry, CancellationToken cancellationToken = default) =>
             Task.FromResult(new ShareLink(new Uri("https://share.example.test/exp-30d/abc.png"), expires));
+
+        public bool CanDelete(RecentLink link) => false;
+
+        public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

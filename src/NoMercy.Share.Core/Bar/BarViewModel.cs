@@ -51,8 +51,10 @@ public sealed class BarViewModel : ObservableObject
         CaptureFiles? files = null,
         IFolderAccess? folderAccess = null,
         IFfmpegInstall? ffmpeg = null,
-        RecordingSoundStore? sound = null)
+        RecordingSoundStore? sound = null,
+        ShareDeletion? deletion = null)
     {
+        DeleteRecentCommand = new BarCommand(_ => _ = deletion);
         _sound = sound;
         if (sound is not null)
         {
@@ -269,7 +271,7 @@ public sealed class BarViewModel : ObservableObject
 
         if (_folderAccess.IsProtectionOn() && !_files.CanWriteCapturesFolder())
         {
-            Ask = new BarAsk(Strings.Get("ask.folder", _files.CapturesFolder), Strings.Get("ask.allow"), () => AllowAccessAsync(), DismissAccessAsk);
+            Ask = new BarAsk(Strings.Get("ask.folder", _files.CapturesFolder), Strings.Get("ask.allow"), () => AllowAccessAsync(), DismissAccessAsk, Strings.Get("ask.notnow"));
         }
     }
 
@@ -355,6 +357,9 @@ public sealed class BarViewModel : ObservableObject
 
     /// <summary>Opens the link of the <see cref="RecentRow"/> given as the command parameter in the browser.</summary>
     public ICommand OpenRecentCommand { get; }
+
+    /// <summary>Asks to delete the <see cref="RecentRow"/> given as the command parameter.</summary>
+    public ICommand DeleteRecentCommand { get; }
 
     /// <summary>True while the recent links list is open. The popup binds to it, so a click outside closes it.</summary>
     public bool IsRecentOpen
@@ -629,7 +634,7 @@ public sealed class BarViewModel : ObservableObject
         {
             if (!_downloading)
             {
-                Ask = new BarAsk(Strings.Get("ask.ffmpeg"), Strings.Get("ask.download"), DownloadFfmpegAsync, () => Ask = null);
+                Ask = new BarAsk(Strings.Get("ask.ffmpeg"), Strings.Get("ask.download"), DownloadFfmpegAsync, () => Ask = null, Strings.Get("ask.notnow"));
             }
 
             return;

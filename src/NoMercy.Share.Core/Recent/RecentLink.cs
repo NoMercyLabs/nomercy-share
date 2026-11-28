@@ -5,6 +5,7 @@ namespace NoMercy.Share.Core.Recent;
 /// <param name="ContentType">The media type of the upload, for example image/png.</param>
 /// <param name="ExpiresAt">When the link stops working; null when it never does.</param>
 /// <param name="FilePath">The local capture, kept only while the file exists when the link is recorded.</param>
+/// <param name="HostId">See <see cref="Sharing.ShareLink.HostId"/>; null in lists written before it was kept.</param>
 public sealed record RecentLink(
     string Url,
     RecentKind Kind,
@@ -12,7 +13,8 @@ public sealed record RecentLink(
     long SizeBytes,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ExpiresAt,
-    string? FilePath)
+    string? FilePath,
+    string? HostId = null)
 {
     public bool IsExpired(DateTimeOffset now) => ExpiresAt is { } expiresAt && now >= expiresAt;
 }

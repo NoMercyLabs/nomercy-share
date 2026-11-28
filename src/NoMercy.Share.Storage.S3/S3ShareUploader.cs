@@ -4,6 +4,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using NoMercy.Share.Core;
+using NoMercy.Share.Core.Recent;
 using NoMercy.Share.Core.Settings;
 using NoMercy.Share.Core.Sharing;
 
@@ -68,6 +69,10 @@ public sealed class S3ShareUploader(
 
         return new ShareLink(settings.LinkFor(plan.Key), plan.ExpiresAt);
     }
+
+    public bool CanDelete(RecentLink link) => false;
+
+    public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     private static string Utc(DateTimeOffset time) => time.UtcDateTime.ToString(TimestampFormat, CultureInfo.InvariantCulture);
 

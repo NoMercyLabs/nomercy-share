@@ -154,7 +154,7 @@
         <TextBlock Text="{Binding Ask.Text, FallbackValue={x:Null}}" Foreground="{DynamicResource Nm-Text-Secondary-Brush}" FontSize="{DynamicResource Nm-Font-Size-Sm}"
                    VerticalAlignment="Center" MaxWidth="360" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
         <Button x:Name="AllowButton" Classes="bar ask first" Command="{Binding AskYesCommand}" Content="{Binding Ask.YesLabel, FallbackValue={x:Null}}" />
-        <Button Classes="bar ask" Command="{Binding AskNoCommand}" Content="{local:Loc ask.notnow}" />
+        <Button Classes="bar ask" Command="{Binding AskNoCommand}" Content="{Binding Ask.NoLabel, FallbackValue={x:Null}}" />
       </StackPanel>
     </Border>
   </StackPanel>
