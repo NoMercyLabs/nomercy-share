@@ -100,7 +100,9 @@ public sealed class WebCapturePanelRenderTests
             Assert.False(address.IsEffectivelyEnabled);
             Assert.False(Named(window, "Capture").IsEffectivelyEnabled);
             Assert.False(Pill(window, "Width", "Phone (390 px)").IsEffectivelyEnabled);
-            Assert.True(BarButton(window, "Screenshot").IsEffectivelyEnabled);
+            Assert.All(new[] { "Full page", "Visible area", "One element" }, name => Assert.False(BarButton(window, name).IsEffectivelyEnabled));
+            Assert.All(new[] { "Screenshot", "Record the screen", "Capture a web page" }, name => Assert.True(BarButton(window, name).IsEffectivelyEnabled));
+            Render(window, "webmodes-busy.png");
 
             Press(window, PhysicalKey.Escape);
 
@@ -118,7 +120,7 @@ public sealed class WebCapturePanelRenderTests
     [InlineData(WebCaptureKind.FullPage)]
     [InlineData(WebCaptureKind.Viewport)]
     [InlineData(WebCaptureKind.Element)]
-    public void BothChoiceRowsShowEveryChoiceUnclipped(WebCaptureKind kind) => WithWindow((window, model, capture, _) =>
+    public void TheWidthRowShowsEveryChoiceUnclippedInEveryMode(WebCaptureKind kind) => WithWindow((window, model, capture, _) =>
     {
         model.SelectedMode = model.Modes.Single(mode => mode.Kind == kind);
         Dispatcher.UIThread.RunJobs();
@@ -144,16 +146,46 @@ public sealed class WebCapturePanelRenderTests
     [Fact]
     public void PickingAPillUpdatesTheViewModel() => WithWindow((window, model, _, _) =>
     {
-        Click(window, Pill(window, "Mode", "One element"));
         Click(window, Pill(window, "Width", "Phone (390 px)"));
 
-        Assert.Equal(WebCaptureKind.Element, model.SelectedMode.Kind);
         Assert.Equal(WebCaptureDevice.Phone, model.SelectedDevice.Device);
-        Assert.True(IsSelected(Pill(window, "Mode", "One element")));
-        Assert.False(IsSelected(Pill(window, "Mode", "Full page")));
-        Assert.Equal(Brush(window, "Nm-Accent-Brush"), IconColor(Pill(window, "Mode", "One element")));
-        Assert.NotEqual(Brush(window, "Nm-Accent-Brush"), IconColor(Pill(window, "Mode", "Full page")));
+        Assert.True(IsSelected(Pill(window, "Width", "Phone (390 px)")));
+        Assert.Equal(Brush(window, "Nm-Accent-Brush"), IconColor(Pill(window, "Width", "Phone (390 px)")));
+        Assert.NotEqual(Brush(window, "Nm-Accent-Brush"), IconColor(Pill(window, "Width", "Desktop (1280 px)")));
     });
+
+    [Fact]
+    public void TheRowPicksTheModeAndOneElementShowsTheSelector() => WithWindow((window, model, capture, _) =>
+    {
+        Assert.False(SelectorShows(window));
+        Click(window, BarButton(window, "One element"));
+        window.UpdateLayout();
+
+        Assert.Equal(WebCaptureKind.Element, model.SelectedMode.Kind);
+        Assert.True(SelectorShows(window));
+        Assert.Equal("Selected", AutomationProperties.GetHelpText(BarButton(window, "One element")));
+        Assert.Null(AutomationProperties.GetHelpText(BarButton(window, "Full page")));
+        Assert.Equal(Brush(window, "Nm-Accent-Brush"), IconColor(BarButton(window, "One element")));
+        Assert.NotEqual(Brush(window, "Nm-Accent-Brush"), IconColor(BarButton(window, "Full page")));
+        Render(window, "webmodes-element.png");
+
+        Click(window, BarButton(window, "Full page"));
+
+        Assert.False(SelectorShows(window));
+        Assert.Empty(capture.Requests);
+        Render(window, "webmodes-default.png");
+    });
+
+    [Fact]
+    public void ThePanelHasNoModeRow() => WithWindow((window, _, _, _) =>
+    {
+        Assert.DoesNotContain(Texts(window), text => text == "Mode");
+        Assert.Equal(["Width"], PanelOf(window).GetVisualDescendants().OfType<ListBox>().Select(AutomationProperties.GetName));
+    });
+
+    private static bool SelectorShows(Window window) => Named(window, "CSS selector").IsEffectivelyVisible;
+
+    private static Color? IconColor(Button button) => (button.GetVisualDescendants().OfType<MoooomIcon>().Single().Stroke as ISolidColorBrush)?.Color;
 
     [Fact]
     public void SixShortPillsFitThePanelAndNameTheirPixelWidth() => WithWindow((window, _, _, _) =>
@@ -191,13 +223,9 @@ public sealed class WebCapturePanelRenderTests
     });
 
     [Fact]
-    public void TabReachesEveryControlAndArrowsMoveInsideARow() => WithWindow((window, model, _, _) =>
+    public void TabGoesFromTheAddressToTheWidthsAndCapture() => WithWindow((window, _, _, _) =>
     {
         Assert.Equal("Address", FocusedName(window));
-        Press(window, PhysicalKey.Tab);
-        Assert.Equal("Full page", FocusedName(window));
-        Press(window, PhysicalKey.ArrowRight);
-        Assert.Equal(WebCaptureKind.Viewport, model.SelectedMode.Kind);
 
         List<string?> reached = [];
         for (int step = 0; step < 2; step++)
@@ -215,10 +243,12 @@ public sealed class WebCapturePanelRenderTests
         model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
         Dispatcher.UIThread.RunJobs();
         List<string> problems = [];
-        for (int step = 0; step < 7; step++)
+        List<string?> reached = [];
+        for (int step = 0; step < 13; step++)
         {
             Press(window, PhysicalKey.Tab);
             Control focused = (Control)window.FocusManager!.GetFocusedElement()!;
+            reached.Add(FocusedName(window));
             int rings = Rings(window);
             if (rings != 1 || focused.FocusAdorner is not null)
             {
@@ -232,6 +262,7 @@ public sealed class WebCapturePanelRenderTests
         }
 
         Assert.True(problems.Count == 0, string.Join("; ", problems));
+        Assert.Superset(new HashSet<string?> { "Full page", "Visible area", "One element" }, reached.ToHashSet());
     });
 
     [Fact]
@@ -248,12 +279,31 @@ public sealed class WebCapturePanelRenderTests
         Assert.NotNull(bar.Choice);
     });
 
-    [Theory]
-    [InlineData("Full page")]
-    [InlineData("Capture")]
-    public void EnterCapturesFromAnyControl(string name) => WithWindow((window, _, capture, _) =>
+    [Fact]
+    public void EnterOnAModeButtonPicksItAndCapturesNothing() => WithWindow((window, model, capture, bar) =>
     {
-        Named(window, name).Focus(NavigationMethod.Tab);
+        BarButton(window, "Visible area").Focus(NavigationMethod.Tab);
+        Press(window, PhysicalKey.Enter);
+
+        Assert.Equal(WebCaptureKind.Viewport, model.SelectedMode.Kind);
+        Assert.Empty(capture.Requests);
+        Assert.Same(model, bar.WebPanel);
+    });
+
+    [Fact]
+    public void TheCaptureRequestCarriesTheModePickedInTheRow() => WithWindow((window, _, capture, _) =>
+    {
+        Click(window, BarButton(window, "Visible area"));
+        Named(window, "Address").Focus(NavigationMethod.Tab);
+        Press(window, PhysicalKey.Enter);
+
+        Assert.Equal(WebCaptureKind.Viewport, Assert.Single(capture.Requests).Kind);
+    });
+
+    [Fact]
+    public void EnterOnCaptureCaptures() => WithWindow((window, _, capture, _) =>
+    {
+        Named(window, "Capture").Focus(NavigationMethod.Tab);
         Press(window, PhysicalKey.Enter);
 
         Assert.Single(capture.Requests);
@@ -364,12 +414,9 @@ public sealed class WebCapturePanelRenderTests
     {
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
-        foreach ((string row, int count) in new[] { ("Mode", 3), ("Width", 6) })
-        {
-            ListBoxItem[] pills = [.. Row(window, row).GetVisualDescendants().OfType<ListBoxItem>()];
-            Assert.Equal(count, pills.Length);
-            Assert.All(pills, pill => Assert.True(pill.IsEffectivelyVisible && Inside(pill, window), $"{AutomationProperties.GetName(pill)} is not wholly in the window"));
-        }
+        ListBoxItem[] pills = [.. Row(window, "Width").GetVisualDescendants().OfType<ListBoxItem>()];
+        Assert.Equal(6, pills.Length);
+        Assert.All(pills, pill => Assert.True(pill.IsEffectivelyVisible && Inside(pill, window), $"{AutomationProperties.GetName(pill)} is not wholly in the window"));
 
         Assert.All(window.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible && !string.IsNullOrEmpty(text.Text)), text =>
         {

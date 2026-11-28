@@ -44,12 +44,17 @@ public sealed class BarRowRenderTests
     }));
 
     [Fact]
-    public void WebModeShowsNoTargets() => HeadlessApp.Run(() => WithBar((window, bar) =>
+    public void WebModeShowsThePageModesWhereTheTargetsSit() => HeadlessApp.Run(() => WithBar((window, bar) =>
     {
         _ = bar.RunAsync(BarAction.WebPage);
 
-        AssertRow(window, [.. Modes, .. Tail], "row-web.png");
-        Assert.Equal(3, Separators(window));
+        AssertRow(window, [.. Modes, "Full page", "Visible area", "One element", .. Tail], "row-web.png");
+        Assert.Equal(4, Separators(window));
+        Button[] picked = [.. Shown(window).Where(button => AutomationProperties.GetHelpText(button) == "Selected")];
+        Assert.Equal(["Capture a web page", "Full page"], picked.Select(AutomationProperties.GetName));
+        Assert.All(picked, button => Assert.Contains("active", button.Classes));
+        Assert.Equal(["fileLines", "macOsWindow", "crossHair"],
+            Shown(window).Skip(3).Take(3).Select(button => button.GetVisualDescendants().OfType<MoooomIcon>().Single().Kind));
     }));
 
     [Fact]
