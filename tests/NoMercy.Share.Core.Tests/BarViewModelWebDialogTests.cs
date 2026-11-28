@@ -55,6 +55,53 @@ public sealed class BarViewModelWebDialogTests
         Assert.Empty(_uploader.Uploads);
     }
 
+    [Fact]
+    public async Task TheCrossClosesAnOpenDialogAndTheBar()
+    {
+        OpenWebDialog dialog = new();
+        BarViewModel bar = Bar(dialog);
+        int closes = 0;
+        bar.CloseRequested += (_, _) => closes++;
+        Task open = bar.RunAsync(BarAction.WebPage);
+
+        await bar.RunAsync(BarAction.Close).WaitAsync(TimeSpan.FromSeconds(10));
+        await open.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.True(dialog.Canceled);
+        Assert.Equal(1, closes);
+    }
+
+    [Fact]
+    public async Task AnotherChoiceClosesAnOpenDialogAndRuns()
+    {
+        OpenWebDialog dialog = new();
+        BarViewModel bar = Bar(dialog);
+        Task open = bar.RunAsync(BarAction.WebPage);
+
+        await bar.RunAsync(BarAction.Screenshot).WaitAsync(TimeSpan.FromSeconds(10));
+        await open.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.True(dialog.Canceled);
+        Assert.True(bar.IsScreenshotMenuOpen);
+    }
+
+    /// <summary>A dialog that stays open until it is canceled, as the real window waits for the user.</summary>
+    private sealed class OpenWebDialog : IWebCaptureDialog
+    {
+        public bool Canceled { get; private set; }
+
+        public async Task<CaptureResult> RunAsync(IWebPageCapture capture, CancellationToken cancellationToken = default)
+        {
+            TaskCompletionSource<CaptureResult> closed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            await using CancellationTokenRegistration registration = cancellationToken.Register(() =>
+            {
+                Canceled = true;
+                closed.TrySetCanceled();
+            });
+            return await closed.Task;
+        }
+    }
+
     private sealed class FakeWebDialog : IWebCaptureDialog
     {
         private readonly CaptureResult? _result;

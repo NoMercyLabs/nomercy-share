@@ -6,7 +6,8 @@ using NoMercy.Share.Core.Settings;
 namespace NoMercy.Share.App;
 
 /// <summary>Opens the capture window, with an https address from the clipboard filled in, and waits until it closes.</summary>
-public sealed class WebCaptureDialog(Core.IClipboard clipboard, Func<WebCaptureSettings> settings) : IWebCaptureDialog
+public sealed class WebCaptureDialog(Core.IClipboard clipboard, Func<WebCaptureSettings> settings, Core.IPointerMonitor? pointer = null)
+    : IWebCaptureDialog
 {
     public async Task<CaptureResult> RunAsync(IWebPageCapture capture, CancellationToken cancellationToken = default)
     {
@@ -17,6 +18,7 @@ public sealed class WebCaptureDialog(Core.IClipboard clipboard, Func<WebCaptureS
             WebCaptureViewModel model = new(capture, settings(), copied);
             WebCaptureWindow opened = new(model);
             opened.Closed += (_, _) => closed.TrySetResult(model.Result);
+            PointerScreen.CenterOnOpen(opened, pointer);
             opened.Show();
             return opened;
         });

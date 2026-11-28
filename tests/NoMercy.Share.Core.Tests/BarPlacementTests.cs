@@ -47,4 +47,19 @@ public sealed class BarPlacementTests
     {
         Assert.Equal(new BarPosition(660, 24), BarPlacement.FirstOpen(Main, 600, 24));
     }
+
+    [Theory]
+    [InlineData(660, 0, 2260, 0)]
+    [InlineData(0, 976, 1920, 960)]
+    [InlineData(1320, 488, 2600, 480)]
+    public void ABarMovedToAnotherScreenKeepsItsPlaceOnTheScreen(double x, double y, double movedX, double movedY)
+    {
+        Assert.Equal(new BarPosition(movedX, movedY), BarPlacement.MoveTo(new BarPosition(x, y), 600, 64, Main, Second));
+    }
+
+    [Fact]
+    public void ABarAsWideAsItsScreenStartsAtTheLeftEdgeOfTheNewOne()
+    {
+        Assert.Equal(new BarPosition(1920, 0), BarPlacement.MoveTo(new BarPosition(0, 0), 1920, 64, Main, Second));
+    }
 }

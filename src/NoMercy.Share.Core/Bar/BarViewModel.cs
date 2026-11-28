@@ -35,6 +35,7 @@ public sealed class BarViewModel : ObservableObject
     private CaptureChoice? _choice;
     private bool _accessAskDismissed;
     private bool _downloading;
+    private CancellationTokenSource? _openWebDialog;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _isRecentOpen;
@@ -439,7 +440,7 @@ public sealed class BarViewModel : ObservableObject
 
     private async Task GuardAsync(BarAction action, Func<Task> work)
     {
-        if (action != BarAction.Show && _picker?.Cancel() == true)
+        if (action != BarAction.Show && CancelWhatWaitsForTheUser())
         {
             await _running;
         }
@@ -686,8 +687,39 @@ public sealed class BarViewModel : ObservableObject
         _lastAction?.Save(new LastAction(LastActionTask.WebPage));
         CaptureResult picture = _webDialog is null
             ? await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken)
-            : await _webDialog.RunAsync(_web, cancellationToken);
+            : await RunWebDialogAsync(_webDialog, _web, cancellationToken);
         await ShareAsync(picture, cancellationToken);
+    }
+
+    private async Task<CaptureResult> RunWebDialogAsync(IWebCaptureDialog dialog, IWebPageCapture web, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource open = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _openWebDialog = open;
+        try
+        {
+            return await dialog.RunAsync(web, open.Token);
+        }
+        finally
+        {
+            _openWebDialog = null;
+        }
+    }
+
+    /// <summary>Cancels an open area picker or web page window, so another choice can run; false when neither is open.</summary>
+    private bool CancelWhatWaitsForTheUser()
+    {
+        if (_picker?.Cancel() == true)
+        {
+            return true;
+        }
+
+        if (_openWebDialog is not { IsCancellationRequested: false } open)
+        {
+            return false;
+        }
+
+        open.Cancel();
+        return true;
     }
 
     private async Task ToggleRecordingAsync(CancellationToken cancellationToken)

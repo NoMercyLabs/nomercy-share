@@ -34,6 +34,7 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IForegroundGrant, WindowsForegroundGrant>();
         services.AddSingleton<ICaptureExclusion, WindowsCaptureExclusion>();
         services.AddSingleton<IInputPassThrough, WindowsInputPassThrough>();
+        services.AddSingleton<IPointerMonitor, WindowsPointerMonitor>();
         services.AddSingleton<IFolderAccess, WindowsFolderAccess>();
         services.AddSingleton<IEncoderProbe>(sp => new FfmpegEncoderProbe(() => sp.GetRequiredService<LiveSettings>().Current.Recording));
         services.AddSingleton<IFfmpegInstall>(sp => new FfmpegDownload(DownloadClient, FfmpegDownload.DefaultFolder(), ShareDefaults.FfmpegReleaseUrl, FfmpegDownload.ThisPlatform(),
