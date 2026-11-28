@@ -18,23 +18,60 @@
           </StackPanel>
         </Border>
         <Border Classes="separator" />
-        <Button x:Name="ScreenshotButton" Classes="bar" Classes.active="{Binding IsScreenshotMenuOpen}" Command="{Binding ActionCommand}"
-                CommandParameter="{x:Static bar:BarAction.Screenshot}" ToolTip.Tip="{local:Loc bar.screenshot}" AutomationProperties.Name="{local:Loc bar.screenshot}">
+        <Button x:Name="ScreenshotButton" Classes="bar" Classes.active="{Binding Row.IsScreenshotMode}" Command="{Binding ActionCommand}"
+                CommandParameter="{x:Static bar:BarAction.Screenshot}" ToolTip.Tip="{local:Loc bar.screenshot}" AutomationProperties.Name="{local:Loc bar.screenshot}"
+                AutomationProperties.HelpText="{Binding Row.ScreenshotState}">
           <icons:MoooomIcon Kind="camera" />
         </Button>
-        <Border Classes="separator" />
-        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecordHighlighted}" Classes.recording="{Binding IsRecording}" Command="{Binding ActionCommand}"
-                CommandParameter="{x:Static bar:BarAction.Record}" ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}">
+        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding Row.IsRecordHighlighted}" Classes.recording="{Binding IsRecording}" Command="{Binding ActionCommand}"
+                CommandParameter="{x:Static bar:BarAction.Record}" ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}"
+                AutomationProperties.HelpText="{Binding Row.RecordState}">
           <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}" VerticalAlignment="Center">
             <icons:MoooomIcon Kind="webcam" />
             <Ellipse Classes="recording-dot" IsVisible="{Binding IsRecording}" />
             <TextBlock Classes="recording-time" IsVisible="{Binding IsRecording}" Text="{Binding ElapsedText}" />
           </StackPanel>
         </Button>
-        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.WebPage}" ToolTip.Tip="{local:Loc bar.webpage}" AutomationProperties.Name="{local:Loc bar.webpage}">
+        <Button x:Name="WebButton" Classes="bar" Classes.active="{Binding Row.IsWebMode}" Command="{Binding ActionCommand}"
+                CommandParameter="{x:Static bar:BarAction.WebPage}" ToolTip.Tip="{local:Loc bar.webpage}" AutomationProperties.Name="{local:Loc bar.webpage}"
+                AutomationProperties.HelpText="{Binding Row.WebState}">
           <icons:MoooomIcon Kind="globe" />
         </Button>
         <Border Classes="separator" />
+        <StackPanel Classes="group" IsVisible="{Binding Row.ShowsTargets}">
+          <Button Classes="bar" Classes.active="{Binding Row.IsAreaPicked}" Command="{Binding PickTargetCommand}" CommandParameter="{x:Static capture:CaptureKind.Region}"
+                  ToolTip.Tip="{local:Loc row.area}" AutomationProperties.Name="{local:Loc row.area}" AutomationProperties.HelpText="{Binding Row.AreaState}">
+            <icons:MoooomIcon Kind="crossHair" />
+          </Button>
+          <Button Classes="bar" Classes.active="{Binding Row.IsWindowPicked}" Command="{Binding PickTargetCommand}" CommandParameter="{x:Static capture:CaptureKind.Window}"
+                  ToolTip.Tip="{local:Loc row.window}" AutomationProperties.Name="{local:Loc row.window}" AutomationProperties.HelpText="{Binding Row.WindowState}">
+            <icons:MoooomIcon Kind="macOsWindow" />
+          </Button>
+          <Button Classes="bar" Classes.active="{Binding Row.IsFullScreenPicked}" Command="{Binding PickTargetCommand}" CommandParameter="{x:Static capture:CaptureKind.FullScreen}"
+                  ToolTip.Tip="{local:Loc row.fullscreen}" AutomationProperties.Name="{local:Loc row.fullscreen}" AutomationProperties.HelpText="{Binding Row.FullScreenState}">
+            <icons:MoooomIcon Kind="monitor" />
+          </Button>
+          <Border Classes="separator" />
+        </StackPanel>
+        <StackPanel Classes="group" IsVisible="{Binding Row.ShowsRecordControls}">
+          <Button Classes="bar" Classes.active="{Binding IsMicrophoneOn}" Command="{Binding ToggleMicrophoneCommand}"
+                  ToolTip.Tip="{Binding MicrophoneTip}" AutomationProperties.Name="{local:Loc row.microphone}" AutomationProperties.HelpText="{Binding MicrophoneState}">
+            <Panel>
+              <icons:MoooomIcon Kind="mic" IsVisible="{Binding IsMicrophoneOn}" />
+              <icons:MoooomIcon Kind="micMuted" IsVisible="{Binding !IsMicrophoneOn}" />
+            </Panel>
+          </Button>
+          <Button Classes="bar" Classes.active="{Binding IsDesktopAudioOn}" Command="{Binding ToggleDesktopAudioCommand}"
+                  ToolTip.Tip="{Binding DesktopAudioTip}" AutomationProperties.Name="{local:Loc row.desktopaudio}" AutomationProperties.HelpText="{Binding DesktopAudioState}">
+            <Panel>
+              <icons:MoooomIcon Kind="volumeThree" IsVisible="{Binding IsDesktopAudioOn}" />
+              <icons:MoooomIcon Kind="volumeMuted" IsVisible="{Binding !IsDesktopAudioOn}" />
+            </Panel>
+          </Button>
+          <Button x:Name="StartButton" Classes="bar ask first" Command="{Binding StartRecordingCommand}" Content="{local:Loc row.start}"
+                  ToolTip.Tip="{local:Loc row.start}" AutomationProperties.Name="{local:Loc row.start}" />
+          <Border Classes="separator" />
+        </StackPanel>
         <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Recent}" ToolTip.Tip="{local:Loc bar.recent}" AutomationProperties.Name="{local:Loc bar.recent}">
           <icons:MoooomIcon Kind="link" />
         </Button>
@@ -52,63 +89,6 @@
            HorizontalOffset="-24" VerticalOffset="-16" IsLightDismissEnabled="True" OverlayInputPassThroughElement="{Binding #Pill}">
       <local:RecentPanel />
     </Popup>
-    <Border x:Name="ScreenshotMenu" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
-            CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-1-Thickness}"
-            BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
-            IsVisible="{Binding IsScreenshotMenuOpen}">
-      <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}">
-        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Region}"
-                ToolTip.Tip="{local:Loc menu.area}" AutomationProperties.Name="{local:Loc menu.area}">
-          <icons:MoooomIcon Kind="crossHair" />
-        </Button>
-        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Window}"
-                ToolTip.Tip="{local:Loc menu.window}" AutomationProperties.Name="{local:Loc menu.window}">
-          <icons:MoooomIcon Kind="macOsWindow" />
-        </Button>
-        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.FullScreen}"
-                ToolTip.Tip="{local:Loc menu.fullscreen}" AutomationProperties.Name="{local:Loc menu.fullscreen}">
-          <icons:MoooomIcon Kind="monitor" />
-        </Button>
-      </StackPanel>
-    </Border>
-    <!-- Nothing records before Start. The picked target and a switched-on sound carry the bar's active accent. -->
-    <Border x:Name="RecordMenu" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
-            CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-1-Thickness}"
-            BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
-            IsVisible="{Binding IsRecordMenuOpen}">
-      <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}">
-        <Button Classes="bar" Classes.active="{Binding IsRecordArea}" Command="{Binding SelectRecordSourceCommand}" CommandParameter="{x:Static capture:CaptureKind.Region}"
-                ToolTip.Tip="{local:Loc menu.area}" AutomationProperties.Name="{local:Loc menu.area}" AutomationProperties.HelpText="{Binding RecordAreaState}">
-          <icons:MoooomIcon Kind="crossHair" />
-        </Button>
-        <Button Classes="bar" Classes.active="{Binding IsRecordWindow}" Command="{Binding SelectRecordSourceCommand}" CommandParameter="{x:Static capture:CaptureKind.Window}"
-                ToolTip.Tip="{local:Loc menu.window}" AutomationProperties.Name="{local:Loc menu.window}" AutomationProperties.HelpText="{Binding RecordWindowState}">
-          <icons:MoooomIcon Kind="macOsWindow" />
-        </Button>
-        <Button Classes="bar" Classes.active="{Binding IsRecordFullScreen}" Command="{Binding SelectRecordSourceCommand}" CommandParameter="{x:Static capture:CaptureKind.FullScreen}"
-                ToolTip.Tip="{local:Loc menu.fullscreen}" AutomationProperties.Name="{local:Loc menu.fullscreen}" AutomationProperties.HelpText="{Binding RecordFullScreenState}">
-          <icons:MoooomIcon Kind="monitor" />
-        </Button>
-        <Border Classes="separator" />
-        <Button Classes="bar" Classes.active="{Binding IsMicrophoneOn}" Command="{Binding ToggleMicrophoneCommand}"
-                ToolTip.Tip="{Binding MicrophoneTip}" AutomationProperties.Name="{local:Loc menu.microphone}" AutomationProperties.HelpText="{Binding MicrophoneState}">
-          <Panel>
-            <icons:MoooomIcon Kind="mic" IsVisible="{Binding IsMicrophoneOn}" />
-            <icons:MoooomIcon Kind="micMuted" IsVisible="{Binding !IsMicrophoneOn}" />
-          </Panel>
-        </Button>
-        <Button Classes="bar" Classes.active="{Binding IsDesktopAudioOn}" Command="{Binding ToggleDesktopAudioCommand}"
-                ToolTip.Tip="{Binding DesktopAudioTip}" AutomationProperties.Name="{local:Loc menu.desktopaudio}" AutomationProperties.HelpText="{Binding DesktopAudioState}">
-          <Panel>
-            <icons:MoooomIcon Kind="volumeThree" IsVisible="{Binding IsDesktopAudioOn}" />
-            <icons:MoooomIcon Kind="volumeMuted" IsVisible="{Binding !IsDesktopAudioOn}" />
-          </Panel>
-        </Button>
-        <Border Classes="separator" />
-        <Button x:Name="StartButton" Classes="bar ask first" Command="{Binding StartRecordingCommand}" Content="{local:Loc menu.start}"
-                ToolTip.Tip="{local:Loc menu.start}" AutomationProperties.Name="{local:Loc menu.start}" />
-      </StackPanel>
-    </Border>
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
             BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"

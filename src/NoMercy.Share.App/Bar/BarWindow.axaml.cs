@@ -25,6 +25,11 @@ public partial class BarWindow : Window
     private readonly DispatcherTimer _elapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private bool _placed;
 
+    /// <summary>Where the user put the bar. A wider row can push the window left of it for as long as it is wide.</summary>
+    private PixelPoint _home;
+
+    private PixelPoint? _fitted;
+
     /// <summary>True while the user wants the bar on screen; otherwise it shows only while a notice, a question or a recording needs it.</summary>
     private bool _called;
 
@@ -43,7 +48,7 @@ public partial class BarWindow : Window
     /// <summary>The cross: the bar goes away and the app, with its hotkeys, stays on.</summary>
     public void Dismiss()
     {
-        (DataContext as BarViewModel)?.CloseMenu();
+        (DataContext as BarViewModel)?.ReturnToLastMode();
         _called = false;
         ShowWhileNeeded();
     }
@@ -172,8 +177,15 @@ public partial class BarWindow : Window
             Place();
             MoveToPointerScreen();
         };
-        PositionChanged += (_, _) =>
+        PositionChanged += (_, e) =>
         {
+            if (e.Point == _fitted)
+            {
+                return;
+            }
+
+            _fitted = null;
+            _home = e.Point;
             viewModel.CloseRecent();
             if (_placed)
             {
@@ -181,7 +193,18 @@ public partial class BarWindow : Window
                 _saveTimer.Start();
             }
         };
+        SizeChanged += (_, _) => FitToScreen();
         Closing += (_, _) => SavePosition();
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (!e.Handled && e.Key == Key.Escape && DataContext is BarViewModel bar)
+        {
+            bar.Escape();
+            e.Handled = true;
+        }
     }
 
     /// <summary>Puts the bar at its saved position, clamped to a visible screen, or centered at the top on first open.</summary>
@@ -193,7 +216,29 @@ public partial class BarWindow : Window
             Position = new PixelPoint((int)Math.Round(target.X), (int)Math.Round(target.Y));
         }
 
+        _home = Position;
         _placed = true;
+    }
+
+    /// <summary>Keeps a row that grew inside the screen its left end is on, and puts it back once it fits there again.</summary>
+    private void FitToScreen()
+    {
+        if (!_placed)
+        {
+            return;
+        }
+
+        double width = Bounds.Width * RenderScaling;
+        double height = Bounds.Height * RenderScaling;
+        Screen? screen = Screens.ScreenFromPoint(_home + new PixelPoint((int)(height / 2), (int)(height / 2)));
+        ScreenArea[] areas = screen is null ? [.. Screens.All.Select(ToArea)] : [ToArea(screen)];
+        BarPosition inside = BarPlacement.Clamp(new BarPosition(_home.X, _home.Y), width, height, areas);
+        PixelPoint fitted = new((int)Math.Floor(inside.X), _home.Y);
+        if (fitted != Position)
+        {
+            _fitted = fitted;
+            Position = fitted;
+        }
     }
 
     /// <summary>Brings the bar to the screen the mouse is on, at the same place as on the screen it was on.</summary>
@@ -234,7 +279,7 @@ public partial class BarWindow : Window
         _saveTimer.Stop();
         if (_placed)
         {
-            _store?.Save(new BarPosition(Position.X, Position.Y));
+            _store?.Save(new BarPosition(_home.X, _home.Y));
         }
     }
 

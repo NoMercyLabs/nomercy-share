@@ -66,6 +66,11 @@
     <Setter Property="Margin" Value="6,0" />
     <Setter Property="Background" Value="{DynamicResource Share-Separator-Brush}" />
   </Style>
+  <!-- A group of the row that comes and goes with the mode, spaced like the row itself. -->
+  <Style Selector="StackPanel.group">
+    <Setter Property="Orientation" Value="Horizontal" />
+    <Setter Property="Spacing" Value="{DynamicResource Nm-Space-0-5}" />
+  </Style>
   <!-- The recent links list: a rounded card under the bar; rows tint on hover and selection like the bar buttons. -->
   <!-- A text button of the access ask: the bar button's size, hover and focus ring, as wide as its label. -->
   <Style Selector="Button.bar.ask">

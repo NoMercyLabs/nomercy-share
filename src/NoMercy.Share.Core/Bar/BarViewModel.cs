@@ -29,8 +29,6 @@ public sealed class BarViewModel : ObservableObject
     private readonly LastActionStore? _lastAction;
     private readonly AreaPicker? _picker;
     private Task _running = Task.CompletedTask;
-    private BarMenu _menu;
-    private CaptureKind _recordSource = CaptureKind.Region;
     private BarAsk? _ask;
     private CaptureChoice? _choice;
     private bool _accessAskDismissed;
@@ -67,6 +65,7 @@ public sealed class BarViewModel : ObservableObject
         }
 
         _lastAction = lastAction;
+        ReturnToLastMode();
         _picker = picker;
         Recent = new RecentList(recent, deletion);
         _sound = sound;
@@ -106,11 +105,7 @@ public sealed class BarViewModel : ObservableObject
             [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
             [BarAction.Window] = token => CaptureAsync(CaptureKind.Window, token),
             [BarAction.FullScreen] = token => CaptureAsync(CaptureKind.FullScreen, token),
-            [BarAction.Screenshot] = _ =>
-            {
-                Menu = Menu == BarMenu.Screenshot ? BarMenu.None : BarMenu.Screenshot;
-                return Task.CompletedTask;
-            },
+            [BarAction.Screenshot] = _ => SelectMode(BarMode.Screenshot),
             [BarAction.Record] = ToggleRecordingAsync,
             [BarAction.WebPage] = CaptureWebPageAsync,
             [BarAction.Recent] = _ => ToggleRecent(),
@@ -143,11 +138,11 @@ public sealed class BarViewModel : ObservableObject
         CopyImageCommand = new BarCommand(_ => _ = CopyImageAsync());
         ShareLinkCommand = new BarCommand(_ => _ = ShareLinkAsync());
         DismissChoiceCommand = new BarCommand(_ => Choice = null);
-        SelectRecordSourceCommand = new BarCommand(parameter =>
+        PickTargetCommand = new BarCommand(parameter =>
         {
-            if (parameter is CaptureKind source)
+            if (parameter is CaptureKind target)
             {
-                SelectRecordSource(source);
+                _ = PickTargetAsync(target);
             }
         });
         StartRecordingCommand = new BarCommand(_ => _ = StartRecordingAsync());
@@ -155,31 +150,8 @@ public sealed class BarViewModel : ObservableObject
         ToggleDesktopAudioCommand = new BarCommand(_ => SaveSound(audio => audio with { SystemSound = !audio.SystemSound }));
     }
 
-    /// <summary>The second pill under the bar.</summary>
-    public BarMenu Menu
-    {
-        get => _menu;
-        private set
-        {
-            if (_menu != value)
-            {
-                Set(ref _menu, value);
-                OnChanged(nameof(IsScreenshotMenuOpen));
-                OnChanged(nameof(IsRecordMenuOpen));
-                OnChanged(nameof(IsRecordHighlighted));
-            }
-        }
-    }
-
-    public bool IsScreenshotMenuOpen => Menu == BarMenu.Screenshot;
-
-    public bool IsRecordMenuOpen => Menu == BarMenu.Record;
-
-    public bool IsRecordArea => _recordSource == CaptureKind.Region;
-
-    public bool IsRecordWindow => _recordSource == CaptureKind.Window;
-
-    public bool IsRecordFullScreen => _recordSource == CaptureKind.FullScreen;
+    /// <summary>The mode, the picked target and the groups the bar shows for them.</summary>
+    public BarRow Row { get; } = new();
 
     public bool IsMicrophoneOn => _sound?.Current.Microphone ?? false;
 
@@ -188,31 +160,20 @@ public sealed class BarViewModel : ObservableObject
     /// <summary>The bar is kept out of captures at all times, except in a running recording with Show bar in video on and no screenshot being taken.</summary>
     public bool IsBarExcludedFromCaptures => !((_live?.Current.Recording.ShowTool ?? false) && IsRecording && !_isTakingScreenshot);
 
-    /// <summary>Picks the <see cref="CaptureKind"/> given as the parameter as what Start records.</summary>
-    public ICommand SelectRecordSourceCommand { get; }
+    /// <summary>A click on the target given as the parameter; see <see cref="PickTargetAsync"/>.</summary>
+    public ICommand PickTargetCommand { get; }
 
-    /// <summary>The record button carries the active accent while its menu is open or a recording runs.</summary>
-    public bool IsRecordHighlighted => IsRecording || IsRecordMenuOpen;
-
-    /// <summary>The screen-reader words for the selected target and the sound switches.</summary>
-    public string? RecordAreaState => Selected(IsRecordArea);
-
-    public string? RecordWindowState => Selected(IsRecordWindow);
-
-    public string? RecordFullScreenState => Selected(IsRecordFullScreen);
-
+    /// <summary>The screen-reader words for the sound switches.</summary>
     public string MicrophoneState => OnOff(IsMicrophoneOn);
 
     public string DesktopAudioState => OnOff(IsDesktopAudioOn);
 
     /// <summary>The tooltips of the sound switches: the name and On or Off.</summary>
-    public string MicrophoneTip => Strings.Get("menu.switch.tip", Strings.Get("menu.microphone"), MicrophoneState);
+    public string MicrophoneTip => Strings.Get("row.switch.tip", Strings.Get("row.microphone"), MicrophoneState);
 
-    public string DesktopAudioTip => Strings.Get("menu.switch.tip", Strings.Get("menu.desktopaudio"), DesktopAudioState);
+    public string DesktopAudioTip => Strings.Get("row.switch.tip", Strings.Get("row.desktopaudio"), DesktopAudioState);
 
-    private static string? Selected(bool selected) => selected ? Strings.Get("menu.selected") : null;
-
-    private static string OnOff(bool on) => Strings.Get(on ? "menu.on" : "menu.off");
+    private static string OnOff(bool on) => Strings.Get(on ? "row.on" : "row.off");
 
     public ICommand StartRecordingCommand { get; }
 
@@ -220,35 +181,52 @@ public sealed class BarViewModel : ObservableObject
 
     public ICommand ToggleDesktopAudioCommand { get; }
 
-    public void CloseMenu() => Menu = BarMenu.None;
-
-    public BarRow Row { get; } = new();
-
-    public ICommand PickTargetCommand => SelectRecordSourceCommand;
-
-    public Task PickTargetAsync(CaptureKind target) => Task.FromResult(target);
-
-    public void ReturnToLastMode()
+    /// <summary>In record mode a target is only picked for Start; in screenshot mode it captures at once.</summary>
+    public Task PickTargetAsync(CaptureKind target)
     {
+        if (Row.IsRecordMode)
+        {
+            Row.RecordSource = target;
+            return Task.CompletedTask;
+        }
+
+        return RunAsync(target switch
+        {
+            CaptureKind.Window => BarAction.Window,
+            CaptureKind.FullScreen => BarAction.FullScreen,
+            _ => BarAction.Region
+        });
     }
 
+    /// <summary>The bar opens in the mode of the last action, or for a screenshot when there is none.</summary>
+    public void ReturnToLastMode() => Row.Mode = _lastAction?.Load().Task switch
+    {
+        LastActionTask.Recording => BarMode.Record,
+        LastActionTask.WebPage => BarMode.Web,
+        _ => BarMode.Screenshot
+    };
+
+    /// <summary>Escape on the bar closes the recent list, else cancels a waiting pick, else hides the bar.</summary>
     public void Escape()
     {
+        if (IsRecentOpen)
+        {
+            CloseRecent();
+        }
+        else if (!CancelWhatWaitsForTheUser())
+        {
+            CloseRequested?.Invoke(this, EventArgs.Empty);
+        }
     }
 
-    /// <summary>The Start button of the record menu. Never throws: a failure becomes a notice.</summary>
+    /// <summary>The Start button. Never throws: a failure becomes a notice.</summary>
     public Task StartRecordingAsync(CancellationToken cancellationToken = default) =>
         GuardAsync(BarAction.Record, () => BeginRecordingAsync(cancellationToken));
 
-    private void SelectRecordSource(CaptureKind source)
+    private Task SelectMode(BarMode mode)
     {
-        _recordSource = source;
-        OnChanged(nameof(IsRecordArea));
-        OnChanged(nameof(IsRecordWindow));
-        OnChanged(nameof(IsRecordFullScreen));
-        OnChanged(nameof(RecordAreaState));
-        OnChanged(nameof(RecordWindowState));
-        OnChanged(nameof(RecordFullScreenState));
+        Row.Mode = mode;
+        return Task.CompletedTask;
     }
 
     private void SaveSound(Func<AudioSettings, AudioSettings> change)
@@ -439,15 +417,7 @@ public sealed class BarViewModel : ObservableObject
 
     /// <summary>Runs one button. Never throws: a failure becomes a notice.</summary>
     public Task RunAsync(BarAction action, CancellationToken cancellationToken = default) =>
-        GuardAsync(action, () =>
-        {
-            if (action is not (BarAction.Screenshot or BarAction.Record))
-            {
-                CloseMenu(); // before the action, so no menu is up while a shot is taken
-            }
-
-            return _actions[action](cancellationToken);
-        });
+        GuardAsync(action, () => _actions[action](cancellationToken));
 
     private async Task GuardAsync(BarAction action, Func<Task> work)
     {
@@ -508,8 +478,8 @@ public sealed class BarViewModel : ObservableObject
 
     private void OnRecordingChanged()
     {
+        Row.IsRecording = IsRecording;
         OnChanged(nameof(IsRecording));
-        OnChanged(nameof(IsRecordHighlighted));
         OnChanged(nameof(RecordLabel));
         OnChanged(nameof(ElapsedText));
         OnChanged(nameof(IsBarExcludedFromCaptures));
@@ -626,19 +596,15 @@ public sealed class BarViewModel : ObservableObject
 
     private Task RepeatRecordingAsync(CaptureKind source, CancellationToken cancellationToken)
     {
-        SelectRecordSource(source);
-        if (source == CaptureKind.Region)
-        {
-            return BeginRecordingAsync(cancellationToken);
-        }
+        Row.RecordSource = source;
 
         // Without a picker there is no moment to change one's mind, so Start stays the user's press.
-        Menu = BarMenu.Record;
-        return Task.CompletedTask;
+        return source == CaptureKind.Region ? BeginRecordingAsync(cancellationToken) : SelectMode(BarMode.Record);
     }
 
     private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken)
     {
+        Row.Mode = BarMode.Screenshot;
         _lastAction?.Save(new LastAction(LastActionTask.Screenshot, kind));
         Choice = null;
         await ShareAsync(await TakeScreenshotAsync(kind, cancellationToken), cancellationToken);
@@ -671,6 +637,7 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
+        Row.Mode = BarMode.Web;
         _lastAction?.Save(new LastAction(LastActionTask.WebPage));
         CaptureResult picture = _webDialog is null
             ? await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken)
@@ -719,7 +686,6 @@ public sealed class BarViewModel : ObservableObject
 
         if (_recorder.IsRecording)
         {
-            CloseMenu();
             _recordingStartedAt = null;
             CaptureResult video = await _recorder.StopAsync(cancellationToken);
             OnRecordingChanged(); // before the sharing, which can take long
@@ -727,11 +693,8 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
-        Menu = IsRecordMenuOpen ? BarMenu.None : BarMenu.Record;
-        if (IsRecordMenuOpen)
-        {
-            ShowRequested?.Invoke(this, EventArgs.Empty); // the hotkey opens the menu on a hidden bar
-        }
+        Row.Mode = BarMode.Record;
+        ShowRequested?.Invoke(this, EventArgs.Empty); // the hotkey shows a hidden bar
     }
 
     private async Task BeginRecordingAsync(CancellationToken cancellationToken)
@@ -741,8 +704,8 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
-        CloseMenu();
-        _lastAction?.Save(new LastAction(LastActionTask.Recording, _recordSource));
+        Row.Mode = BarMode.Record;
+        _lastAction?.Save(new LastAction(LastActionTask.Recording, Row.RecordSource));
         if (_ffmpeg is not null && !_ffmpeg.IsFound())
         {
             if (!_downloading)
@@ -753,7 +716,7 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
-        RecordingOptions options = new(Source: _recordSource);
+        RecordingOptions options = new(Source: Row.RecordSource);
         if (options.Source == CaptureKind.Window)
         {
             // The window to record is the one that was active before the bar, as for a window screenshot.
