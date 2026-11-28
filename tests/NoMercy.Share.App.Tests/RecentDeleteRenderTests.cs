@@ -105,6 +105,33 @@ public sealed class RecentDeleteRenderTests
         Assert.False(bar.IsRecentOpen);
     }));
 
+    [Fact]
+    public void ADeleteKeepsTheListWhereItWasScrolled() => HeadlessApp.Run(() => WithRecent(deletes: false, (bar, panel, host, _) =>
+    {
+        ListBox list = panel.GetVisualDescendants().OfType<ListBox>().Single();
+        ScrollViewer scroll = list.GetVisualDescendants().OfType<ScrollViewer>().First();
+        list.ScrollIntoView(9);
+        Dispatcher.UIThread.RunJobs();
+        Vector before = scroll.Offset;
+        Assert.True(before.Y > 0, "the list did not scroll");
+        Control row = list.ContainerFromIndex(8)!;
+        RecentRow deleted = (RecentRow)row.DataContext!;
+
+        ClickIn(row, "Delete");
+        ClickIn(row, "Remove");
+
+        Assert.DoesNotContain(deleted, bar.Recent.Rows);
+        Assert.Equal(before, scroll.Offset);
+        Assert.Same(bar.Recent.Rows[8], list.SelectedItem);
+        Save(host, "delete-keeps-scroll.png");
+    }, moreLinks: 9));
+
+    private static void ClickIn(Control row, string button)
+    {
+        VisibleButtons(row).Single(candidate => Name(candidate) == button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
     private static bool ShowsRing(ListBoxItem row) =>
         row.GetVisualDescendants().OfType<ContentPresenter>().First(presenter => presenter.Name == "PART_ContentPresenter" && presenter.TemplatedParent == row)
             .BorderBrush is ISolidColorBrush { Color.A: > 0 };
@@ -168,7 +195,7 @@ public sealed class RecentDeleteRenderTests
         }
     }
 
-    private static void WithRecent(bool deletes, Action<BarViewModel, RecentPanel, Window, FakeUploader> test)
+    private static void WithRecent(bool deletes, Action<BarViewModel, RecentPanel, Window, FakeUploader> test, int moreLinks = 0)
     {
         string root = Path.Combine(Path.GetTempPath(), $"share-delete-render-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -178,6 +205,11 @@ public sealed class RecentDeleteRenderTests
             recent.Add(new RecentLink("https://share.example.test/exp-30d/Qx7LmP2aRt.png", RecentKind.Image, "image/png", 48_000, Now.AddMinutes(-5), Now.AddDays(29), null));
             recent.Add(new RecentLink("https://share.example.test/exp-7d/Zk3VbN8cYd.mp4", RecentKind.Video, "video/mp4", 9_000_000, Now.AddHours(-3), Now.AddDays(4), null));
             recent.Add(new RecentLink("https://share.example.test/exp-30d/Hh5TgW1eUo.png", RecentKind.Image, "image/png", 52_000, Now.AddDays(-31), Now.AddDays(-1), null));
+            for (int older = 0; older < moreLinks; older++)
+            {
+                recent.Add(new RecentLink($"https://share.example.test/exp-30d/older-{older}.png", RecentKind.Image, "image/png", 40_000, Now.AddDays(-2), Now.AddDays(27), null));
+            }
+
             FakeUploader uploader = new() { Deletes = deletes };
             BarViewModel bar = new(
                 new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),

@@ -89,13 +89,23 @@ public partial class RecentPanel : UserControl
     {
         if (Bar is { } bar && (sender as Control)?.DataContext is RecentRow row)
         {
+            int place = List.Items.IndexOf(row);
             Task delete = bar.Recent.DeleteAsync(row);
             FocusRow(row); // the pressed button is gone, and without focus in the panel Escape would not reach it
             await delete;
             if (bar.IsRecentOpen && !IsKeyboardFocusWithin)
             {
-                FocusFirstRow();
+                FocusRowAt(place);
             }
+        }
+    }
+
+    /// <summary>The row that moved into a deleted one's place, so the list stays where it is scrolled.</summary>
+    private void FocusRowAt(int place)
+    {
+        if (Bar?.Recent.Rows is { Count: > 0 } rows)
+        {
+            FocusRow(rows[Math.Min(place, rows.Count - 1)]);
         }
     }
 
