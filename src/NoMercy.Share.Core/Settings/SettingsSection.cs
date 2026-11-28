@@ -5,7 +5,6 @@ public enum SettingsSection
 {
     General,
     Sharing,
-    Links,
     Hotkeys,
     Recording
 }

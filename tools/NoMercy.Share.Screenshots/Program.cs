@@ -100,13 +100,13 @@ public static class Program
             SaveSettings(Path.Combine(folder, $"share-settings-focus-segmented-{name}.png"), model, SettingsSection.Sharing, prepare: root =>
                 root.GetVisualDescendants().OfType<ListBox>().First(list => list.Classes.Contains("segmented")).GetVisualDescendants().OfType<ListBoxItem>().First().Focus(NavigationMethod.Tab));
             SaveSettings(Path.Combine(folder, $"share-settings-focus-switch-{name}.png"), model, SettingsSection.Recording, prepare: root => root.GetVisualDescendants().OfType<ToggleSwitch>().First().Focus(NavigationMethod.Tab));
-            SaveSettings(Path.Combine(folder, $"share-settings-combo-open-{name}.png"), model, SettingsSection.Links, prepare: root => root.GetVisualDescendants().OfType<ComboBox>().First().IsDropDownOpen = true);
+            SaveSettings(Path.Combine(folder, $"share-settings-combo-open-{name}.png"), model, SettingsSection.General, prepare: root => root.GetVisualDescendants().OfType<ComboBox>().First().IsDropDownOpen = true);
             SaveSettings(Path.Combine(folder, $"share-settings-scrolled-end-{name}.png"), model, SettingsSection.Sharing, prepare: root => root.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault(viewer => viewer.Extent.Height > viewer.Viewport.Height)?.ScrollToEnd());
             SettingsViewModel failing = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"));
             typeof(SettingsViewModel).GetProperty(nameof(SettingsViewModel.SaveError))!.SetValue(failing, "The settings were not saved: access to the path is denied.");
             SaveSettings(Path.Combine(folder, $"share-settings-save-error-{name}.png"), failing, SettingsSection.Hotkeys);
             SettingsViewModel discordLinks = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), DiscordSettings.ProviderName, webhookStored: true);
-            SaveSettings(Path.Combine(folder, $"share-settings-discord-links-{name}.png"), discordLinks, SettingsSection.Links);
+            SaveSettings(Path.Combine(folder, $"share-settings-discord-links-{name}.png"), discordLinks, SettingsSection.General);
             SettingsViewModel unset = SettingsModel(Path.Combine(Path.GetTempPath(), $"share-settings-shots-{Guid.NewGuid():N}"), unset: true);
             SaveSettings(Path.Combine(folder, $"share-settings-notsetup-{name}.png"), unset);
             model.Endpoint = "not an address";

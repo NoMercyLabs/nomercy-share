@@ -45,12 +45,6 @@
                 <TextBlock Text="{local:Loc settings.section.sharing}" />
               </StackPanel>
             </ListBoxItem>
-            <ListBoxItem AutomationProperties.Name="{local:Loc settings.section.links}">
-              <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
-                <icons:MoooomIcon Kind="link" />
-                <TextBlock Text="{local:Loc settings.section.links}" />
-              </StackPanel>
-            </ListBoxItem>
             <ListBoxItem AutomationProperties.Name="{local:Loc settings.section.hotkeys}">
               <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
                 <icons:MoooomIcon Kind="keyboard" />
@@ -83,6 +77,58 @@
                 <TextBlock Classes="status note-text" Text="{local:Loc settings.general.showbar.helper}" TextWrapping="Wrap" />
               </StackPanel>
             </Border>
+            <Border Classes="group">
+              <StackPanel Classes="field">
+                <TextBlock Classes="field-label" Text="{local:Loc settings.expiry}" />
+                <ComboBox ItemsSource="{Binding ExpiryChoices}" SelectedItem="{Binding SelectedExpiry}" IsVisible="{Binding ShowsStorageFields}"
+                          AutomationProperties.Name="{local:Loc settings.expiry}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="settings:ExpiryChoice">
+                      <TextBlock Text="{Binding Label}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Classes="status note-text" Text="{local:Loc settings.expiry.discord}" TextWrapping="Wrap" IsVisible="{Binding IsDiscord}" />
+              </StackPanel>
+            </Border>
+            <Border Classes="group">
+              <StackPanel>
+                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.systemsound}" />
+                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordSystemSound}" OnContent="" OffContent="" MinWidth="0"
+                                AutomationProperties.Name="{local:Loc settings.recording.systemsound}" />
+                </Grid>
+                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.microphone}" />
+                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordMicrophone}" OnContent="" OffContent="" MinWidth="0"
+                                AutomationProperties.Name="{local:Loc settings.recording.microphone}" />
+                </Grid>
+              </StackPanel>
+            </Border>
+            <Border Classes="group">
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
+                <StackPanel Classes="field">
+                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.resolution}" />
+                  <ComboBox ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding SelectedResolution}" AutomationProperties.Name="{local:Loc settings.recording.resolution}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="settings:ResolutionChoice">
+                        <TextBlock Text="{Binding Label}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                  <TextBlock Classes="field-error" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Classes="field">
+                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.size}" />
+                  <TextBox Text="{Binding MaxSizeMegabytes}" AutomationProperties.Name="{local:Loc settings.recording.size}">
+                    <TextBox.InnerRightContent>
+                      <TextBlock Classes="unit" Text="{local:Loc settings.unit.mb}" />
+                    </TextBox.InnerRightContent>
+                  </TextBox>
+                  <TextBlock Classes="field-error" Text="{Binding MaxSizeError}" />
+                </StackPanel>
+              </Grid>
+            </Border>
           </StackPanel>
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsSharing}">
@@ -109,7 +155,13 @@
               <StackPanel Spacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.endpoint}" />
-                  <TextBox Text="{Binding Endpoint}" AutomationProperties.Name="{local:Loc settings.endpoint}" />
+                  <TextBox PasswordChar="•" Text="{Binding Endpoint}" AutomationProperties.Name="{local:Loc settings.endpoint}">
+                    <TextBox.InnerRightContent>
+                      <Button Classes="bar small" Click="OnRevealClick" ToolTip.Tip="{local:Loc settings.reveal}" AutomationProperties.Name="{local:Loc settings.reveal}">
+                        <icons:MoooomIcon Kind="eye" />
+                      </Button>
+                    </TextBox.InnerRightContent>
+                  </TextBox>
                   <TextBlock Classes="field-error" Text="{Binding EndpointError}" />
                 </StackPanel>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
@@ -136,12 +188,24 @@
               <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.keyid}" />
-                  <TextBox Text="{Binding AccessKeyId}" AutomationProperties.Name="{local:Loc settings.keyid}" />
+                  <TextBox PasswordChar="•" Text="{Binding AccessKeyId}" AutomationProperties.Name="{local:Loc settings.keyid}">
+                    <TextBox.InnerRightContent>
+                      <Button Classes="bar small" Click="OnRevealClick" ToolTip.Tip="{local:Loc settings.reveal}" AutomationProperties.Name="{local:Loc settings.reveal}">
+                        <icons:MoooomIcon Kind="eye" />
+                      </Button>
+                    </TextBox.InnerRightContent>
+                  </TextBox>
                   <TextBlock Classes="field-error" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.secret}" />
-                  <TextBox PasswordChar="•" Text="{Binding SecretAccessKey}" PlaceholderText="{Binding SecretPlaceholder}" AutomationProperties.Name="{local:Loc settings.secret}" />
+                  <TextBox PasswordChar="•" Text="{Binding SecretAccessKey}" PlaceholderText="{Binding SecretPlaceholder}" AutomationProperties.Name="{local:Loc settings.secret}">
+                    <TextBox.InnerRightContent>
+                      <Button Classes="bar small" Click="OnRevealClick" ToolTip.Tip="{local:Loc settings.reveal}" AutomationProperties.Name="{local:Loc settings.reveal}">
+                        <icons:MoooomIcon Kind="eye" />
+                      </Button>
+                    </TextBox.InnerRightContent>
+                  </TextBox>
                   <TextBlock Classes="field-error" Text="{Binding CredentialError}" />
                 </StackPanel>
               </Grid>
@@ -154,24 +218,6 @@
                          AutomationProperties.Name="{local:Loc settings.discord.webhook}" />
                 <TextBlock Classes="field-error" Text="{Binding DiscordWebhookError}" />
                 <TextBlock Classes="status note-text" Text="{local:Loc settings.discord.helper}" TextWrapping="Wrap" />
-              </StackPanel>
-            </Border>
-          </StackPanel>
-
-          <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsLinks}">
-            <TextBlock Classes="section" Text="{local:Loc settings.section.links}" />
-            <Border Classes="group">
-              <StackPanel Classes="field">
-                <TextBlock Classes="field-label" Text="{local:Loc settings.expiry}" />
-                <ComboBox ItemsSource="{Binding ExpiryChoices}" SelectedItem="{Binding SelectedExpiry}" IsVisible="{Binding ShowsStorageFields}"
-                          AutomationProperties.Name="{local:Loc settings.expiry}">
-                  <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="settings:ExpiryChoice">
-                      <TextBlock Text="{Binding Label}" />
-                    </DataTemplate>
-                  </ComboBox.ItemTemplate>
-                </ComboBox>
-                <TextBlock Classes="status note-text" Text="{local:Loc settings.expiry.discord}" TextWrapping="Wrap" IsVisible="{Binding IsDiscord}" />
               </StackPanel>
             </Border>
           </StackPanel>
@@ -228,28 +274,8 @@
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsRecording}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.recording}" />
             <Border Classes="group">
-              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="{DynamicResource Nm-Space-2}">
                 <StackPanel Classes="field">
-                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.resolution}" />
-                  <ComboBox ItemsSource="{Binding ResolutionChoices}" SelectedItem="{Binding SelectedResolution}" AutomationProperties.Name="{local:Loc settings.recording.resolution}">
-                    <ComboBox.ItemTemplate>
-                      <DataTemplate x:DataType="settings:ResolutionChoice">
-                        <TextBlock Text="{Binding Label}" />
-                      </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                  </ComboBox>
-                  <TextBlock Classes="field-error" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Classes="field">
-                  <TextBlock Classes="field-label" Text="{local:Loc settings.recording.size}" />
-                  <TextBox Text="{Binding MaxSizeMegabytes}" AutomationProperties.Name="{local:Loc settings.recording.size}">
-                    <TextBox.InnerRightContent>
-                      <TextBlock Classes="unit" Text="{local:Loc settings.unit.mb}" />
-                    </TextBox.InnerRightContent>
-                  </TextBox>
-                  <TextBlock Classes="field-error" Text="{Binding MaxSizeError}" />
-                </StackPanel>
-                <StackPanel Grid.Column="2" Classes="field">
                   <TextBlock Classes="field-label" Text="{local:Loc settings.recording.fps}" />
                   <TextBox Text="{Binding FrameRate}" AutomationProperties.Name="{local:Loc settings.recording.fps}">
                     <TextBox.InnerRightContent>
@@ -311,20 +337,6 @@
                     </ListBox.ItemTemplate>
                   </ListBox>
                 </StackPanel>
-              </StackPanel>
-            </Border>
-            <Border Classes="group">
-              <StackPanel>
-                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
-                  <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.systemsound}" />
-                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordSystemSound}" OnContent="" OffContent="" MinWidth="0"
-                                AutomationProperties.Name="{local:Loc settings.recording.systemsound}" />
-                </Grid>
-                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
-                  <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.microphone}" />
-                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordMicrophone}" OnContent="" OffContent="" MinWidth="0"
-                                AutomationProperties.Name="{local:Loc settings.recording.microphone}" />
-                </Grid>
               </StackPanel>
             </Border>
           </StackPanel>

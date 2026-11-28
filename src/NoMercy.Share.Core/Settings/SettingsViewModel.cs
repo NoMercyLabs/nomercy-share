@@ -166,7 +166,6 @@ public sealed class SettingsViewModel : ObservableObject
             OnChanged(nameof(SelectedSectionIndex));
             OnChanged(nameof(ShowsGeneral));
             OnChanged(nameof(ShowsSharing));
-            OnChanged(nameof(ShowsLinks));
             OnChanged(nameof(ShowsHotkeys));
             OnChanged(nameof(ShowsRecording));
         }
@@ -188,8 +187,6 @@ public sealed class SettingsViewModel : ObservableObject
     public bool ShowsGeneral => SelectedSection == SettingsSection.General;
 
     public bool ShowsSharing => SelectedSection == SettingsSection.Sharing;
-
-    public bool ShowsLinks => SelectedSection == SettingsSection.Links;
 
     public bool ShowsHotkeys => SelectedSection == SettingsSection.Hotkeys;
 
@@ -582,7 +579,11 @@ public sealed class SettingsViewModel : ObservableObject
     private void ShowFirstSectionWithError()
     {
         bool sharing = new[] { EndpointError, BucketError, RegionError, PublicBaseUrlError, CredentialError, DiscordWebhookError }.Any(error => error is not null);
-        if (sharing)
+        if (MaxSizeError is not null)
+        {
+            SelectedSection = SettingsSection.General;
+        }
+        else if (sharing)
         {
             SelectedSection = SettingsSection.Sharing;
         }
@@ -590,7 +591,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             SelectedSection = SettingsSection.Hotkeys;
         }
-        else if (MaxSizeError is not null || FrameRateError is not null)
+        else if (FrameRateError is not null)
         {
             SelectedSection = SettingsSection.Recording;
         }

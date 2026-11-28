@@ -76,7 +76,7 @@ Click the record button (or press `Shift+PrintScreen`, which also shows a hidden
 
 While you record, a colored border shows around what is being recorded. You see it, but it is not in the video, and your clicks go straight through it. It sits just outside the recorded rectangle. Where there is no room, as in a full screen recording, that side sits just inside the edge. Like the bar, it needs Windows 10 version 2004 or later to stay out of the video; without that, only the sides outside the rectangle show.
 
-**Show bar in video** in [Settings](#settings), under Recording (off at first), puts the bar in the recording; screenshots never contain it.
+**Show bar in captures** in [Settings](#settings), under General (off at first), puts the bar in screenshots and recordings. A window screenshot holds only that window.
 
 **Microphone** and **Desktop audio** switch sound on or off; a switch that is off shows a crossed-out icon. The bar shows a red dot and a running timer while it records, and the targets, sound switches and **Start** go away. **Screenshot** brings the targets back, so you can still take screenshots.
 
@@ -84,7 +84,7 @@ While you record, a colored border shows around what is being recorded. You see 
 
 Click the record button (or press its hotkey) again to stop at once. The recording is squeezed into an MP4 that fits the size limit, 50 MB unless you change it, and shared like any other capture. A long recording is compressed harder to fit, so keep clips short if quality matters.
 
-Sound is off until you turn it on. **Desktop audio** is what your speakers play and **Microphone** is your voice. They are the same switches as **Record system sound** and **Record microphone** in [Settings](#settings), under Recording, and your choice is saved. If a microphone or sound output is missing, the recording still starts and the bar tells you what it left out.
+Sound is off until you turn it on. **Desktop audio** is what your speakers play and **Microphone** is your voice. They are the same switches as **Record system sound** and **Record microphone** in [Settings](#settings), under General, and your choice is saved. If a microphone or sound output is missing, the recording still starts and the bar tells you what it left out.
 
 ## Capture a web page
 
@@ -126,16 +126,16 @@ The trash button always asks first, inside the row, and the list stays open. Whe
 
 ## Settings
 
-The gear opens one window with four sections in the list on the left. Pick a section to see its page. **Save** checks every field and applies the change at once: the next share uses the new host, the next recording the new limits, and the hotkeys register again. **Cancel** changes nothing.
+The gear opens one window with four sections in the list on the left; it opens on **General**. Pick a section to see its page. **Save** checks every field and applies the change at once: the next share uses the new host, the next recording the new limits, and the hotkeys register again. **Cancel** changes nothing.
 
 ![The Settings window on its Sharing page: the section list on the left, the Cloudflare R2 provider picked, and its fields filled in with example values.](docs/images/settings.png)
 
 | Section | What you set |
 | --- | --- |
-| Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). |
-| Links | The default expiry: never, or 1, 7, 30 or 90 days. |
+| General | What you change most: **Show bar in captures**, the default expiry (never, or 1, 7, 30 or 90 days), the two sound switches, the largest picture size (720p up to 4K, or the original size) and the largest file. |
+| Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). The endpoint and the keys are hidden; the eye button shows what is in the box. |
 | Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (show the bar and repeat the last action), `Ctrl+PrintScreen` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
-| Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, VP9, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, the two sound switches and **Show bar in video**. |
+| Recording | The frame rate, the codec (H.264, VP9, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test) and the speed. |
 
 Your secret access key is stored in the Windows Credential Manager, never in a file. The box shows "Saved" afterwards and stays empty. Leave it empty and the stored key stays.
 

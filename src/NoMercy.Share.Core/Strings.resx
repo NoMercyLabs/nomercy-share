@@ -33,7 +33,6 @@
   <data name="settings.general.showbar" xml:space="preserve"><value>Show bar in captures</value></data>
   <data name="settings.general.showbar.helper" xml:space="preserve"><value>Screenshots and recordings. A window screenshot holds only that window.</value></data>
   <data name="settings.section.sharing" xml:space="preserve"><value>Sharing</value></data>
-  <data name="settings.section.links" xml:space="preserve"><value>Links</value></data>
   <data name="settings.discord.webhook" xml:space="preserve"><value>Webhook address</value></data>
   <data name="settings.discord.helper" xml:space="preserve"><value>Discord links stop working after a while; Discord decides when.</value></data>
   <data name="settings.expiry.discord" xml:space="preserve"><value>Discord decides how long its links last.</value></data>
@@ -56,6 +55,7 @@
   <data name="settings.region" xml:space="preserve"><value>Region</value></data>
   <data name="settings.publicbase" xml:space="preserve"><value>Public link base URL</value></data>
   <data name="settings.keyid" xml:space="preserve"><value>Access key id</value></data>
+  <data name="settings.reveal" xml:space="preserve"><value>Show or hide</value></data>
   <data name="settings.secret" xml:space="preserve"><value>Secret access key</value></data>
   <data name="settings.secret.saved" xml:space="preserve"><value>Saved</value></data>
   <data name="settings.expiry" xml:space="preserve"><value>Default expiry</value></data>

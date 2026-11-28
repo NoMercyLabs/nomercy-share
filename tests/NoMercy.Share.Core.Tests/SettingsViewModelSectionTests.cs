@@ -44,7 +44,6 @@ public sealed class SettingsViewModelSectionTests : IDisposable
 
         Assert.True(_model.ShowsRecording);
         Assert.False(_model.ShowsSharing);
-        Assert.False(_model.ShowsLinks);
         Assert.False(_model.ShowsHotkeys);
         Assert.Contains(nameof(SettingsViewModel.ShowsSharing), changed);
         Assert.Contains(nameof(SettingsViewModel.ShowsRecording), changed);
@@ -77,12 +76,17 @@ public sealed class SettingsViewModelSectionTests : IDisposable
     [Fact]
     public void ASaveWithAMistakeInAnotherSectionJumpsToTheFirstSectionWithAnError()
     {
-        _model.SelectedSection = SettingsSection.Links;
-        _model.MaxSizeMegabytes = "abc";
+        _model.SelectedSection = SettingsSection.Hotkeys;
+        _model.FrameRate = "abc";
 
         _model.Save();
 
         Assert.False(_model.Saved);
         Assert.Equal(SettingsSection.Recording, _model.SelectedSection);
+
+        _model.MaxSizeMegabytes = "abc";
+        _model.Save();
+
+        Assert.Equal(SettingsSection.General, _model.SelectedSection);
     }
 }

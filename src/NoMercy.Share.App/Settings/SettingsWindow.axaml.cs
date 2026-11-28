@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using NoMercy.Share.Core.Settings;
 
 namespace NoMercy.Share.App;
@@ -55,6 +56,14 @@ public partial class SettingsWindow : Window
         if (sender is Control { DataContext: HotkeyRow row })
         {
             row.Clear();
+        }
+    }
+
+    private void OnRevealClick(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.FindAncestorOfType<TextBox>() is { } box)
+        {
+            box.RevealPassword = !box.RevealPassword;
         }
     }
 

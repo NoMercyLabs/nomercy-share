@@ -22,7 +22,6 @@ public sealed class SettingsWindowRenderTests
     [Theory]
     [InlineData(SettingsSection.General)]
     [InlineData(SettingsSection.Sharing)]
-    [InlineData(SettingsSection.Links)]
     [InlineData(SettingsSection.Hotkeys)]
     [InlineData(SettingsSection.Recording)]
     public void EverySectionFitsAndTheFooterStaysVisible(SettingsSection section) => HeadlessApp.Run(() =>
@@ -50,7 +49,6 @@ public sealed class SettingsWindowRenderTests
     [Theory]
     [InlineData(SettingsSection.General)]
     [InlineData(SettingsSection.Sharing)]
-    [InlineData(SettingsSection.Links)]
     [InlineData(SettingsSection.Hotkeys)]
     [InlineData(SettingsSection.Recording)]
     public void EveryPageFitsWithoutScrollingAndItsTitleSitsLevelWithTheCross(SettingsSection section) => HeadlessApp.Run(() =>
@@ -71,6 +69,58 @@ public sealed class SettingsWindowRenderTests
             Directory.Delete(root, recursive: true);
         }
     });
+
+    [Fact]
+    public void TheSidebarButtonsHaveAGapBetweenThem() => HeadlessApp.Run(() => With(SettingsSection.General, window =>
+    {
+        ListBox rail = window.GetVisualDescendants().OfType<ListBox>().Single(list => list.Classes.Contains("rail"));
+        Rect[] pills = [.. rail.GetVisualDescendants().OfType<ListBoxItem>().Select(item =>
+        {
+            Control pill = item.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>().First(part => part.Name == "PART_ContentPresenter");
+            return new Rect(pill.TranslatePoint(default, window)!.Value, pill.Bounds.Size);
+        })];
+
+        Assert.All(pills.Zip(pills.Skip(1)), pair => Assert.True(pair.Second.Top - pair.First.Bottom >= 4, $"gap {pair.Second.Top - pair.First.Bottom}"));
+    }));
+
+    [Fact]
+    public void TheFirstPageHoldsTheSettingsThatChangeOften() => HeadlessApp.Run(() => With(SettingsSection.General, window =>
+    {
+        string[] shown = [..window.GetVisualDescendants().OfType<Control>()
+            .Where(control => control.IsEffectivelyVisible && control is ToggleSwitch or ComboBox or TextBox)
+            .Select(AutomationName)];
+
+        Assert.Equal(["Show bar in captures", "Default expiry", "Record system sound", "Record microphone", "Max resolution", "Max size"], shown);
+    }));
+
+    [Fact]
+    public void TheStorageKeysStayHiddenUntilTheirEyeIsPressed() => HeadlessApp.Run(() => With(SettingsSection.Sharing, window =>
+    {
+        TextBox[] secrets = [.. window.GetVisualDescendants().OfType<TextBox>().Where(box => box.IsEffectivelyVisible && box.PasswordChar != default)];
+        Assert.Equal(["Endpoint", "Access key id", "Secret access key"], secrets.Select(AutomationName));
+        Assert.All(secrets, box => Assert.False(box.RevealPassword));
+
+        Button eye = secrets[1].GetVisualDescendants().OfType<Button>().Single(button => AutomationName(button) == "Show or hide");
+        eye.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(secrets[1].RevealPassword);
+        Assert.False(secrets[0].RevealPassword);
+    }));
+
+    private static void With(SettingsSection section, Action<SettingsWindow> test)
+    {
+        (SettingsWindow window, string root) = Open(section, width: null);
+        try
+        {
+            test(window);
+        }
+        finally
+        {
+            window.Close();
+            Directory.Delete(root, recursive: true);
+        }
+    }
 
     private static double CentreY(Control control, Window window) => control.TranslatePoint(new Point(0, control.Bounds.Height / 2), window)!.Value.Y;
 
@@ -146,7 +196,6 @@ public sealed class SettingsWindowRenderTests
     [Theory]
     [InlineData(SettingsSection.General)]
     [InlineData(SettingsSection.Sharing)]
-    [InlineData(SettingsSection.Links)]
     [InlineData(SettingsSection.Hotkeys)]
     [InlineData(SettingsSection.Recording)]
     public void TheWindowFollowsTheBarsRules(SettingsSection section) => HeadlessApp.Run(() =>

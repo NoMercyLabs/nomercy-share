@@ -25,6 +25,7 @@
     "fileLines",
     "mobilePhone",
     "micMuted",
-    "volumeMuted"
+    "volumeMuted",
+    "eye"
   ]
 }
