@@ -16,6 +16,7 @@
   <data name="menu.fullscreen" xml:space="preserve"><value>Full screen</value></data>
   <data name="menu.microphone" xml:space="preserve"><value>Microphone</value></data>
   <data name="menu.desktopaudio" xml:space="preserve"><value>Desktop audio</value></data>
+  <data name="menu.showtool" xml:space="preserve"><value>Show bar in video</value></data>
   <data name="menu.start" xml:space="preserve"><value>Start</value></data>
   <data name="menu.selected" xml:space="preserve"><value>Selected</value></data>
   <data name="menu.on" xml:space="preserve"><value>On</value></data>

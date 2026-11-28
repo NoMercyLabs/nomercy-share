@@ -57,4 +57,7 @@ public sealed record RecordingSettings
 
     /// <summary>How long after the start ffmpeg is watched; quitting inside it fails the start.</summary>
     public int StartupCheckMilliseconds { get; init; } = ShareDefaults.RecordingStartupCheckMilliseconds;
+
+    /// <summary>Show the bar in a recording. Screenshots never contain it.</summary>
+    public bool ShowTool { get; init; } = ShareDefaults.RecordingShowTool;
 }

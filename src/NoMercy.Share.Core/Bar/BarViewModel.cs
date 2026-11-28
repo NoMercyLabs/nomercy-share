@@ -24,6 +24,8 @@ public sealed class BarViewModel : ObservableObject
     private readonly IFolderAccess? _folderAccess;
     private readonly IFfmpegInstall? _ffmpeg;
     private readonly RecordingSoundStore? _sound;
+    private readonly RecordingToolStore? _tool;
+    private bool _isTakingScreenshot;
     private readonly LastActionStore? _lastAction;
     private readonly AreaPicker? _picker;
     private Task _running = Task.CompletedTask;
@@ -55,8 +57,20 @@ public sealed class BarViewModel : ObservableObject
         RecordingSoundStore? sound = null,
         ShareDeletion? deletion = null,
         LastActionStore? lastAction = null,
-        AreaPicker? picker = null)
+        AreaPicker? picker = null,
+        RecordingToolStore? tool = null)
     {
+        _tool = tool;
+        if (tool is not null)
+        {
+            tool.Changed += (_, _) =>
+            {
+                OnChanged(nameof(IsToolInRecordingOn));
+                OnChanged(nameof(ToolInRecordingState));
+                OnChanged(nameof(IsBarExcludedFromCaptures));
+            };
+        }
+
         _lastAction = lastAction;
         _picker = picker;
         Recent = new RecentList(recent, deletion);
@@ -142,6 +156,7 @@ public sealed class BarViewModel : ObservableObject
         StartRecordingCommand = new BarCommand(_ => _ = StartRecordingAsync());
         ToggleMicrophoneCommand = new BarCommand(_ => SaveSound(audio => audio with { Microphone = !audio.Microphone }));
         ToggleDesktopAudioCommand = new BarCommand(_ => SaveSound(audio => audio with { SystemSound = !audio.SystemSound }));
+        ToggleToolInRecordingCommand = new BarCommand(_ => SaveToolInRecording());
     }
 
     /// <summary>The second pill under the bar.</summary>
@@ -174,6 +189,11 @@ public sealed class BarViewModel : ObservableObject
 
     public bool IsDesktopAudioOn => _sound?.Current.SystemSound ?? false;
 
+    public bool IsToolInRecordingOn => _tool?.Current ?? false;
+
+    /// <summary>The bar is kept out of captures at all times, except in a running recording with the switch on and no screenshot being taken.</summary>
+    public bool IsBarExcludedFromCaptures => !(IsToolInRecordingOn && IsRecording && !_isTakingScreenshot);
+
     /// <summary>Picks the <see cref="CaptureKind"/> given as the parameter as what Start records.</summary>
     public ICommand SelectRecordSourceCommand { get; }
 
@@ -191,6 +211,8 @@ public sealed class BarViewModel : ObservableObject
 
     public string DesktopAudioState => OnOff(IsDesktopAudioOn);
 
+    public string ToolInRecordingState => OnOff(IsToolInRecordingOn);
+
     private static string? Selected(bool selected) => selected ? Strings.Get("menu.selected") : null;
 
     private static string OnOff(bool on) => Strings.Get(on ? "menu.on" : "menu.off");
@@ -200,6 +222,8 @@ public sealed class BarViewModel : ObservableObject
     public ICommand ToggleMicrophoneCommand { get; }
 
     public ICommand ToggleDesktopAudioCommand { get; }
+
+    public ICommand ToggleToolInRecordingCommand { get; }
 
     public void CloseMenu() => Menu = BarMenu.None;
 
@@ -218,16 +242,16 @@ public sealed class BarViewModel : ObservableObject
         OnChanged(nameof(RecordFullScreenState));
     }
 
-    private void SaveSound(Func<AudioSettings, AudioSettings> change)
-    {
-        if (_sound is null)
-        {
-            return;
-        }
+    private void SaveSound(Func<AudioSettings, AudioSettings> change) =>
+        SaveSwitch(() => _sound?.Save(change(_sound.Current)));
 
+    private void SaveToolInRecording() => SaveSwitch(() => _tool?.Save(!_tool.Current));
+
+    private void SaveSwitch(Action save)
+    {
         try
         {
-            _sound.Save(change(_sound.Current));
+            save();
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
@@ -484,6 +508,7 @@ public sealed class BarViewModel : ObservableObject
         OnChanged(nameof(IsRecordHighlighted));
         OnChanged(nameof(RecordLabel));
         OnChanged(nameof(ElapsedText));
+        OnChanged(nameof(IsBarExcludedFromCaptures));
     }
 
     private void OnRecorderFailed(object? sender, string reason)
@@ -612,7 +637,26 @@ public sealed class BarViewModel : ObservableObject
     {
         _lastAction?.Save(new LastAction(LastActionTask.Screenshot, kind));
         Choice = null;
-        await ShareAsync(await _capture.RunAsync(kind, cancellationToken), cancellationToken);
+        await ShareAsync(await TakeScreenshotAsync(kind, cancellationToken), cancellationToken);
+    }
+
+    private async Task<CaptureResult> TakeScreenshotAsync(CaptureKind kind, CancellationToken cancellationToken)
+    {
+        SetTakingScreenshot(true);
+        try
+        {
+            return await _capture.RunAsync(kind, cancellationToken);
+        }
+        finally
+        {
+            SetTakingScreenshot(false);
+        }
+    }
+
+    private void SetTakingScreenshot(bool taking)
+    {
+        _isTakingScreenshot = taking;
+        OnChanged(nameof(IsBarExcludedFromCaptures));
     }
 
     private async Task CaptureWebPageAsync(CancellationToken cancellationToken)
@@ -673,7 +717,9 @@ public sealed class BarViewModel : ObservableObject
         {
             CloseMenu();
             _recordingStartedAt = null;
-            await ShareAsync(await _recorder.StopAsync(cancellationToken), cancellationToken);
+            CaptureResult video = await _recorder.StopAsync(cancellationToken);
+            OnRecordingChanged(); // before the sharing, which can take long
+            await ShareAsync(video, cancellationToken);
             return;
         }
 

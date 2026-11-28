@@ -7,4 +7,7 @@ public sealed class WindowsCaptureExclusion : ICaptureExclusion
 {
     public bool Exclude(nint window) =>
         window != 0 && NativeMethods.SetWindowDisplayAffinity(window, NativeMethods.ExcludeFromCapture);
+
+    public bool Include(nint window) =>
+        window != 0 && NativeMethods.SetWindowDisplayAffinity(window, NativeMethods.NoDisplayAffinity);
 }

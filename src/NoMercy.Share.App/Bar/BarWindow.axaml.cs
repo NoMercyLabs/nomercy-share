@@ -96,10 +96,12 @@ public partial class BarWindow : Window
     private ICaptureExclusion? _exclusion;
     private IPointerMonitor? _pointer;
 
-    // Popups and tooltips are windows of their own, so each one is kept out of captures too.
-    static BarWindow() => Control.LoadedEvent.AddClassHandler<PopupRoot>((popup, _) => ExcludePopup(popup));
+    private readonly List<TopLevel> _popups = [];
 
-    private static void ExcludePopup(PopupRoot popup)
+    // Popups and tooltips are windows of their own, so each one follows the bar in and out of captures.
+    static BarWindow() => Control.LoadedEvent.AddClassHandler<PopupRoot>((popup, _) => FollowPopup(popup));
+
+    private static void FollowPopup(PopupRoot popup)
     {
         TopLevel? owner = popup.ParentTopLevel;
         while (owner is PopupRoot parent)
@@ -107,15 +109,26 @@ public partial class BarWindow : Window
             owner = parent.ParentTopLevel;
         }
 
-        (owner as BarWindow)?.KeepOutOfCaptures(popup);
+        if (owner is BarWindow bar)
+        {
+            bar._popups.Add(popup);
+            popup.Unloaded += (_, _) => bar._popups.Remove(popup);
+            bar.ApplyCaptureExclusion(popup);
+        }
     }
 
-    private void KeepOutOfCaptures(TopLevel window)
+    private void ApplyCaptureExclusion(TopLevel window)
     {
-        nint handle = window.TryGetPlatformHandle()?.Handle ?? 0;
-        if (_exclusion is not null && !_exclusion.Exclude(handle))
+        if (_exclusion is null)
         {
-            Trace.TraceWarning("A bar window could not be left out of screen captures.");
+            return;
+        }
+
+        bool excluded = (DataContext as BarViewModel)?.IsBarExcludedFromCaptures ?? true;
+        nint handle = window.TryGetPlatformHandle()?.Handle ?? 0;
+        if (!(excluded ? _exclusion.Exclude(handle) : _exclusion.Include(handle)))
+        {
+            Trace.TraceWarning(excluded ? "A bar window could not be left out of screen captures." : "A bar window could not be shown in screen captures.");
         }
     }
 
@@ -137,7 +150,7 @@ public partial class BarWindow : Window
     {
         _exclusion = exclusion;
         _pointer = pointer;
-        Opened += (_, _) => KeepOutOfCaptures(this);
+        Opened += (_, _) => ApplyCaptureExclusion(this);
         DataContext = viewModel;
         _store = store;
         _settings = settings;
@@ -235,6 +248,14 @@ public partial class BarWindow : Window
 
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(BarViewModel.IsBarExcludedFromCaptures))
+        {
+            foreach (TopLevel window in (TopLevel[])[this, .. _popups])
+            {
+                ApplyCaptureExclusion(window);
+            }
+        }
+
         if (e.PropertyName == nameof(BarViewModel.IsRecording) && DataContext is BarViewModel bar)
         {
             _elapsedTimer.IsEnabled = bar.IsRecording;

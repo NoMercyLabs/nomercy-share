@@ -119,6 +119,13 @@
             <TextBlock Text="{local:Loc menu.desktopaudio}" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
+        <Button Classes="bar ask" Classes.active="{Binding IsToolInRecordingOn}" Command="{Binding ToggleToolInRecordingCommand}"
+                AutomationProperties.Name="{local:Loc menu.showtool}" AutomationProperties.HelpText="{Binding ToolInRecordingState}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="filmMedia" />
+            <TextBlock Text="{local:Loc menu.showtool}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
         <Border Classes="separator" />
         <Button x:Name="StartButton" Classes="bar ask first" Command="{Binding StartRecordingCommand}" Content="{local:Loc menu.start}"
                 AutomationProperties.Name="{local:Loc menu.start}" />

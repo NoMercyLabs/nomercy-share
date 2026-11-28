@@ -19,6 +19,9 @@ internal static partial class NativeMethods
     /// <summary>WDA_EXCLUDEFROMCAPTURE: on screen for the user, absent from every capture.</summary>
     internal const uint ExcludeFromCapture = 0x11;
 
+    /// <summary>WDA_NONE: captures see the window again.</summary>
+    internal const uint NoDisplayAffinity = 0;
+
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool SetWindowDisplayAffinity(nint window, uint affinity);
