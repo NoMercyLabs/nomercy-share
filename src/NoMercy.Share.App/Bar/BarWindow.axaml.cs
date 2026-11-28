@@ -222,7 +222,7 @@ public partial class BarWindow : Window
         _placed = true;
     }
 
-    /// <summary>Keeps a row that grew inside the screen its left end is on, and puts it back once it fits there again.</summary>
+    /// <summary>Keeps a bar that grew inside the screen its row is on, and puts it back once it fits there again.</summary>
     private void FitToScreen()
     {
         if (!_placed)
@@ -232,10 +232,12 @@ public partial class BarWindow : Window
 
         double width = Bounds.Width * RenderScaling;
         double height = Bounds.Height * RenderScaling;
-        Screen? screen = Screens.ScreenFromPoint(_home + new PixelPoint((int)(height / 2), (int)(height / 2)));
+        // A point in the row: under an open panel the middle of the window can lie on another screen, or on none.
+        int inRow = (int)((Pill.Margin.Top + Pill.Bounds.Height) * RenderScaling);
+        Screen? screen = Screens.ScreenFromPoint(_home + new PixelPoint(inRow, inRow));
         ScreenArea[] areas = screen is null ? [.. Screens.All.Select(ToArea)] : [ToArea(screen)];
         BarPosition inside = BarPlacement.Clamp(new BarPosition(_home.X, _home.Y), width, height, areas);
-        PixelPoint fitted = new((int)Math.Floor(inside.X), _home.Y);
+        PixelPoint fitted = new((int)Math.Floor(inside.X), (int)Math.Floor(inside.Y));
         if (fitted != Position)
         {
             _fitted = fitted;
