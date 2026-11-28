@@ -2,7 +2,7 @@
 
 NoMercy Share puts a small floating bar on your Windows desktop. Click a button, and a screenshot, a screen recording or a picture of a web page is saved. Then you choose: **Copy image** to paste the picture itself, or **Copy link** to upload it to a host you choose and paste its link into a chat. Nothing is uploaded until you pick the link.
 
-![The NoMercy Share bar: a handle, then screenshot, record, web page, recent links, settings and close buttons.](docs/images/bar.png)
+![The NoMercy Share bar in screenshot mode: a handle, then screenshot (picked), record, web page, area, window, full screen, recent links, settings and close buttons.](docs/images/bar.png)
 
 ## Before you start
 
@@ -23,9 +23,15 @@ Until sharing is set up, nothing is uploaded. Every capture is saved in a `NoMer
 
 The bar floats above your other windows. Drag it by the handle on the left edge and it remembers where you left it. Every button has a tooltip, and Tab and Enter work if you prefer the keyboard.
 
-From left to right: the handle, then **Screenshot**, **Record the screen**, **Capture a web page**, **Recent links**, **Settings** and **Close**.
+The bar is one row. From left to right: the handle, then **Screenshot**, **Record the screen** and **Capture a web page**, the buttons of the picked one, then **Recent links**, **Settings** and **Close**. The buttons are icons, and the tooltip names each one; only **Start** has text.
 
-**Screenshot** and **Record the screen** each open a second bar underneath. Its buttons are icons, and the tooltip names each one; only **Start** has text. Press the same button again to close it. Opening one closes the other, and the cross closes it too.
+The first three pick what you want to do, and the row grows sideways to fit it:
+
+- **Screenshot** adds **Area**, **Window** and **Full screen**. A click on one takes the shot at once.
+- **Record the screen** adds the same three, **Microphone**, **Desktop audio** and **Start**.
+- **Capture a web page** adds nothing; it opens the web capture window at once.
+
+Picking **Screenshot** or **Record the screen** captures nothing by itself. The bar opens on what you used last. Near the right edge of a screen, a wider row moves left to stay on it, and goes back when it shrinks. Escape closes the recent links list; else it cancels a capture that is waiting for you; else it hides the bar.
 
 The bar and its tooltips are left out of your screenshots and recordings, but you still see them. This needs Windows 10 version 2004 or later.
 
@@ -37,9 +43,9 @@ After a capture a second bar underneath offers **Copy image** (pictures only), *
 
 `Win+Shift+S` shows the bar and starts what you started last: a screenshot or a recording of an area, a window or the full screen, or a web page capture. Before you have started anything, it is a screenshot of an area. NoMercy Share remembers it after a restart.
 
-- While the area picker is open, the bar stays above it. Click something else on the bar, or press another hotkey, and the picker closes and your new choice starts. Opening a menu closes the picker too.
+- While the area picker is open, the bar stays above it. Click something else on the bar, or press another hotkey, and the picker closes and your new choice starts.
 - Esc closes the picker and leaves the bar on screen.
-- A window or full screen recording does not start by itself. The record menu opens with it selected, and you press **Start**.
+- A window or full screen recording does not start by itself. The bar shows record mode with it picked, and you press **Start**.
 - While you record, `Win+Shift+S` only shows the bar.
 
 ## Capture a region
@@ -58,11 +64,11 @@ Each monitor keeps its own display scale, so a selection stays on one monitor.
 
 **Screenshot**, then **Full screen**, takes the monitor your cursor is on.
 
-The shot is taken at once, and the bar hides itself for a moment. Both have hotkeys that skip the menu: `Alt+PrintScreen` for a window and `PrintScreen` for the full screen. Once the capture is shared, the bar shows the notice you saw above.
+The shot is taken at once, and the bar hides itself for a moment. Both also have hotkeys: `Alt+PrintScreen` for a window and `PrintScreen` for the full screen. Once the capture is shared, the bar shows the notice you saw above.
 
 ## Record the screen
 
-Click the record button (or press `Shift+PrintScreen`, which also shows a hidden bar). A second bar opens, and nothing records until you press **Start**. Pick what to record:
+Click the record button (or press `Shift+PrintScreen`, which also shows a hidden bar). The bar switches to record mode, and nothing records until you press **Start**. Pick what to record:
 
 - **Area** (picked at first): after Start, drag over the part of the screen, the same way as for a region. Esc cancels.
 - **Window**: the rectangle of the window you were using, as it is when you press Start. The recording does not follow the window if you move it.
@@ -72,9 +78,9 @@ While you record, a colored border shows around what is being recorded. You see 
 
 **Show bar in video** in [Settings](#settings), under Recording (off at first), puts the bar in the recording; screenshots never contain it.
 
-**Microphone** and **Desktop audio** switch sound on or off; a switch that is off shows a crossed-out icon. The bar shows a red dot and a running timer while it records.
+**Microphone** and **Desktop audio** switch sound on or off; a switch that is off shows a crossed-out icon. The bar shows a red dot and a running timer while it records, and the targets, sound switches and **Start** go away. **Screenshot** brings the targets back, so you can still take screenshots.
 
-![The bar while recording: the record button is highlighted with a red dot and the timer reads 01:23.](docs/images/bar-recording.png)
+![The bar while recording: the record button is highlighted with a red dot, the timer reads 01:23, and the targets, sound switches and Start are gone.](docs/images/bar-recording.png)
 
 Click the record button (or press its hotkey) again to stop at once. The recording is squeezed into an MP4 that fits the size limit, 50 MB unless you change it, and shared like any other capture. A long recording is compressed harder to fit, so keep clips short if quality matters.
 

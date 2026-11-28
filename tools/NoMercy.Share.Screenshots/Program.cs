@@ -39,7 +39,44 @@ public static class Program
         bool popupFollows = RenderRecent(folder);
         RenderSettings(folder);
         RenderWebCapture(folder);
+        RenderReadmeBars(folder);
         return remembered && popupFollows ? 0 : 1;
+    }
+
+    /// <summary>The pictures of the bar in docs/images that need a state: recording, after a capture, and the folder question.</summary>
+    private static void RenderReadmeBars(string folder)
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        DateTimeOffset now = new(2026, 11, 27, 12, 0, 0, TimeSpan.Zero);
+        SaveReadmeBar(Path.Combine(folder, "bar-recording.png"), () => now, bar =>
+        {
+            bar.RunAsync(BarAction.Record).GetAwaiter().GetResult();
+            bar.StartRecordingAsync().GetAwaiter().GetResult();
+            bar.ClearNotice();
+            now = now.AddSeconds(83);
+            bar.RefreshElapsed();
+        });
+        SaveReadmeBar(Path.Combine(folder, "bar-capture-done.png"), () => now, bar => bar.ShowMessage("Link copied"));
+        BarAsk ask = new(Strings.Get("ask.folder", @"Z:\My Captures"), Strings.Get("ask.allow"), () => Task.CompletedTask, () => { }, Strings.Get("ask.notnow"));
+        SaveReadmeBar(Path.Combine(folder, "bar-windows-protection.png"), () => now,
+            bar => typeof(BarViewModel).GetProperty(nameof(BarViewModel.Ask))!.SetValue(bar, ask));
+    }
+
+    private static void SaveReadmeBar(string file, Func<DateTimeOffset> clock, Action<BarViewModel> prepare)
+    {
+        string temp = Path.Combine(Path.GetTempPath(), $"share-readme-shots-{Guid.NewGuid():N}");
+        BarViewModel model = new(new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
+            new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
+            recorder: new FakeScreenRecorder(), web: new FakeWebPageCapture(), clock: clock);
+        BarWindow window = new(model, new BarPositionStore(new SettingsFile(Path.Combine(temp, "settings.json"))), new BarSettings());
+        window.Background = new SolidColorBrush(Color.Parse("#2A2E39"));
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        prepare(model);
+        Dispatcher.UIThread.RunJobs();
+        window.CaptureRenderedFrame()!.Save(file);
+        Console.WriteLine(file);
+        window.Close();
     }
 
     /// <summary>The settings window at 2x, dark and light, with made-up values; and once more with a bad endpoint, an empty bucket and a bad chord.</summary>

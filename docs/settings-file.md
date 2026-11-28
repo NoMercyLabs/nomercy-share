@@ -23,7 +23,7 @@ How each button captures:
 | Window | The window that was active before the bar, else the window under the cursor. PrintWindow with PW_RENDERFULLCONTENT, cropped to the DWM frame (no invisible border); BitBlt of the frame if PrintWindow fails. Works while other windows cover it. |
 | Region | One BitBlt freezes the virtual screen and one overlay per monitor shows it dimmed outside the selection. Each monitor keeps its own display scale, so a selection stays on one monitor. |
 
-On the bar, **Screenshot** opens a menu with Area, Window and Full screen. **Record** opens a menu with the same three targets (Area picked at first), the two sound switches, **Show bar in video** and Start.
+On the bar, **Screenshot** shows Area, Window and Full screen in the row. **Record** shows the same three targets (Area picked at first), the two sound switches and Start.
 
 How each recording target works. A recording reads one monitor, so a rectangle that crosses monitors is cut at the edge of the one it covers most.
 
@@ -47,7 +47,7 @@ While a recording runs, a border 3 units thick shows 2 units outside the recorde
 | `Hotkeys.Window` | `Alt+PrintScreen` |
 | `Hotkeys.Record` | `Shift+PrintScreen` |
 
-The Region, FullScreen and Window hotkeys capture at once. The Record hotkey opens the record menu (a hidden bar shows) and stops a running recording.
+The Region, FullScreen and Window hotkeys capture at once. The Record hotkey switches the bar to record mode (a hidden bar shows) and stops a running recording.
 
 `Bar.LastAction` is what the Bar hotkey starts again; the app writes it each time you start a capture. `Task` is `Screenshot` (the default), `Recording` or `WebPage`. `Source` is `Region` (the default), `Window` or `FullScreen`.
 
@@ -66,7 +66,7 @@ An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share show
 | `Recording.Codec` | `h264` | The video codec: `h264`, `vp9`, `hevc` or `av1`. H.264 plays everywhere (MP4). VP9 encodes twice to fit the most picture into the size limit (WebM with Opus sound, CPU only), best for Discord. HEVC and AV1 look sharper at the same size, but not every browser or app plays them. |
 | `Recording.Encoder` | `cpu` | What encodes the video: `cpu`, `nvidia`, `intel` or `amd`. Settings lists only the ones that pass a test encode on your PC. If a GPU encode fails, the recording is encoded again on the CPU. |
 | `Recording.Speed` | `fast` | `fast`, `balanced` or `quality`. A slower encode gives a sharper picture at the same file size. |
-| `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. The Desktop audio and Microphone switches in the record menu save these same settings. |
+| `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. The Desktop audio and Microphone switches on the bar save these same settings. |
 | `Recording.ShowTool` | off | Shows the bar, its popups and its tooltips in a recording. The **Show bar in video** switch in the Settings window, under Recording, saves this setting. Screenshots never contain them. |
 | `Recording.AudioBitrateKbps` | 128 | The highest audio bitrate, taken off the size budget when a recording has sound. A tight budget steps it down: 128 kbps from 760 kbps of total budget, 96 from 520, 64 below that. |
 | `Recording.LowBudgetMinHeight`, `Recording.LowBudgetFrameRate` | 480, 15 | When the budget would shrink the picture below this height, the frame rate drops to this rate first, so the picture stays sharper. |
