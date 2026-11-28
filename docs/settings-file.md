@@ -67,7 +67,7 @@ An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share show
 | `Recording.Encoder` | `cpu` | What encodes the video: `cpu`, `nvidia`, `intel` or `amd`. Settings lists only the ones that pass a test encode on your PC. If a GPU encode fails, the recording is encoded again on the CPU. |
 | `Recording.Speed` | `fast` | `fast`, `balanced` or `quality`. A slower encode gives a sharper picture at the same file size. |
 | `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. The Desktop audio and Microphone switches in the record menu save these same settings. |
-| `Recording.ShowTool` | off | Shows the bar, its popups and its tooltips in a recording. The **Show bar in video** switch in the record menu saves this setting. Screenshots never contain them. |
+| `Recording.ShowTool` | off | Shows the bar, its popups and its tooltips in a recording. The **Show bar in video** switch in the Settings window, under Recording, saves this setting. Screenshots never contain them. |
 | `Recording.AudioBitrateKbps` | 128 | The highest audio bitrate, taken off the size budget when a recording has sound. A tight budget steps it down: 128 kbps from 760 kbps of total budget, 96 from 520, 64 below that. |
 | `Recording.LowBudgetMinHeight`, `Recording.LowBudgetFrameRate` | 480, 15 | When the budget would shrink the picture below this height, the frame rate drops to this rate first, so the picture stays sharper. |
 | `Recording.SizeHeadroom` | 0.95 | The part of the size limit the video may use. |

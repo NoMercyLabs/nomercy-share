@@ -25,7 +25,7 @@ The bar floats above your other windows. Drag it by the handle on the left edge 
 
 From left to right: the handle, then **Screenshot**, **Record the screen**, **Capture a web page**, **Recent links**, **Settings** and **Close**.
 
-**Screenshot** and **Record the screen** each open a second bar underneath. Press the same button again to close it. Opening one closes the other, and the cross closes it too.
+**Screenshot** and **Record the screen** each open a second bar underneath. Its buttons are icons, and the tooltip names each one; only **Start** has text. Press the same button again to close it. Opening one closes the other, and the cross closes it too.
 
 The bar and its tooltips are left out of your screenshots and recordings, but you still see them. This needs Windows 10 version 2004 or later.
 
@@ -70,9 +70,9 @@ Click the record button (or press `Shift+PrintScreen`, which also shows a hidden
 
 While you record, a colored border shows around what is being recorded. You see it, but it is not in the video, and your clicks go straight through it. It sits just outside the recorded rectangle. Where there is no room, as in a full screen recording, that side sits just inside the edge. Like the bar, it needs Windows 10 version 2004 or later to stay out of the video; without that, only the sides outside the rectangle show.
 
-**Show bar in video** (off at first) puts the bar in the recording; screenshots never contain it.
+**Show bar in video** in [Settings](#settings), under Recording (off at first), puts the bar in the recording; screenshots never contain it.
 
-**Microphone** and **Desktop audio** switch sound on or off. The bar shows a red dot and a running timer while it records.
+**Microphone** and **Desktop audio** switch sound on or off; a switch that is off shows a crossed-out icon. The bar shows a red dot and a running timer while it records.
 
 ![The bar while recording: the record button is highlighted with a red dot and the timer reads 01:23.](docs/images/bar-recording.png)
 
@@ -129,7 +129,7 @@ The gear opens one window with four sections in the list on the left. Pick a sec
 | Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). |
 | Links | The default expiry: never, or 1, 7, 30 or 90 days. |
 | Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (show the bar and repeat the last action), `Ctrl+PrintScreen` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
-| Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, VP9, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, and the two sound switches. |
+| Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, VP9, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, the two sound switches and **Show bar in video**. |
 
 Your secret access key is stored in the Windows Credential Manager, never in a file. The box shows "Saved" afterwards and stays empty. Leave it empty and the stored key stays.
 

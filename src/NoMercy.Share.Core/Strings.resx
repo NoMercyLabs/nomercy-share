@@ -16,11 +16,11 @@
   <data name="menu.fullscreen" xml:space="preserve"><value>Full screen</value></data>
   <data name="menu.microphone" xml:space="preserve"><value>Microphone</value></data>
   <data name="menu.desktopaudio" xml:space="preserve"><value>Desktop audio</value></data>
-  <data name="menu.showtool" xml:space="preserve"><value>Show bar in video</value></data>
   <data name="menu.start" xml:space="preserve"><value>Start</value></data>
   <data name="menu.selected" xml:space="preserve"><value>Selected</value></data>
   <data name="menu.on" xml:space="preserve"><value>On</value></data>
   <data name="menu.off" xml:space="preserve"><value>Off</value></data>
+  <data name="menu.switch.tip" xml:space="preserve"><value>{0}: {1}</value></data>
   <data name="bar.record" xml:space="preserve"><value>Record the screen</value></data>
   <data name="bar.record.stop" xml:space="preserve"><value>Stop recording</value></data>
   <data name="bar.webpage" xml:space="preserve"><value>Capture a web page</value></data>
@@ -95,6 +95,7 @@
   <data name="settings.unit.fps" xml:space="preserve"><value>fps</value></data>
   <data name="settings.sections" xml:space="preserve"><value>Settings sections</value></data>  <data name="settings.recording.systemsound" xml:space="preserve"><value>Record system sound</value></data>
   <data name="settings.recording.microphone" xml:space="preserve"><value>Record microphone</value></data>
+  <data name="settings.recording.showtool" xml:space="preserve"><value>Show bar in video</value></data>
   <data name="settings.save" xml:space="preserve"><value>Save</value></data>
   <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="settings.save.failed" xml:space="preserve"><value>The settings were not saved: {0}</value></data>

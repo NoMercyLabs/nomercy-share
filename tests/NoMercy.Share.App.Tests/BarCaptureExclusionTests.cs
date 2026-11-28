@@ -20,17 +20,18 @@ public sealed class BarCaptureExclusionTests
         {
             FakeScreenRecorder recorder = new();
             SettingsFile file = new(Path.Combine(root, "settings.json"));
+            LiveSettings live = new(new ShareSettings());
             BarViewModel bar = new(
                 new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
                 new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
                 recorder: recorder,
-                tool: new RecordingToolStore(file, new LiveSettings(new ShareSettings())));
+                live: live);
             Exclusion barCalls = new();
             Exclusion borderCalls = new();
             BarWindow window = new(bar, new BarPositionStore(file), new BarSettings(), barCalls);
             _ = new RecordingBorderPresenter(recorder, () => [(new ScreenRect(0, 0, 1920, 1080), 1.0)], borderCalls, new PassThrough());
             window.Summon();
-            bar.ToggleToolInRecordingCommand.Execute(null);
+            live.Replace(new ShareSettings { Recording = new RecordingSettings { ShowTool = true } });
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(["exclude"], barCalls.Calls.Distinct());
 

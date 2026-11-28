@@ -152,7 +152,6 @@ public sealed class App : Application
         services.AddSingleton(settings.Recent);
         services.AddSingleton<BarPositionStore>();
         services.AddSingleton<RecordingSoundStore>();
-        services.AddSingleton<RecordingToolStore>();
         services.AddSingleton(new RecentLinks(RecentLinks.DefaultPath(), settings.Recent));
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
         services.AddSingleton<LastActionStore>();

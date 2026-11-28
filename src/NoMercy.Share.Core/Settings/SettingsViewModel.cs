@@ -42,6 +42,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _recordSystemSound;
     private bool _recordMicrophone;
     private AudioSettings _followedAudio;
+    private bool _showBarInRecording;
     private readonly IEncoderProbe? _probe;
     private ResolutionChoice _selectedResolution;
     private OptionChoice _selectedCodec;
@@ -88,6 +89,7 @@ public sealed class SettingsViewModel : ObservableObject
         _recordSystemSound = current.Recording.Audio.SystemSound;
         _recordMicrophone = current.Recording.Audio.Microphone;
         _followedAudio = live.Current.Recording.Audio;
+        _showBarInRecording = current.Recording.ShowTool;
         live.Changed += OnLiveChanged;
 
         RecordingSettings recording = current.Recording;
@@ -311,6 +313,12 @@ public sealed class SettingsViewModel : ObservableObject
     {
         get => _recordMicrophone;
         set => Set(ref _recordMicrophone, value);
+    }
+
+    public bool ShowBarInRecording
+    {
+        get => _showBarInRecording;
+        set => Set(ref _showBarInRecording, value);
     }
 
     public IReadOnlyList<ResolutionChoice> ResolutionChoices { get; }
@@ -752,6 +760,7 @@ public sealed class SettingsViewModel : ObservableObject
                 MaxSizeMegabytes = size,
                 FrameRate = rate,
                 Audio = audio,
+                ShowTool = ShowBarInRecording,
                 MaxWidth = SelectedResolution.Width,
                 MaxHeight = SelectedResolution.Height,
                 Codec = SelectedCodec.Value,

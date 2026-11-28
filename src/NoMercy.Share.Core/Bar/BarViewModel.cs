@@ -24,7 +24,7 @@ public sealed class BarViewModel : ObservableObject
     private readonly IFolderAccess? _folderAccess;
     private readonly IFfmpegInstall? _ffmpeg;
     private readonly RecordingSoundStore? _sound;
-    private readonly RecordingToolStore? _tool;
+    private readonly LiveSettings? _live;
     private bool _isTakingScreenshot;
     private readonly LastActionStore? _lastAction;
     private readonly AreaPicker? _picker;
@@ -58,17 +58,12 @@ public sealed class BarViewModel : ObservableObject
         ShareDeletion? deletion = null,
         LastActionStore? lastAction = null,
         AreaPicker? picker = null,
-        RecordingToolStore? tool = null)
+        LiveSettings? live = null)
     {
-        _tool = tool;
-        if (tool is not null)
+        _live = live;
+        if (live is not null)
         {
-            tool.Changed += (_, _) =>
-            {
-                OnChanged(nameof(IsToolInRecordingOn));
-                OnChanged(nameof(ToolInRecordingState));
-                OnChanged(nameof(IsBarExcludedFromCaptures));
-            };
+            live.Changed += (_, _) => OnChanged(nameof(IsBarExcludedFromCaptures));
         }
 
         _lastAction = lastAction;
@@ -83,6 +78,8 @@ public sealed class BarViewModel : ObservableObject
                 OnChanged(nameof(IsDesktopAudioOn));
                 OnChanged(nameof(MicrophoneState));
                 OnChanged(nameof(DesktopAudioState));
+                OnChanged(nameof(MicrophoneTip));
+                OnChanged(nameof(DesktopAudioTip));
             };
         }
 
@@ -156,7 +153,6 @@ public sealed class BarViewModel : ObservableObject
         StartRecordingCommand = new BarCommand(_ => _ = StartRecordingAsync());
         ToggleMicrophoneCommand = new BarCommand(_ => SaveSound(audio => audio with { Microphone = !audio.Microphone }));
         ToggleDesktopAudioCommand = new BarCommand(_ => SaveSound(audio => audio with { SystemSound = !audio.SystemSound }));
-        ToggleToolInRecordingCommand = new BarCommand(_ => SaveToolInRecording());
     }
 
     /// <summary>The second pill under the bar.</summary>
@@ -189,10 +185,8 @@ public sealed class BarViewModel : ObservableObject
 
     public bool IsDesktopAudioOn => _sound?.Current.SystemSound ?? false;
 
-    public bool IsToolInRecordingOn => _tool?.Current ?? false;
-
-    /// <summary>The bar is kept out of captures at all times, except in a running recording with the switch on and no screenshot being taken.</summary>
-    public bool IsBarExcludedFromCaptures => !(IsToolInRecordingOn && IsRecording && !_isTakingScreenshot);
+    /// <summary>The bar is kept out of captures at all times, except in a running recording with Show bar in video on and no screenshot being taken.</summary>
+    public bool IsBarExcludedFromCaptures => !((_live?.Current.Recording.ShowTool ?? false) && IsRecording && !_isTakingScreenshot);
 
     /// <summary>Picks the <see cref="CaptureKind"/> given as the parameter as what Start records.</summary>
     public ICommand SelectRecordSourceCommand { get; }
@@ -211,7 +205,10 @@ public sealed class BarViewModel : ObservableObject
 
     public string DesktopAudioState => OnOff(IsDesktopAudioOn);
 
-    public string ToolInRecordingState => OnOff(IsToolInRecordingOn);
+    /// <summary>The tooltips of the sound switches: the name and On or Off.</summary>
+    public string MicrophoneTip => Strings.Get("menu.switch.tip", Strings.Get("menu.microphone"), MicrophoneState);
+
+    public string DesktopAudioTip => Strings.Get("menu.switch.tip", Strings.Get("menu.desktopaudio"), DesktopAudioState);
 
     private static string? Selected(bool selected) => selected ? Strings.Get("menu.selected") : null;
 
@@ -222,8 +219,6 @@ public sealed class BarViewModel : ObservableObject
     public ICommand ToggleMicrophoneCommand { get; }
 
     public ICommand ToggleDesktopAudioCommand { get; }
-
-    public ICommand ToggleToolInRecordingCommand { get; }
 
     public void CloseMenu() => Menu = BarMenu.None;
 
@@ -242,16 +237,11 @@ public sealed class BarViewModel : ObservableObject
         OnChanged(nameof(RecordFullScreenState));
     }
 
-    private void SaveSound(Func<AudioSettings, AudioSettings> change) =>
-        SaveSwitch(() => _sound?.Save(change(_sound.Current)));
-
-    private void SaveToolInRecording() => SaveSwitch(() => _tool?.Save(!_tool.Current));
-
-    private void SaveSwitch(Action save)
+    private void SaveSound(Func<AudioSettings, AudioSettings> change)
     {
         try
         {
-            save();
+            _sound?.Save(change(_sound.Current));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {

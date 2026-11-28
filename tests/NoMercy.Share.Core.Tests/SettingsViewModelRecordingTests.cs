@@ -44,6 +44,19 @@ public sealed class SettingsViewModelRecordingTests : IDisposable
     }
 
     [Fact]
+    public void ASaveThatTouchesNothingKeepsTheShownBarAndTheSoundSwitches()
+    {
+        RecordingSettings recording = new() { ShowTool = true, Audio = new AudioSettings { Microphone = true, SystemSound = true } };
+
+        Open(recording).Save();
+
+        RecordingSettings saved = _file.Load().Recording;
+        Assert.True(saved.ShowTool);
+        Assert.Equal((true, true), (saved.Audio.Microphone, saved.Audio.SystemSound));
+        Assert.True(_live.Current.Recording.ShowTool);
+    }
+
+    [Fact]
     public void TheSizesRunFrom720pTo4kPlusTheOriginalSize()
     {
         SettingsViewModel model = Open(new RecordingSettings());

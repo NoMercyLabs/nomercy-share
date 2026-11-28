@@ -5,11 +5,12 @@ using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Tests;
 
-/// <summary>The switch that shows the tool in a recording: when the bar may be seen by a capture.</summary>
+/// <summary>The setting that shows the tool in a recording: when the bar may be seen by a capture.</summary>
 public sealed class BarViewModelToolInRecordingTests : IDisposable
 {
     private readonly FakeScreenCapture _screen = new();
     private readonly FakeScreenRecorder _recorder = new();
+    private readonly LiveSettings _live = new(new ShareSettings());
     private readonly string _folder = Path.Combine(Path.GetTempPath(), $"share-tool-{Guid.NewGuid():N}");
 
     public void Dispose()
@@ -22,16 +23,19 @@ public sealed class BarViewModelToolInRecordingTests : IDisposable
 
     private SettingsFile SettingsOnDisk() => new(Path.Combine(_folder, "settings.json"));
 
-    private BarViewModel Bar(LiveSettings? live = null) => new(
+    private BarViewModel Bar() => new(
         new CaptureFlow(_screen, new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
         new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
         recorder: _recorder,
-        tool: new RecordingToolStore(SettingsOnDisk(), live ?? new LiveSettings(new ShareSettings())));
+        live: _live);
+
+    private void ShowTheTool(bool show) =>
+        _live.Replace(new ShareSettings { Recording = new RecordingSettings { ShowTool = show } });
 
     private async Task<BarViewModel> RecordingWithTheSwitchOnAsync()
     {
         BarViewModel bar = Bar();
-        bar.ToggleToolInRecordingCommand.Execute(null);
+        ShowTheTool(true);
         await bar.OpenAndStartAsync();
         return bar;
     }
@@ -54,7 +58,6 @@ public sealed class BarViewModelToolInRecordingTests : IDisposable
     public async Task TheSwitchIsOffAtFirstAndARecordingLeavesTheBarOut()
     {
         BarViewModel bar = Bar();
-        Assert.False(bar.IsToolInRecordingOn);
         Assert.False(new ShareSettings().Recording.ShowTool);
 
         await bar.OpenAndStartAsync();
@@ -73,24 +76,17 @@ public sealed class BarViewModelToolInRecordingTests : IDisposable
     }
 
     [Fact]
-    public void TheSwitchIsSavedAtOnce()
+    public async Task ASaveDuringARecordingTakesEffectAtOnce()
     {
-        LiveSettings live = new(new ShareSettings());
-        BarViewModel bar = Bar(live);
-        List<string?> changed = [];
-        bar.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        BarViewModel bar = Bar();
+        await bar.OpenAndStartAsync();
+        Func<bool?> told = Told(bar);
 
-        bar.ToggleToolInRecordingCommand.Execute(null);
+        ShowTheTool(true);
+        Assert.False(told());
 
-        Assert.True(bar.IsToolInRecordingOn);
-        Assert.True(SettingsOnDisk().Load().Recording.ShowTool);
-        Assert.True(live.Current.Recording.ShowTool);
-        Assert.Contains(nameof(BarViewModel.IsToolInRecordingOn), changed);
-        Assert.Contains(nameof(BarViewModel.ToolInRecordingState), changed);
-
-        bar.ToggleToolInRecordingCommand.Execute(null);
-
-        Assert.False(SettingsOnDisk().Load().Recording.ShowTool);
+        ShowTheTool(false);
+        Assert.True(told());
     }
 
     [Fact]
@@ -98,7 +94,7 @@ public sealed class BarViewModelToolInRecordingTests : IDisposable
     {
         BarViewModel bar = Bar();
 
-        bar.ToggleToolInRecordingCommand.Execute(null);
+        ShowTheTool(true);
 
         Assert.True(bar.IsBarExcludedFromCaptures);
     }
@@ -107,7 +103,7 @@ public sealed class BarViewModelToolInRecordingTests : IDisposable
     public async Task OnlyARunningRecordingLetsTheBarInAndAStopTakesItOutAgain()
     {
         BarViewModel bar = Bar();
-        bar.ToggleToolInRecordingCommand.Execute(null);
+        ShowTheTool(true);
         Func<bool?> told = Told(bar);
 
         await bar.OpenAndStartAsync();
@@ -149,7 +145,7 @@ public sealed class BarViewModelToolInRecordingTests : IDisposable
     public async Task ACancelledStartNeverLetsTheBarIn()
     {
         BarViewModel bar = Bar();
-        bar.ToggleToolInRecordingCommand.Execute(null);
+        ShowTheTool(true);
         _recorder.StartThrows = new OperationCanceledException();
 
         await bar.OpenAndStartAsync();

@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Hotkeys;
@@ -172,7 +173,10 @@ public sealed class SettingsWindowRenderTests
         });
         BarViewModel bar = new(new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings()),
             new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()));
-        SettingsViewModel model = new(file, new LiveSettings(file.Load()), new FakeCredentialStore(), new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3", "discord"])
+        // A stored made-up key, so Save has nothing to refuse.
+        FakeCredentialStore credentials = new();
+        credentials.Stored["made-up"] = new StoredCredential("made-up-key-id", "made-up-secret");
+        SettingsViewModel model = new(file, new LiveSettings(file.Load()), credentials, new HotkeyBinder(new FakeGlobalHotkeys(), bar, new HotkeySettings()), ["r2", "s3", "discord"])
         {
             SelectedSection = section
         };

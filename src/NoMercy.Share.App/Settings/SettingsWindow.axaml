@@ -304,6 +304,11 @@
                   <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordMicrophone}" OnContent="" OffContent="" MinWidth="0"
                                 AutomationProperties.Name="{local:Loc settings.recording.microphone}" />
                 </Grid>
+                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.showtool}" />
+                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowBarInRecording}" OnContent="" OffContent="" MinWidth="0"
+                                AutomationProperties.Name="{local:Loc settings.recording.showtool}" />
+                </Grid>
               </StackPanel>
             </Border>
           </StackPanel>

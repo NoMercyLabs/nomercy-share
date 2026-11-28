@@ -23,6 +23,8 @@
     "volumeThree",
     "trash",
     "fileLines",
-    "mobilePhone"
+    "mobilePhone",
+    "micMuted",
+    "volumeMuted"
   ]
 }
