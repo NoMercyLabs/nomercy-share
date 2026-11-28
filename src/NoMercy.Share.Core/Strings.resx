@@ -183,7 +183,6 @@
   <data name="recent.expires.days" xml:space="preserve"><value>expires in {0} days</value></data>
   <data name="web.title" xml:space="preserve"><value>Capture a web page</value></data>
   <data name="web.address" xml:space="preserve"><value>Address</value></data>
-  <data name="web.mode" xml:space="preserve"><value>Mode</value></data>
   <data name="web.selector" xml:space="preserve"><value>CSS selector</value></data>
   <data name="web.width" xml:space="preserve"><value>Width</value></data>
   <data name="web.capture" xml:space="preserve"><value>Capture</value></data>

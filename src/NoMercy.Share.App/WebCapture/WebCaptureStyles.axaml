@@ -28,10 +28,7 @@
       </ItemsPanelTemplate>
     </Setter>
   </Style>
-  <!-- A mode pill is named by its label; a width pill also tells its pixels, in its name and its tooltip. -->
-  <Style Selector="ListBox.mode > ListBoxItem" x:DataType="capture:WebModeChoice">
-    <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
-  </Style>
+  <!-- A width pill tells its pixels, in its name and its tooltip. -->
   <Style Selector="ListBox.width > ListBoxItem" x:DataType="capture:WebDeviceChoice">
     <Setter Property="AutomationProperties.Name" Value="{Binding Description}" />
     <Setter Property="ToolTip.Tip" Value="{Binding Description}" />

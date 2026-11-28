@@ -29,7 +29,7 @@ The first three pick what you want to do, and the row grows sideways to fit it:
 
 - **Screenshot** adds **Area**, **Window** and **Full screen**. A click on one takes the shot at once.
 - **Record the screen** adds the same three, **Microphone**, **Desktop audio** and **Start**.
-- **Capture a web page** adds nothing to the row; it opens the web page options under the bar at once.
+- **Capture a web page** adds **Full page**, **Visible area** and **One element**, and opens the web page options under the bar at once. A click on one only picks it.
 
 Picking **Screenshot** or **Record the screen** captures nothing by itself. The bar opens on what you used last. Near the right edge of a screen, a wider row moves left to stay on it, and goes back when it shrinks. Escape closes the recent links list; else it cancels a capture that is waiting for you, which also closes the web page options and goes back to **Screenshot**; else it hides the bar. Near the bottom edge of a screen, the bar moves up to make room for what opens under it.
 
@@ -88,15 +88,15 @@ Sound is off until you turn it on. **Desktop audio** is what your speakers play 
 
 ## Capture a web page
 
-Click the globe button. The options open under the bar and ask for three things:
+Click the globe button. In the bar, pick **Full page**, **Visible area**, or **One element**. The options open under the bar and ask for:
 
 - **Address**: filled in for you when your clipboard holds an https address.
-- **Mode**: **Full page**, **Visible area**, or **One element**, where you give a CSS selector such as `#header`.
+- **CSS selector**: only for **One element**, such as `#header`.
 - **Width**: **Phone**, **Tablet**, **Desktop**, **1080p**, **1440p** or **4K**, which decides how the page lays itself out. Point at a choice to see its width in pixels. [The widths can be changed](docs/settings-file.md#web-page-capture).
 
-Click a choice to pick it, or use Tab and the arrow keys. Press Enter or click **Capture**. Press Esc, pick **Screenshot** or **Record the screen**, or click the bar's cross to cancel, also while a page is loading. The options move with the bar, and like the bar they are left out of your captures. If a page cannot be captured, they stay open and say why.
+Click a width to pick it, or use Tab and the arrow keys. Tab to a mode button and press Enter to pick it. Press Enter in the options or click **Capture**. Press Esc, pick **Screenshot** or **Record the screen**, or click the bar's cross to cancel, also while a page is loading. The options move with the bar, and like the bar they are left out of your captures. If a page cannot be captured, they stay open and say why.
 
-![The bar in web page mode with its options joined under it: the line "Pages open signed out.", the address https://example.test/articles/made-up, a row of Mode choices with Full page picked, six Width choices on two lines with Desktop picked, and Capture.](docs/images/web-page-capture.png)
+![The bar in web page mode with its options joined under it: the line "Pages open signed out.", the address https://example.test/articles/made-up, full page (picked), visible area and one element buttons in the bar's row, six Width choices on two lines with Desktop picked, and Capture.](docs/images/web-page-capture.png)
 
 The page opens in a private, headless Edge (or Chrome) that is closed again afterwards. It has no cookies, so you see the page as a signed-out visitor, and only http and https addresses are opened.
 

@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Windows.Input;
+using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Settings;
 
 namespace NoMercy.Share.Core.Capture;
@@ -13,7 +15,7 @@ public sealed class WebCaptureViewModel : ObservableObject
     private CancellationTokenSource? _running;
     private string _address = string.Empty;
     private string _selector = string.Empty;
-    private WebModeChoice _selectedMode;
+    private WebCaptureKind _mode = WebCaptureKind.FullPage;
     private WebDeviceChoice _selectedDevice;
     private string? _addressError;
     private string? _selectorError;
@@ -24,14 +26,19 @@ public sealed class WebCaptureViewModel : ObservableObject
     public WebCaptureViewModel(IWebPageCapture capture, WebCaptureSettings settings, string? clipboardText)
     {
         _capture = capture;
-        Modes = [new WebModeChoice(WebCaptureKind.FullPage), new WebModeChoice(WebCaptureKind.Viewport), new WebModeChoice(WebCaptureKind.Element)];
+        PickModeCommand = new BarCommand(parameter =>
+        {
+            if (parameter is WebCaptureKind picked)
+            {
+                Mode = picked;
+            }
+        });
         WebCaptureDevice[] narrowestFirst =
         [
             WebCaptureDevice.Phone, WebCaptureDevice.Tablet, WebCaptureDevice.Desktop,
             WebCaptureDevice.FullHd, WebCaptureDevice.QuadHd, WebCaptureDevice.UltraHd
         ];
         Devices = [.. narrowestFirst.Select(device => new WebDeviceChoice(device, settings.WidthOf(device)))];
-        _selectedMode = Modes[0];
         _selectedDevice = Devices.Single(choice => choice.Device == WebCaptureDevice.Desktop);
         if (WebAddress.TryParse(clipboardText, out Uri? copied) && WebAddress.IsHttps(copied))
         {
@@ -69,7 +76,8 @@ public sealed class WebCaptureViewModel : ObservableObject
         return await closed.Task ?? throw new OperationCanceledException("The web page capture was cancelled.");
     }
 
-    public IReadOnlyList<WebModeChoice> Modes { get; }
+    /// <summary>Picks the mode given as the parameter; nothing is captured.</summary>
+    public ICommand PickModeCommand { get; }
 
     public IReadOnlyList<WebDeviceChoice> Devices { get; }
 
@@ -88,13 +96,14 @@ public sealed class WebCaptureViewModel : ObservableObject
         set => Set(ref _selector, value);
     }
 
-    public WebModeChoice SelectedMode
+    /// <summary>What Capture takes a picture of; the bar's row picks it.</summary>
+    public WebCaptureKind Mode
     {
-        get => _selectedMode;
+        get => _mode;
         set
         {
-            Set(ref _selectedMode, value);
-            OnChanged(nameof(IsElementMode));
+            Set(ref _mode, value);
+            OnChanged(string.Empty); // the picked flags and their screen-reader words follow it
         }
     }
 
@@ -104,8 +113,19 @@ public sealed class WebCaptureViewModel : ObservableObject
         set => Set(ref _selectedDevice, value);
     }
 
+    public bool IsFullPageMode => Mode == WebCaptureKind.FullPage;
+
+    public bool IsViewportMode => Mode == WebCaptureKind.Viewport;
+
     /// <summary>True when the selector field shows.</summary>
-    public bool IsElementMode => SelectedMode.Kind == WebCaptureKind.Element;
+    public bool IsElementMode => Mode == WebCaptureKind.Element;
+
+    /// <summary>The screen-reader words for the picked mode.</summary>
+    public string? FullPageState => Selected(IsFullPageMode);
+
+    public string? ViewportState => Selected(IsViewportMode);
+
+    public string? ElementState => Selected(IsElementMode);
 
     public string? AddressError
     {
@@ -162,7 +182,7 @@ public sealed class WebCaptureViewModel : ObservableObject
         try
         {
             string? selector = IsElementMode ? Selector.Trim() : null;
-            Result = await _capture.CaptureAsync(new WebCaptureRequest(page, SelectedMode.Kind, selector, SelectedDevice.Device), running.Token);
+            Result = await _capture.CaptureAsync(new WebCaptureRequest(page, Mode, selector, SelectedDevice.Device), running.Token);
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException)
@@ -191,6 +211,8 @@ public sealed class WebCaptureViewModel : ObservableObject
         _running?.Cancel();
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    private static string? Selected(bool selected) => selected ? Strings.Get("row.selected") : null;
 
     private void ShowFailure(WebCaptureException error)
     {

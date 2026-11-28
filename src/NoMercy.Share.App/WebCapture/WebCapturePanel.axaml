@@ -17,20 +17,6 @@
           <TextBox Name="AddressBox" Text="{Binding Address}" AutomationProperties.Name="{local:Loc web.address}" />
           <TextBlock Classes="field-error" Text="{Binding AddressError}" IsVisible="{Binding AddressError, Converter={x:Static ObjectConverters.IsNotNull}}" />
         </StackPanel>
-        <StackPanel Classes="field">
-          <TextBlock Classes="field-label" Text="{local:Loc web.mode}" />
-          <ListBox Classes="choices mode" ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}" SelectionMode="Single,AlwaysSelected"
-                   AutomationProperties.Name="{local:Loc web.mode}">
-            <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="capture:WebModeChoice">
-                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
-                  <icons:MoooomIcon Kind="{Binding Kind, Converter={x:Static local:WebChoiceIcons.Mode}}" />
-                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                </StackPanel>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
-        </StackPanel>
         <StackPanel Classes="field" IsVisible="{Binding IsElementMode}">
           <TextBlock Classes="field-label" Text="{local:Loc web.selector}" />
           <TextBox Text="{Binding Selector}" AutomationProperties.Name="{local:Loc web.selector}" />

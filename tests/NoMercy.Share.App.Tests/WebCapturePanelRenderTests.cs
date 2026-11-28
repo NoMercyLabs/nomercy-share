@@ -122,7 +122,7 @@ public sealed class WebCapturePanelRenderTests
     [InlineData(WebCaptureKind.Element)]
     public void TheWidthRowShowsEveryChoiceUnclippedInEveryMode(WebCaptureKind kind) => WithWindow((window, model, capture, _) =>
     {
-        model.SelectedMode = model.Modes.Single(mode => mode.Kind == kind);
+        model.Mode = kind;
         Dispatcher.UIThread.RunJobs();
         AssertRowsAndTexts(window);
 
@@ -161,7 +161,7 @@ public sealed class WebCapturePanelRenderTests
         Click(window, BarButton(window, "One element"));
         window.UpdateLayout();
 
-        Assert.Equal(WebCaptureKind.Element, model.SelectedMode.Kind);
+        Assert.Equal(WebCaptureKind.Element, model.Mode);
         Assert.True(SelectorShows(window));
         Assert.Equal("Selected", AutomationProperties.GetHelpText(BarButton(window, "One element")));
         Assert.Null(AutomationProperties.GetHelpText(BarButton(window, "Full page")));
@@ -240,7 +240,7 @@ public sealed class WebCapturePanelRenderTests
     [Fact]
     public void EveryFocusedControlShowsExactlyOneRing() => WithWindow((window, model, _, _) =>
     {
-        model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+        model.Mode = WebCaptureKind.Element;
         Dispatcher.UIThread.RunJobs();
         List<string> problems = [];
         List<string?> reached = [];
@@ -285,7 +285,7 @@ public sealed class WebCapturePanelRenderTests
         BarButton(window, "Visible area").Focus(NavigationMethod.Tab);
         Press(window, PhysicalKey.Enter);
 
-        Assert.Equal(WebCaptureKind.Viewport, model.SelectedMode.Kind);
+        Assert.Equal(WebCaptureKind.Viewport, model.Mode);
         Assert.Empty(capture.Requests);
         Assert.Same(model, bar.WebPanel);
     });

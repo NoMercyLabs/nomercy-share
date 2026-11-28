@@ -71,6 +71,13 @@
     <Setter Property="Orientation" Value="Horizontal" />
     <Setter Property="Spacing" Value="{DynamicResource Nm-Space-0-5}" />
   </Style>
+  <!-- A disabled group button dims; the theme's gray disc would read as picked. -->
+  <Style Selector="StackPanel.group > Button.bar:disabled">
+    <Setter Property="Opacity" Value="0.4" />
+  </Style>
+  <Style Selector="StackPanel.group > Button.bar:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
   <!-- The recent links list: a rounded card under the bar; rows tint on hover and selection like the bar buttons. -->
   <!-- A text button of the access ask: the bar button's size, hover and focus ring, as wide as its label. -->
   <Style Selector="Button.bar.ask">

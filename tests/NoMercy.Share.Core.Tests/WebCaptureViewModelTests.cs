@@ -56,10 +56,10 @@ public sealed class WebCaptureViewModelTests
     public void TheSelectorShowsOnlyForOneElement()
     {
         WebCaptureViewModel model = Model();
-        Assert.Equal(WebCaptureKind.FullPage, model.SelectedMode.Kind);
+        Assert.Equal(WebCaptureKind.FullPage, model.Mode);
         Assert.False(model.IsElementMode);
 
-        model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+        model.PickModeCommand.Execute(WebCaptureKind.Element);
 
         Assert.True(model.IsElementMode);
     }
@@ -90,7 +90,7 @@ public sealed class WebCaptureViewModelTests
         Assert.Null(model.SelectorError);
         Assert.Single(capture.Requests);
 
-        model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+        model.Mode = WebCaptureKind.Element;
         await model.CaptureAsync();
         Assert.Equal("Enter a CSS selector.", model.SelectorError);
         Assert.Single(capture.Requests);
@@ -102,7 +102,7 @@ public sealed class WebCaptureViewModelTests
         FakeWebPageCapture capture = new();
         WebCaptureViewModel model = Model(capture);
         model.Address = "https://example.test/";
-        model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+        model.Mode = WebCaptureKind.Element;
         model.Selector = "  #card ";
         model.SelectedDevice = model.Devices.Single(device => device.Device == WebCaptureDevice.Phone);
 
@@ -137,7 +137,7 @@ public sealed class WebCaptureViewModelTests
     {
         WebCaptureViewModel model = Model(new FakeWebPageCapture { Throws = new WebCaptureException(field, text) });
         model.Address = "https://example.test/";
-        model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+        model.Mode = WebCaptureKind.Element;
         model.Selector = "#missing";
         int closed = 0;
         model.CloseRequested += (_, _) => closed++;
@@ -194,11 +194,10 @@ public sealed class WebCaptureViewModelTests
     }
 
     [Fact]
-    public void TheModeAndDeviceLabelsComeFromTheStrings()
+    public void TheDeviceLabelsComeFromTheStrings()
     {
         WebCaptureViewModel model = Model();
 
-        Assert.Equal(["Full page", "Visible area", "One element"], model.Modes.Select(mode => mode.Label));
         Assert.Equal(["Phone", "Tablet", "Desktop", "1080p", "1440p", "4K"], model.Devices.Select(device => device.Label));
         Assert.Equal(
             ["Phone (390 px)", "Tablet (834 px)", "Desktop (1280 px)", "1080p (1920 px)", "1440p (2560 px)", "4K (3840 px)"],

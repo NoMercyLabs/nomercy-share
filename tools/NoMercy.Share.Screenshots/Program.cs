@@ -138,7 +138,7 @@ public static class Program
             {
                 _ = bar.RunAsync(BarAction.WebPage);
                 WebCaptureViewModel panel = bar.WebPanel!;
-                panel.SelectedMode = panel.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+                panel.Mode = WebCaptureKind.Element;
                 panel.Address = "example.test";
                 panel.CaptureAsync().GetAwaiter().GetResult();
             }, behind);

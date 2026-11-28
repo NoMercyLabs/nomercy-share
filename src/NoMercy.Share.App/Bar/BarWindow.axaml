@@ -53,6 +53,22 @@
           </Button>
           <Border Classes="separator" />
         </StackPanel>
+        <!-- The open web panel's mode sits where the targets sit; a click only picks it. -->
+        <StackPanel Classes="group" IsVisible="{Binding WebPanel, Converter={x:Static ObjectConverters.IsNotNull}}" IsEnabled="{Binding !WebPanel.IsBusy}">
+          <Button Classes="bar" Classes.active="{Binding WebPanel.IsFullPageMode}" Command="{Binding WebPanel.PickModeCommand}" CommandParameter="{x:Static capture:WebCaptureKind.FullPage}"
+                  ToolTip.Tip="{local:Loc web.mode.full}" AutomationProperties.Name="{local:Loc web.mode.full}" AutomationProperties.HelpText="{Binding WebPanel.FullPageState}">
+            <icons:MoooomIcon Kind="fileLines" />
+          </Button>
+          <Button Classes="bar" Classes.active="{Binding WebPanel.IsViewportMode}" Command="{Binding WebPanel.PickModeCommand}" CommandParameter="{x:Static capture:WebCaptureKind.Viewport}"
+                  ToolTip.Tip="{local:Loc web.mode.viewport}" AutomationProperties.Name="{local:Loc web.mode.viewport}" AutomationProperties.HelpText="{Binding WebPanel.ViewportState}">
+            <icons:MoooomIcon Kind="macOsWindow" />
+          </Button>
+          <Button Classes="bar" Classes.active="{Binding WebPanel.IsElementMode}" Command="{Binding WebPanel.PickModeCommand}" CommandParameter="{x:Static capture:WebCaptureKind.Element}"
+                  ToolTip.Tip="{local:Loc web.mode.element}" AutomationProperties.Name="{local:Loc web.mode.element}" AutomationProperties.HelpText="{Binding WebPanel.ElementState}">
+            <icons:MoooomIcon Kind="crossHair" />
+          </Button>
+          <Border Classes="separator" />
+        </StackPanel>
         <StackPanel Classes="group" IsVisible="{Binding Row.ShowsRecordControls}">
           <Button Classes="bar" Classes.active="{Binding IsMicrophoneOn}" Command="{Binding ToggleMicrophoneCommand}"
                   ToolTip.Tip="{Binding MicrophoneTip}" AutomationProperties.Name="{local:Loc row.microphone}" AutomationProperties.HelpText="{Binding MicrophoneState}">
