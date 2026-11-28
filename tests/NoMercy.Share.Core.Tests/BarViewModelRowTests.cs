@@ -6,8 +6,8 @@ using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Core.Tests;
 
-/// <summary>The Screenshot and Record menus under the bar: what opens, what closes them, and what Start records.</summary>
-public sealed class BarViewModelMenuTests : IDisposable
+/// <summary>The bar's modes: picking one captures nothing, what a target does in each, and what Start records.</summary>
+public sealed class BarViewModelRowTests : IDisposable
 {
     private readonly FakeScreenCapture _screen = new();
     private readonly FakeScreenRecorder _recorder = new();
@@ -24,47 +24,71 @@ public sealed class BarViewModelMenuTests : IDisposable
 
     private SettingsFile File() => new(Path.Combine(_folder, "settings.json"));
 
-    private BarViewModel Bar(RecordingSoundStore? sound = null) => new(
-        new CaptureFlow(_screen, _host, new CaptureSettings { HideDelayMilliseconds = 0 }),
-        new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
-        recorder: _recorder,
-        sound: sound);
+    private BarViewModel Bar(RecordingSoundStore? sound = null, LastAction? last = null)
+    {
+        LastActionStore store = new(File());
+        if (last is not null)
+        {
+            store.Save(last);
+        }
 
-    [Fact]
-    public async Task ScreenshotOpensItsMenuAndASecondPressClosesIt()
+        return new BarViewModel(
+            new CaptureFlow(_screen, _host, new CaptureSettings { HideDelayMilliseconds = 0 }),
+            new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
+            recorder: _recorder,
+            web: new FakeWebPageCapture(),
+            sound: sound,
+            lastAction: store);
+    }
+
+    private static (bool, bool, bool) Picked(BarViewModel bar) => (bar.Row.IsAreaPicked, bar.Row.IsWindowPicked, bar.Row.IsFullScreenPicked);
+
+    [Theory]
+    [InlineData(BarAction.Screenshot, BarMode.Screenshot)]
+    [InlineData(BarAction.Record, BarMode.Record)]
+    public async Task PickingAModeOnlySelectsItAndASecondPressKeepsIt(BarAction button, BarMode mode)
     {
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Screenshot);
-        Assert.True(bar.IsScreenshotMenuOpen);
-        Assert.Empty(_screen.Calls);
+        await bar.RunAsync(button);
+        await bar.RunAsync(button);
 
-        await bar.RunAsync(BarAction.Screenshot);
-        Assert.False(bar.IsScreenshotMenuOpen);
-        Assert.Equal(BarMenu.None, bar.Menu);
+        Assert.Equal(mode, bar.Row.Mode);
+        Assert.Empty(_screen.Calls);
+        Assert.False(_recorder.IsRecording);
     }
 
     [Theory]
-    [InlineData(BarAction.Region, "region")]
-    [InlineData(BarAction.Window, "window")]
-    [InlineData(BarAction.FullScreen, "fullscreen")]
-    public async Task PickingAShotTakesItAtOnceWithTheMenuAlreadyClosed(BarAction pick, string call)
+    [InlineData(CaptureKind.Region, "region")]
+    [InlineData(CaptureKind.Window, "window")]
+    [InlineData(CaptureKind.FullScreen, "fullscreen")]
+    public async Task ATargetInScreenshotModeCapturesAtOnceAndNoTargetLooksPicked(CaptureKind target, string call)
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Screenshot);
-        Assert.Equal(BarMenu.Screenshot, bar.Menu);
-        BarMenu? during = null;
-        _screen.OnCapture = () => during = bar.Menu;
+        Assert.Equal((false, false, false), Picked(bar));
 
-        await bar.RunAsync(pick);
+        await bar.PickTargetAsync(target);
 
         Assert.Equal([call], _screen.Calls);
-        Assert.Equal(BarMenu.None, during);
-        Assert.Equal(BarMenu.None, bar.Menu);
+        Assert.Equal((false, false, false), Picked(bar));
     }
 
     [Fact]
-    public async Task RecordOpensItsMenuShowsTheBarAndRecordsNothing()
+    public async Task ATargetInRecordModeIsOnlyPickedAndOneAtATime()
+    {
+        BarViewModel bar = Bar();
+        await bar.RunAsync(BarAction.Record);
+        Assert.Equal((true, false, false), Picked(bar));
+
+        bar.PickTargetCommand.Execute(CaptureKind.FullScreen);
+
+        Assert.Equal((false, false, true), Picked(bar));
+        Assert.Empty(_screen.Calls);
+        Assert.False(_recorder.IsRecording);
+    }
+
+    [Fact]
+    public async Task TheRecordHotkeyShowsTheBarInRecordModeAndRecordsNothing()
     {
         BarViewModel bar = Bar();
         int shows = 0;
@@ -72,56 +96,59 @@ public sealed class BarViewModelMenuTests : IDisposable
 
         await bar.RunAsync(BarAction.Record);
 
-        Assert.True(bar.IsRecordMenuOpen);
-        Assert.False(_recorder.IsRecording);
-        Assert.Equal(1, shows);
-
-        await bar.RunAsync(BarAction.Record);
-        Assert.False(bar.IsRecordMenuOpen);
+        Assert.True(bar.Row.IsRecordMode);
         Assert.False(_recorder.IsRecording);
         Assert.Equal(1, shows);
     }
 
     [Fact]
-    public async Task OpeningOneMenuClosesTheOther()
+    public async Task TheGlobePicksWebModeAndOpensTheWebPageCaptureAtOnce()
     {
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Screenshot);
-        await bar.RunAsync(BarAction.Record);
-        Assert.Equal(BarMenu.Record, bar.Menu);
+        await bar.RunAsync(BarAction.WebPage);
 
-        await bar.RunAsync(BarAction.Screenshot);
-        Assert.Equal(BarMenu.Screenshot, bar.Menu);
+        Assert.True(bar.Row.IsWebMode);
+        Assert.False(bar.Row.ShowsTargets);
     }
 
     [Theory]
-    [InlineData(BarAction.Close)]
-    [InlineData(BarAction.Settings)]
-    [InlineData(BarAction.WebPage)]
-    [InlineData(BarAction.Recent)]
-    public async Task AnyOtherButtonClosesTheMenu(BarAction other)
+    [InlineData(null, BarMode.Screenshot)]
+    [InlineData(LastActionTask.Screenshot, BarMode.Screenshot)]
+    [InlineData(LastActionTask.Recording, BarMode.Record)]
+    [InlineData(LastActionTask.WebPage, BarMode.Web)]
+    public async Task TheBarOpensInTheModeOfTheLastActionAndReturnsToItWhenDismissed(LastActionTask? task, BarMode mode)
     {
-        BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
-        Assert.Equal(BarMenu.Record, bar.Menu);
+        BarViewModel bar = Bar(last: task is { } saved ? new LastAction(saved, CaptureKind.Window) : null);
+        Assert.Equal(mode, bar.Row.Mode);
 
-        await bar.RunAsync(other);
+        await bar.RunAsync(mode == BarMode.Record ? BarAction.Screenshot : BarAction.Record);
+        bar.ReturnToLastMode();
 
-        Assert.Equal(BarMenu.None, bar.Menu);
+        Assert.Equal(mode, bar.Row.Mode);
     }
 
     [Fact]
-    public async Task AreaIsSelectedByDefaultAndOneTargetIsSelectedAtATime()
+    public async Task TheModeFollowsWhatWasStartedByAHotkey()
     {
         BarViewModel bar = Bar();
         await bar.RunAsync(BarAction.Record);
-        Assert.Equal((true, false, false), (bar.IsRecordArea, bar.IsRecordWindow, bar.IsRecordFullScreen));
 
-        bar.SelectRecordSourceCommand.Execute(CaptureKind.FullScreen);
+        await bar.RunAsync(BarAction.FullScreen);
 
-        Assert.Equal((false, false, true), (bar.IsRecordArea, bar.IsRecordWindow, bar.IsRecordFullScreen));
-        Assert.False(_recorder.IsRecording);
+        Assert.Equal(BarMode.Screenshot, bar.Row.Mode);
+    }
+
+    [Fact]
+    public void EscapeWithNothingWaitingAsksToHideTheBar()
+    {
+        BarViewModel bar = Bar();
+        int closes = 0;
+        bar.CloseRequested += (_, _) => closes++;
+
+        bar.Escape();
+
+        Assert.Equal(1, closes);
     }
 
     [Theory]
@@ -132,21 +159,22 @@ public sealed class BarViewModelMenuTests : IDisposable
     {
         BarViewModel bar = Bar();
         await bar.RunAsync(BarAction.Record);
-        bar.SelectRecordSourceCommand.Execute(source);
+        bar.PickTargetCommand.Execute(source);
         bool? hiddenAtStart = null;
         _recorder.OnStart = () => hiddenAtStart = _host.Hidden;
 
         await bar.StartRecordingAsync();
 
         Assert.True(bar.IsRecording);
-        Assert.Equal(BarMenu.None, bar.Menu);
+        Assert.False(bar.Row.ShowsRecordControls);
+        Assert.False(bar.Row.ShowsTargets);
         Assert.Equal(source, _recorder.Options?.Source);
         Assert.Equal(hides, hiddenAtStart);
         Assert.False(_host.Hidden);
     }
 
     [Fact]
-    public async Task WhileRecordingTheRecordButtonStopsAtOnceWithNoMenu()
+    public async Task WhileRecordingTheRecordButtonStopsAtOnce()
     {
         BarViewModel bar = Bar();
         await bar.OpenAndStartAsync();
@@ -154,7 +182,7 @@ public sealed class BarViewModelMenuTests : IDisposable
         await bar.RunAsync(BarAction.Record);
 
         Assert.False(bar.IsRecording);
-        Assert.Equal(BarMenu.None, bar.Menu);
+        Assert.True(bar.Row.ShowsRecordControls);
     }
 
     [Fact]
@@ -204,7 +232,7 @@ public sealed class BarViewModelMenuTests : IDisposable
 
 internal static class BarRecordingSteps
 {
-    /// <summary>The two steps a user takes: the Record button opens the menu, Start records.</summary>
+    /// <summary>The two steps a user takes: the video button picks record mode, Start records.</summary>
     public static async Task OpenAndStartAsync(this BarViewModel bar)
     {
         await bar.RunAsync(BarAction.Record);

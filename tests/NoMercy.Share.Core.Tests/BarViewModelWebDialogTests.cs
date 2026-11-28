@@ -82,7 +82,7 @@ public sealed class BarViewModelWebDialogTests
         await open.WaitAsync(TimeSpan.FromSeconds(10));
 
         Assert.True(dialog.Canceled);
-        Assert.True(bar.IsScreenshotMenuOpen);
+        Assert.True(bar.Row.IsScreenshotMode);
     }
 
     /// <summary>A dialog that stays open until it is canceled, as the real window waits for the user.</summary>

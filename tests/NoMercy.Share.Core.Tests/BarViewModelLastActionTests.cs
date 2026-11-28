@@ -98,17 +98,17 @@ public sealed class BarViewModelLastActionTests : IDisposable
     [Theory]
     [InlineData(CaptureKind.Window)]
     [InlineData(CaptureKind.FullScreen)]
-    public async Task TheHotkeyOpensTheRecordMenuInsteadOfRecordingWithoutAPicker(CaptureKind source)
+    public async Task TheHotkeyOnlyPreselectsARecordingThatHasNoPicker(CaptureKind source)
     {
         Store().Save(Recording(source));
         BarViewModel bar = Bar();
 
         await Done(bar.RunAsync(BarAction.Show));
 
-        Assert.True(bar.IsRecordMenuOpen);
+        Assert.True(bar.Row.IsRecordMode);
         Assert.False(_recorder.IsRecording);
-        Assert.Equal(source == CaptureKind.Window, bar.IsRecordWindow);
-        Assert.Equal(source == CaptureKind.FullScreen, bar.IsRecordFullScreen);
+        Assert.Equal(source == CaptureKind.Window, bar.Row.IsWindowPicked);
+        Assert.Equal(source == CaptureKind.FullScreen, bar.Row.IsFullScreenPicked);
     }
 
     [Fact]
@@ -123,12 +123,12 @@ public sealed class BarViewModelLastActionTests : IDisposable
     }
 
     [Fact]
-    public async Task AStartedRecordingIsSavedButOpeningItsMenuIsNot()
+    public async Task AStartedRecordingIsSavedButPickingItsModeAndTargetIsNot()
     {
         BarViewModel bar = Bar();
-        bar.SelectRecordSourceCommand.Execute(CaptureKind.FullScreen);
 
         await Done(bar.RunAsync(BarAction.Record));
+        bar.PickTargetCommand.Execute(CaptureKind.FullScreen);
         Assert.Equal(new LastAction(), Store().Load());
         await Done(bar.StartRecordingAsync());
 
@@ -139,7 +139,8 @@ public sealed class BarViewModelLastActionTests : IDisposable
     public async Task WhileRecordingTheHotkeyOnlyShowsTheBar()
     {
         BarViewModel bar = Bar();
-        bar.SelectRecordSourceCommand.Execute(CaptureKind.FullScreen);
+        await Done(bar.RunAsync(BarAction.Record));
+        bar.PickTargetCommand.Execute(CaptureKind.FullScreen);
         await Done(bar.StartRecordingAsync());
         int shows = 0;
         bar.ShowRequested += (_, _) => shows++;
@@ -148,7 +149,7 @@ public sealed class BarViewModelLastActionTests : IDisposable
 
         Assert.Equal(1, shows);
         Assert.True(_recorder.IsRecording);
-        Assert.False(bar.IsRecordMenuOpen);
+        Assert.False(bar.Row.ShowsRecordControls);
         Assert.Empty(_screen.Calls);
     }
 
@@ -200,9 +201,9 @@ public sealed class BarViewModelLastActionTests : IDisposable
     }
 
     [Theory]
-    [InlineData(BarAction.Screenshot, BarMenu.Screenshot)]
-    [InlineData(BarAction.Record, BarMenu.Record)]
-    public async Task OpeningAMenuCancelsTheOpenPicker(BarAction button, BarMenu menu)
+    [InlineData(BarAction.Screenshot, BarMode.Screenshot)]
+    [InlineData(BarAction.Record, BarMode.Record)]
+    public async Task PickingAModeCancelsTheOpenPicker(BarAction button, BarMode mode)
     {
         BarViewModel bar = Bar();
         Task open = bar.RunAsync(BarAction.Show);
@@ -211,9 +212,25 @@ public sealed class BarViewModelLastActionTests : IDisposable
         await Done(bar.RunAsync(button));
         await Done(open);
 
-        Assert.Equal(menu, bar.Menu);
+        Assert.Equal(mode, bar.Row.Mode);
         Assert.Null(bar.Choice);
         Assert.Equal(new LastAction(), Store().Load());
+    }
+
+    [Fact]
+    public async Task EscapeOnTheBarCancelsAnOpenPickerAndKeepsTheBar()
+    {
+        BarViewModel bar = Bar();
+        int closes = 0;
+        bar.CloseRequested += (_, _) => closes++;
+        Task open = bar.RunAsync(BarAction.Show);
+        await _overlay.WaitUntilOpenAsync();
+
+        bar.Escape();
+        await Done(open);
+
+        Assert.Equal(0, closes);
+        Assert.Null(bar.Choice);
     }
 
     [Fact]

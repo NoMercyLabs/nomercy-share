@@ -230,7 +230,7 @@ public sealed class BarViewModelRecentTests : IDisposable
 
         await bar.RunAsync(BarAction.Screenshot);
 
-        Assert.True(bar.IsScreenshotMenuOpen);
+        Assert.True(bar.Row.IsScreenshotMode);
         host.DeleteWaits.SetResult();
         await delete;
     }

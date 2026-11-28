@@ -222,6 +222,20 @@ public sealed class BarViewModel : ObservableObject
 
     public void CloseMenu() => Menu = BarMenu.None;
 
+    public BarRow Row { get; } = new();
+
+    public ICommand PickTargetCommand => SelectRecordSourceCommand;
+
+    public Task PickTargetAsync(CaptureKind target) => Task.FromResult(target);
+
+    public void ReturnToLastMode()
+    {
+    }
+
+    public void Escape()
+    {
+    }
+
     /// <summary>The Start button of the record menu. Never throws: a failure becomes a notice.</summary>
     public Task StartRecordingAsync(CancellationToken cancellationToken = default) =>
         GuardAsync(BarAction.Record, () => BeginRecordingAsync(cancellationToken));
