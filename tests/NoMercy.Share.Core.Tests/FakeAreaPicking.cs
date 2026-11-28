@@ -20,7 +20,14 @@ internal sealed class FakeRegionSelector : IRegionSelector
         return await open.Task;
     }
 
-    public async Task WaitUntilOpenAsync() => Assert.True(await _opened.WaitAsync(TimeSpan.FromSeconds(10)), "no picker opened");
+    // No test library here: the screenshot tool compiles this file too.
+    public async Task WaitUntilOpenAsync()
+    {
+        if (!await _opened.WaitAsync(TimeSpan.FromSeconds(10)))
+        {
+            throw new TimeoutException("no picker opened");
+        }
+    }
 
     public void Choose() => _open!.TrySetResult(new ScreenRect(0, 0, 10, 10));
 
