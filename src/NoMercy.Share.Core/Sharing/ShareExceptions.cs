@@ -1,6 +1,6 @@
 namespace NoMercy.Share.Core.Sharing;
 
-/// <summary>An upload that did not happen. The message is the reason for the user and never holds a secret.</summary>
+/// <summary>An upload or a delete that the host did not do. The message is the reason for the user and never holds a secret.</summary>
 public class ShareUploadException : Exception
 {
     public ShareUploadException(string message)

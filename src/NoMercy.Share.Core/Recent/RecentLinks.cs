@@ -47,7 +47,10 @@ public sealed class RecentLinks(string path, RecentSettings settings, Func<DateT
     /// <summary>Takes one link off the list. Throws when the file cannot be written; the old file stays whole.</summary>
     public void Remove(RecentLink link)
     {
-        _ = link;
+        lock (_gate)
+        {
+            Write([.. Current().Where(entry => entry.Url != link.Url)]);
+        }
     }
 
     /// <summary>Records an upload that just succeeded. A list that cannot be written never fails the share.</summary>
@@ -57,7 +60,7 @@ public sealed class RecentLinks(string path, RecentSettings settings, Func<DateT
         string? file = File.Exists(capture.FilePath) ? capture.FilePath : null;
         try
         {
-            Add(new RecentLink(link.Url.AbsoluteUri, kind, capture.ContentType, capture.SizeBytes, _clock(), link.ExpiresAt, file));
+            Add(new RecentLink(link.Url.AbsoluteUri, kind, capture.ContentType, capture.SizeBytes, _clock(), link.ExpiresAt, file, link.HostId));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {

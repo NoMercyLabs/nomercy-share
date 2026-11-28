@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<ICaptureHost>(),
             sp.GetRequiredService<CaptureSettings>()));
         services.TryAddSingleton<IFolderAccess, NoFolderAccess>();
+        services.AddSingleton(sp => new ShareDeletion(() => sp.GetServices<IShareUploader>()));
         services.AddSingleton<BarViewModel>();
         services.AddSingleton<HotkeyBinder>();
         return services;

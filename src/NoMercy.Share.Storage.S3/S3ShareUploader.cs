@@ -51,12 +51,48 @@ public sealed class S3ShareUploader(
         string contentType = ContentTypes.For(Path.GetExtension(plan.Key));
         string? expiresAt = plan.ExpiresAt is { } at ? Utc(at) : null;
 
-        try
+        await WithClientAsync(credential, async client =>
         {
-            using AmazonS3Client client = CreateClient(credential);
             await PutPictureAsync(client, plan.Key, filePath, contentType, expiresAt, cancellationToken);
             ShareSidecar sidecar = new(plan.Key, Utc(now), expiresAt, contentType, new FileInfo(filePath).Length);
             await PutSidecarAsync(client, plan.SidecarKey, sidecar, cancellationToken);
+        });
+
+        return new ShareLink(settings.LinkFor(plan.Key), plan.ExpiresAt);
+    }
+
+    public bool CanDelete(RecentLink link) => KeyOf(link) is not null;
+
+    public async Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default)
+    {
+        settings.Validate();
+        string key = KeyOf(link) ?? throw new ArgumentException("The link is not an upload of this storage.", nameof(link));
+        await WithClientAsync(ReadCredential(), async client =>
+        {
+            await client.DeleteObjectAsync(settings.Bucket, key, cancellationToken);
+            await client.DeleteObjectAsync(settings.Bucket, key + settings.SidecarSuffix, cancellationToken);
+        });
+    }
+
+    /// <summary>The object key of a link under the public address; null for any other link. A link with a host id is another kind of host's.</summary>
+    private string? KeyOf(RecentLink link)
+    {
+        if (link.HostId is not null || !Uri.TryCreate(settings.PublicBaseUrl.TrimEnd('/') + "/", UriKind.Absolute, out Uri? root))
+        {
+            return null;
+        }
+
+        return link.Url.Length > root.AbsoluteUri.Length && link.Url.StartsWith(root.AbsoluteUri, StringComparison.Ordinal)
+            ? Uri.UnescapeDataString(link.Url[root.AbsoluteUri.Length..])
+            : null;
+    }
+
+    private async Task WithClientAsync(StoredCredential credential, Func<AmazonS3Client, Task> requests)
+    {
+        try
+        {
+            using AmazonS3Client client = CreateClient(credential);
+            await requests(client);
         }
         catch (AmazonServiceException error)
         {
@@ -66,13 +102,7 @@ public sealed class S3ShareUploader(
         {
             throw new ShareUploadException(Strings.Get("error.upload.network"), error);
         }
-
-        return new ShareLink(settings.LinkFor(plan.Key), plan.ExpiresAt);
     }
-
-    public bool CanDelete(RecentLink link) => false;
-
-    public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
     private static string Utc(DateTimeOffset time) => time.UtcDateTime.ToString(TimestampFormat, CultureInfo.InvariantCulture);
 

@@ -8,15 +8,13 @@ namespace NoMercy.Share.Core.Sharing;
 /// </summary>
 public sealed class ShareDeletion(Func<IEnumerable<IShareUploader>> uploaders)
 {
-    public bool CanDeleteFromHost(RecentLink link)
-    {
-        _ = (uploaders, link);
-        return false;
-    }
+    public bool CanDeleteFromHost(RecentLink link) => Owner(link) is not null;
 
-    public Task DeleteFromHostAsync(RecentLink link, CancellationToken cancellationToken = default)
-    {
-        _ = (link, cancellationToken);
-        return Task.CompletedTask;
-    }
+    /// <summary>Deletes a link <see cref="CanDeleteFromHost"/> answered true for. Throws <see cref="ShareUploadException"/> when the host did not delete it.</summary>
+    public Task DeleteFromHostAsync(RecentLink link, CancellationToken cancellationToken = default) =>
+        Owner(link) is { } owner
+            ? owner.DeleteAsync(link, cancellationToken)
+            : throw new InvalidOperationException("No provider can delete this link.");
+
+    private IShareUploader? Owner(RecentLink link) => uploaders().FirstOrDefault(uploader => uploader.CanDelete(link));
 }

@@ -11,7 +11,7 @@ using NoMercy.Share.Core.Sharing;
 
 namespace NoMercy.Share.Storage.Discord;
 
-/// <summary>Uploads the file itself to a Discord channel through its webhook; the link is the file's Discord address. The webhook address is read from the credential store for each upload and is never logged or put in a message.</summary>
+/// <summary>Uploads the file itself to a Discord channel through its webhook; the link is the file's Discord address. The webhook address is read from the credential store for each upload or delete and is never logged or put in a message.</summary>
 public sealed class DiscordShareUploader(
     HttpClient http, ShareSettings settings, ICredentialStore credentials, Func<TimeSpan, CancellationToken, Task>? wait = null) : IShareUploader
 {
@@ -48,48 +48,72 @@ public sealed class DiscordShareUploader(
             throw TooBig(size);
         }
 
-        if (!DiscordWebhookAddress.TryParse(credentials.Read(discord.CredentialName)?.SecretAccessKey, out Uri? webhook))
-        {
-            throw new ShareUploadException(Strings.Get("error.discord.address"));
-        }
-
-        Uri address = new($"{webhook.AbsoluteUri}?wait=true");
-        TimeSpan timeout = TimeSpan.FromSeconds(discord.TimeoutSeconds);
+        Uri address = new($"{ReadWebhook().AbsoluteUri}?wait=true");
         string name = RandomName(filePath);
-        HttpResponseMessage response = await PostAsync(address, filePath, name, timeout, cancellationToken);
-        if ((int)response.StatusCode == RateLimited)
+        using HttpResponseMessage response = await SendWithRetryAsync(
+            () => PostAsync(address, filePath, name, cancellationToken), cancellationToken);
+        if ((int)response.StatusCode == TooLarge)
         {
-            TimeSpan retryAfter = await RetryAfterAsync(response, cancellationToken);
-            if (retryAfter > timeout)
-            {
-                response.Dispose();
-                throw Refused(response.StatusCode);
-            }
-
-            response.Dispose();
-            await _wait(retryAfter, cancellationToken);
-            response = await PostAsync(address, filePath, name, timeout, cancellationToken);
+            throw TooBig(size);
         }
 
-        using (response)
+        if (!response.IsSuccessStatusCode)
         {
-            if ((int)response.StatusCode == TooLarge)
-            {
-                throw TooBig(size);
-            }
+            throw Refused(response.StatusCode);
+        }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw Refused(response.StatusCode);
-            }
+        return await ReadLinkAsync(response, cancellationToken);
+    }
 
-            return await ReadLinkAsync(response, cancellationToken);
+    public bool CanDelete(RecentLink link) => link.HostId is not null;
+
+    /// <summary>Deletes the webhook message that holds the file. Any refusal throws, because a 404 can also mean the webhook changed.</summary>
+    public async Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default)
+    {
+        string messageId = link.HostId ?? throw new ArgumentException("The link has no Discord message id.", nameof(link));
+        Uri address = new($"{ReadWebhook().AbsoluteUri}/messages/{Uri.EscapeDataString(messageId)}");
+        using HttpResponseMessage response = await SendWithRetryAsync(
+            async () =>
+            {
+                using HttpRequestMessage request = new(HttpMethod.Delete, address);
+                return await SendAsync(request, cancellationToken);
+            },
+            cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw Refused(response.StatusCode);
         }
     }
 
-    public bool CanDelete(RecentLink link) => false;
+    private TimeSpan RequestTimeout => TimeSpan.FromSeconds(settings.Discord.TimeoutSeconds);
 
-    public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    private Uri ReadWebhook() =>
+        DiscordWebhookAddress.TryParse(credentials.Read(settings.Discord.CredentialName)?.SecretAccessKey, out Uri? webhook)
+            ? webhook
+            : throw new ShareUploadException(Strings.Get("error.discord.address"));
+
+    /// <summary>Sends once; after a rate limit it waits the time Discord names (at most the timeout) and sends once more.</summary>
+    private async Task<HttpResponseMessage> SendWithRetryAsync(Func<Task<HttpResponseMessage>> send, CancellationToken cancellationToken)
+    {
+        HttpResponseMessage response = await send();
+        if ((int)response.StatusCode != RateLimited)
+        {
+            return response;
+        }
+
+        TimeSpan retryAfter;
+        using (response)
+        {
+            retryAfter = await RetryAfterAsync(response, cancellationToken);
+            if (retryAfter > RequestTimeout)
+            {
+                throw Refused(response.StatusCode);
+            }
+        }
+
+        await _wait(retryAfter, cancellationToken);
+        return await send();
+    }
 
     private ShareUploadException TooBig(long size) => new(Strings.Get(
         "error.discord.size", MegabyteText.FromBytes(size), MegabyteText.FromMegabytes(settings.Discord.MaxUploadMegabytes)));
@@ -104,16 +128,21 @@ public sealed class DiscordShareUploader(
     private static string PayloadJson(string name) =>
         JsonSerializer.Serialize(new { attachments = new[] { new { id = 0, filename = name } } });
 
-    private async Task<HttpResponseMessage> PostAsync(Uri address, string filePath, string name, TimeSpan timeout, CancellationToken cancellationToken)
+    private async Task<HttpResponseMessage> PostAsync(Uri address, string filePath, string name, CancellationToken cancellationToken)
     {
-        using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        limit.CancelAfter(timeout);
         await using FileStream file = File.OpenRead(filePath);
         using StreamContent picture = new(file);
         picture.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         using StringContent payload = new(PayloadJson(name), System.Text.Encoding.UTF8, "application/json");
         using MultipartFormDataContent form = new() { { picture, "files[0]", name }, { payload, "payload_json" } };
         using HttpRequestMessage request = new(HttpMethod.Post, address) { Content = form };
+        return await SendAsync(request, cancellationToken);
+    }
+
+    private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(RequestTimeout);
         try
         {
             return await http.SendAsync(request, HttpCompletionOption.ResponseContentRead, limit.Token);
@@ -160,7 +189,10 @@ public sealed class DiscordShareUploader(
                 && Uri.TryCreate(url.GetString(), UriKind.Absolute, out Uri? link)
                 && link.Scheme == Uri.UriSchemeHttps)
             {
-                return new ShareLink(link, DiscordLinkExpiry.From(link));
+                string? messageId = message.RootElement.TryGetProperty("id", out JsonElement id) && id.ValueKind == JsonValueKind.String
+                    ? id.GetString()
+                    : null;
+                return new ShareLink(link, DiscordLinkExpiry.From(link), messageId);
             }
         }
         catch (JsonException)

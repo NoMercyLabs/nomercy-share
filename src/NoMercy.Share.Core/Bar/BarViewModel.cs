@@ -18,6 +18,7 @@ public sealed class BarViewModel : ObservableObject
     private readonly IWebCaptureDialog? _webDialog;
     private readonly Func<DateTimeOffset> _clock;
     private readonly RecentLinks? _recent;
+    private readonly ShareDeletion? _deletion;
     private readonly IUrlOpener? _opener;
     private readonly IClipboard? _clipboard;
     private readonly SynchronizationContext? _context;
@@ -54,7 +55,7 @@ public sealed class BarViewModel : ObservableObject
         RecordingSoundStore? sound = null,
         ShareDeletion? deletion = null)
     {
-        DeleteRecentCommand = new BarCommand(_ => _ = deletion);
+        _deletion = deletion;
         _sound = sound;
         if (sound is not null)
         {
@@ -125,6 +126,13 @@ public sealed class BarViewModel : ObservableObject
             if (parameter is RecentRow row)
             {
                 OpenRecent(row);
+            }
+        });
+        DeleteRecentCommand = new BarCommand(parameter =>
+        {
+            if (parameter is RecentRow row)
+            {
+                AskToDelete(row.Link);
             }
         });
         AskYesCommand = new BarCommand(_ => _ = Ask?.Yes());
@@ -559,6 +567,48 @@ public sealed class BarViewModel : ObservableObject
         {
             Trace.TraceError("Opening a recent link failed: {0}", error);
             Notice = Strings.Get("notice.failed");
+        }
+    }
+
+    private void AskToDelete(RecentLink link)
+    {
+        if (_recent is not { } recent)
+        {
+            return;
+        }
+
+        CloseRecent();
+        ShareDeletion? host = _deletion?.CanDeleteFromHost(link) == true ? _deletion : null;
+        Ask = new BarAsk(
+            Strings.Get(host is null ? "ask.delete.list" : "ask.delete.host"),
+            Strings.Get("ask.delete"),
+            () => DeleteRecentAsync(recent, host, link),
+            () => Ask = null,
+            Strings.Get("ask.cancel"));
+    }
+
+    /// <summary>The link leaves the list only after the host, when there is one to ask, has deleted the upload.</summary>
+    private async Task DeleteRecentAsync(RecentLinks recent, ShareDeletion? host, RecentLink link)
+    {
+        Ask = null;
+        try
+        {
+            if (host is not null)
+            {
+                await host.DeleteFromHostAsync(link);
+            }
+
+            recent.Remove(link);
+            Notice = Strings.Get(host is null ? "notice.removed" : "notice.deleted");
+        }
+        catch (ShareUploadException error)
+        {
+            Notice = Strings.Get("notice.delete.refused", error.Message);
+        }
+        catch (Exception error)
+        {
+            Trace.TraceError("Deleting a recent link failed: {0}", error);
+            Notice = Strings.Get("notice.delete.failed");
         }
     }
 

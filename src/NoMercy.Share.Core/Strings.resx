@@ -123,6 +123,14 @@
   <data name="ask.folder" xml:space="preserve"><value>Windows blocks NoMercy Share from saving in {0}. Allow the app?</value></data>
   <data name="ask.allow" xml:space="preserve"><value>Allow</value></data>
   <data name="ask.notnow" xml:space="preserve"><value>Not now</value></data>
+  <data name="ask.delete.host" xml:space="preserve"><value>Delete this upload from the host? A browser can show its cached copy for up to one hour, and Discord can keep its preview.</value></data>
+  <data name="ask.delete.list" xml:space="preserve"><value>The app cannot delete this upload from the host (older Discord uploads, for example). Remove it from the list? The upload stays online.</value></data>
+  <data name="ask.delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="ask.cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="notice.deleted" xml:space="preserve"><value>Link deleted</value></data>
+  <data name="notice.removed" xml:space="preserve"><value>Removed from the list</value></data>
+  <data name="notice.delete.refused" xml:space="preserve"><value>Not deleted: {0}. The link stays in the list.</value></data>
+  <data name="notice.delete.failed" xml:space="preserve"><value>That did not work. The link stays in the list.</value></data>
   <data name="choice.picture" xml:space="preserve"><value>Screenshot saved</value></data>
   <data name="choice.video" xml:space="preserve"><value>Recording saved</value></data>
   <data name="choice.copyimage" xml:space="preserve"><value>Copy image</value></data>
