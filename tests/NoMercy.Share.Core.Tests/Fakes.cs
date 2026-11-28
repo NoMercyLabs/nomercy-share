@@ -144,17 +144,24 @@ internal sealed class FakeUploader(string name = "r2") : IShareUploader
 
     public List<RecentLink> Deleted { get; } = [];
 
+    /// <summary>When set, a delete stays running until the test completes it.</summary>
+    public TaskCompletionSource? DeleteWaits { get; set; }
+
     public bool CanDelete(RecentLink link) => Deletes;
 
-    public Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(RecentLink link, CancellationToken cancellationToken = default)
     {
+        if (DeleteWaits is not null)
+        {
+            await DeleteWaits.Task;
+        }
+
         if (DeleteThrows is not null)
         {
-            return Task.FromException(DeleteThrows);
+            throw DeleteThrows;
         }
 
         Deleted.Add(link);
-        return Task.CompletedTask;
     }
 }
 

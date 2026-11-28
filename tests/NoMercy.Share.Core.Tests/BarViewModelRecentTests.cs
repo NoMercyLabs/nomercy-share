@@ -36,36 +36,44 @@ public sealed class BarViewModelRecentTests : IDisposable
     {
         BarViewModel bar = Bar(host: host);
         await bar.RunAsync(BarAction.Recent);
-        bar.DeleteRecentCommand.Execute(bar.RecentRows[0]);
+        bar.Recent.AskToDelete(bar.Recent.Rows[0]);
         return bar;
     }
 
+    private async Task<BarViewModel> AskWithTwoLinks(FakeUploader host)
+    {
+        AddLink("a");
+        AddLink("b");
+        return await AskToDeleteTheNewest(host);
+    }
+
     [Fact]
-    public async Task DeleteAsksFirstAndDeletesNothingYet()
+    public async Task DeleteAsksInTheRowAndDeletesNothingYet()
     {
         AddLink("a");
         FakeUploader host = new() { Deletes = true };
 
         BarViewModel bar = await AskToDeleteTheNewest(host);
 
-        Assert.False(bar.IsRecentOpen);
-        Assert.NotNull(bar.Ask);
-        Assert.Equal("Delete", bar.Ask.YesLabel);
-        Assert.Equal("Cancel", bar.Ask.NoLabel);
+        RecentRowState state = bar.Recent.Rows[0].State;
+        Assert.True(bar.IsRecentOpen);
+        Assert.Null(bar.Ask);
+        Assert.Equal(RecentRowStep.Asking, state.Step);
+        Assert.Equal("Delete from the host?", state.Title);
+        Assert.Equal("Cached copies can stay up to an hour.", state.Detail);
+        Assert.Equal("Delete", state.ConfirmLabel);
         Assert.Empty(host.Deleted);
         Assert.Single(_store.Load());
     }
 
     [Fact]
-    public async Task TheConfirmTextNamesTheBrowserCacheAndTheDiscordPreview()
+    public async Task AskingOnAnotherRowReturnsTheFirstToNormal()
     {
-        AddLink("a");
+        BarViewModel bar = await AskWithTwoLinks(new FakeUploader { Deletes = true });
 
-        BarViewModel bar = await AskToDeleteTheNewest(new FakeUploader { Deletes = true });
+        bar.Recent.AskToDelete(bar.Recent.Rows[1]);
 
-        Assert.Contains("one hour", bar.Ask?.Text);
-        Assert.Contains("Discord", bar.Ask?.Text);
-        Assert.Contains("preview", bar.Ask?.Text);
+        Assert.Equal([RecentRowStep.Normal, RecentRowStep.Asking], bar.Recent.Rows.Select(row => row.State.Step));
     }
 
     [Fact]
@@ -75,55 +83,156 @@ public sealed class BarViewModelRecentTests : IDisposable
         FakeUploader host = new() { Deletes = true };
         BarViewModel bar = await AskToDeleteTheNewest(host);
 
-        bar.AskNoCommand.Execute(null);
+        Assert.True(bar.Recent.ResetQuestions());
 
-        Assert.Null(bar.Ask);
+        Assert.Equal(RecentRowStep.Normal, bar.Recent.Rows[0].State.Step);
+        Assert.False(bar.Recent.ResetQuestions());
         Assert.Empty(host.Deleted);
         Assert.Single(_store.Load());
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ClosingTheListReturnsTheQuestionToNormal(bool lightDismiss)
+    {
+        AddLink("a");
+        BarViewModel bar = await AskToDeleteTheNewest(new FakeUploader { Deletes = true });
+
+        if (lightDismiss)
+        {
+            bar.IsRecentOpen = false;
+        }
+        else
+        {
+            bar.CloseRecent();
+        }
+
+        await bar.RunAsync(BarAction.Recent);
+
+        Assert.Equal(RecentRowStep.Normal, bar.Recent.Rows[0].State.Step);
+    }
+
     [Fact]
-    public async Task YesDeletesFromTheHostAndTakesTheLinkOffTheListButKeepsTheFile()
+    public async Task DeletingOffersNoAnswerAndDeletesOnlyOnce()
+    {
+        AddLink("a");
+        FakeUploader host = new() { Deletes = true, DeleteWaits = new TaskCompletionSource() };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+        RecentRow row = bar.Recent.Rows[0];
+
+        Task first = bar.Recent.DeleteAsync(row);
+        Task second = bar.Recent.DeleteAsync(row);
+        bar.Recent.AskToDelete(row);
+
+        Assert.Equal(RecentRowStep.Deleting, row.State.Step);
+        Assert.Equal("Deleting...", row.State.Title);
+        Assert.False(row.State.OffersAnswer);
+        host.DeleteWaits.SetResult();
+        await Task.WhenAll(first, second);
+        Assert.Single(host.Deleted);
+    }
+
+    [Fact]
+    public async Task ADeletedRowLeavesAloneAndTheListStaysOpen()
     {
         string file = Path.Combine(_folder, "shot.png");
         File.WriteAllText(file, "made-up-picture-bytes");
         _store.Add(new RecentLink("https://share.example.test/exp-30d/a.png", RecentKind.Image, "image/png", 10, Now, null, file));
         FakeUploader host = new() { Deletes = true };
         BarViewModel bar = await AskToDeleteTheNewest(host);
+        List<string?> changed = [];
+        bar.Recent.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
-        await bar.Ask!.Yes();
+        await bar.Recent.DeleteAsync(bar.Recent.Rows[0]);
 
         Assert.Equal("https://share.example.test/exp-30d/a.png", Assert.Single(host.Deleted).Url);
         Assert.Empty(_store.Load());
         Assert.True(File.Exists(file));
-        Assert.Null(bar.Ask);
-        Assert.Equal("Link deleted", bar.Notice);
+        Assert.True(bar.IsRecentOpen);
+        Assert.True(bar.Recent.IsEmpty);
+        Assert.Contains(nameof(RecentList.IsEmpty), changed);
+        Assert.Null(bar.Notice);
     }
 
     [Fact]
-    public async Task ARefusedDeleteKeepsTheLinkAndSaysWhy()
+    public async Task TheOtherRowsStayTheSameObjectsAfterADelete()
+    {
+        BarViewModel bar = await AskWithTwoLinks(new FakeUploader { Deletes = true });
+        RecentRow other = bar.Recent.Rows[1];
+
+        await bar.Recent.DeleteAsync(bar.Recent.Rows[0]);
+
+        Assert.Same(other, Assert.Single(bar.Recent.Rows));
+    }
+
+    [Fact]
+    public async Task ARefusedDeleteKeepsTheLinkAndSaysWhyInTheRow()
     {
         AddLink("a");
-        BarViewModel bar = await AskToDeleteTheNewest(
-            new FakeUploader { Deletes = true, DeleteThrows = new ShareUploadException("the host said no") });
+        FakeUploader host = new() { Deletes = true, DeleteThrows = new ShareUploadException("the host said no") };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+        RecentRow row = bar.Recent.Rows[0];
 
-        await bar.Ask!.Yes();
+        await bar.Recent.DeleteAsync(row);
 
         Assert.Single(_store.Load());
-        Assert.Equal("Not deleted: the host said no. The link stays in the list.", bar.Notice);
+        Assert.Equal(RecentRowStep.Failed, row.State.Step);
+        Assert.Equal("Not deleted", row.State.Title);
+        Assert.Equal("the host said no", row.State.Detail);
+        Assert.Equal("Try again", row.State.ConfirmLabel);
+        Assert.Null(bar.Notice);
+        host.DeleteThrows = null;
+        await bar.Recent.DeleteAsync(row);
+        Assert.Empty(_store.Load());
     }
 
     [Fact]
-    public async Task AnUnexpectedDeleteErrorKeepsTheLinkWithAPlainNotice()
+    public async Task AnUnexpectedDeleteErrorShowsPlainWords()
     {
         AddLink("a");
         BarViewModel bar = await AskToDeleteTheNewest(
             new FakeUploader { Deletes = true, DeleteThrows = new InvalidOperationException("internal detail") });
 
-        await bar.Ask!.Yes();
+        await bar.Recent.DeleteAsync(bar.Recent.Rows[0]);
 
+        Assert.Equal("Something went wrong. The link is kept.", bar.Recent.Rows[0].State.Detail);
         Assert.Single(_store.Load());
-        Assert.Equal("That did not work. The link stays in the list.", bar.Notice);
+    }
+
+    [Fact]
+    public async Task AFailureWhileTheListIsClosedShowsWhenItOpensAgain()
+    {
+        AddLink("a");
+        FakeUploader host = new() { Deletes = true, DeleteWaits = new TaskCompletionSource() };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+        Task delete = bar.Recent.DeleteAsync(bar.Recent.Rows[0]);
+
+        bar.CloseRecent();
+        await bar.RunAsync(BarAction.Recent);
+        Assert.Equal(RecentRowStep.Deleting, bar.Recent.Rows[0].State.Step);
+        bar.CloseRecent();
+        host.DeleteWaits.SetException(new ShareUploadException("the host said no"));
+        await delete;
+        await bar.RunAsync(BarAction.Recent);
+
+        Assert.Equal(RecentRowStep.Failed, bar.Recent.Rows[0].State.Step);
+        Assert.Equal("the host said no", bar.Recent.Rows[0].State.Detail);
+    }
+
+    [Fact]
+    public async Task ARunningDeleteDoesNotBlockTheBar()
+    {
+        AddLink("a");
+        FakeUploader host = new() { Deletes = true, DeleteWaits = new TaskCompletionSource() };
+        BarViewModel bar = await AskToDeleteTheNewest(host);
+        Task delete = bar.Recent.DeleteAsync(bar.Recent.Rows[0]);
+
+        await bar.RunAsync(BarAction.Screenshot);
+
+        Assert.True(bar.IsScreenshotMenuOpen);
+        host.DeleteWaits.SetResult();
+        await delete;
     }
 
     [Fact]
@@ -132,14 +241,15 @@ public sealed class BarViewModelRecentTests : IDisposable
         AddLink("a");
         FakeUploader host = new() { Deletes = false };
         BarViewModel bar = await AskToDeleteTheNewest(host);
+        RecentRowState state = bar.Recent.Rows[0].State;
 
-        Assert.Contains("older Discord uploads", bar.Ask?.Text);
-        Assert.Equal("Remove", bar.Ask?.YesLabel);
-        await bar.Ask!.Yes();
+        Assert.Equal("Only remove from the list?", state.Title);
+        Assert.Equal("The upload stays online.", state.Detail);
+        Assert.Equal("Remove", state.ConfirmLabel);
+        await bar.Recent.DeleteAsync(bar.Recent.Rows[0]);
 
         Assert.Empty(host.Deleted);
         Assert.Empty(_store.Load());
-        Assert.Equal("Removed from the list", bar.Notice);
     }
 
     private void AddLink(string id) =>
@@ -155,8 +265,8 @@ public sealed class BarViewModelRecentTests : IDisposable
         await bar.RunAsync(BarAction.Recent);
 
         Assert.True(bar.IsRecentOpen);
-        Assert.Equal(2, bar.RecentRows.Count);
-        Assert.False(bar.IsRecentEmpty);
+        Assert.Equal(2, bar.Recent.Rows.Count);
+        Assert.False(bar.Recent.IsEmpty);
         Assert.Null(bar.Notice);
     }
 
@@ -179,8 +289,8 @@ public sealed class BarViewModelRecentTests : IDisposable
         await bar.RunAsync(BarAction.Recent);
 
         Assert.True(bar.IsRecentOpen);
-        Assert.True(bar.IsRecentEmpty);
-        Assert.Empty(bar.RecentRows);
+        Assert.True(bar.Recent.IsEmpty);
+        Assert.Empty(bar.Recent.Rows);
     }
 
     [Fact]
@@ -193,7 +303,7 @@ public sealed class BarViewModelRecentTests : IDisposable
         AddLink("new");
         await bar.RunAsync(BarAction.Recent);
 
-        Assert.Single(bar.RecentRows);
+        Assert.Single(bar.Recent.Rows);
     }
 
     [Fact]
@@ -206,7 +316,6 @@ public sealed class BarViewModelRecentTests : IDisposable
         await bar.RunAsync(BarAction.Recent);
 
         Assert.Contains(nameof(BarViewModel.IsRecentOpen), changed);
-        Assert.Contains(nameof(BarViewModel.RecentRows), changed);
     }
 
     [Fact]
@@ -216,7 +325,7 @@ public sealed class BarViewModelRecentTests : IDisposable
         BarViewModel bar = Bar();
         await bar.RunAsync(BarAction.Recent);
 
-        bar.CopyRecentCommand.Execute(bar.RecentRows[0]);
+        bar.CopyRecentCommand.Execute(bar.Recent.Rows[0]);
 
         Assert.Equal(["https://share.example.test/exp-30d/a.png"], _clipboard.Texts);
         Assert.Equal("Link copied", bar.Notice);
@@ -230,7 +339,7 @@ public sealed class BarViewModelRecentTests : IDisposable
         BarViewModel bar = Bar();
         await bar.RunAsync(BarAction.Recent);
 
-        bar.OpenRecentCommand.Execute(bar.RecentRows[0]);
+        bar.OpenRecentCommand.Execute(bar.Recent.Rows[0]);
 
         Assert.Equal([new Uri("https://share.example.test/exp-30d/a.png")], _opener.Opened);
         Assert.False(bar.IsRecentOpen);
@@ -244,7 +353,7 @@ public sealed class BarViewModelRecentTests : IDisposable
         BarViewModel bar = Bar();
         await bar.RunAsync(BarAction.Recent);
 
-        bar.OpenRecentCommand.Execute(bar.RecentRows[0]);
+        bar.OpenRecentCommand.Execute(bar.Recent.Rows[0]);
 
         Assert.Equal("That did not work. Try again.", bar.Notice);
     }
@@ -257,7 +366,7 @@ public sealed class BarViewModelRecentTests : IDisposable
 
         await bar.RunAsync(BarAction.Recent);
 
-        Assert.True(bar.RecentRows[0].IsExpired);
+        Assert.True(bar.Recent.Rows[0].IsExpired);
     }
 
     [Fact]

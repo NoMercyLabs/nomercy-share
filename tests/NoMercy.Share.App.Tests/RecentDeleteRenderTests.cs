@@ -2,11 +2,11 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Recent;
@@ -25,7 +25,7 @@ public sealed class RecentDeleteRenderTests
     private static readonly DateTimeOffset Now = new(2026, 11, 27, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void EveryRecentRowOffersCopyOpenAndDelete() => HeadlessApp.Run(() => WithRecent(deletes: true, (_, panel, host) =>
+    public void EveryRecentRowOffersCopyOpenAndDelete() => HeadlessApp.Run(() => WithRecent(deletes: true, (_, panel, host, _) =>
     {
         Button[][] rows = [.. panel.GetVisualDescendants().OfType<ListBoxItem>()
             .Select(row => row.GetVisualDescendants().OfType<Button>().ToArray())];
@@ -44,35 +44,123 @@ public sealed class RecentDeleteRenderTests
     }));
 
     [Fact]
-    public void DeletingAnUploadTheHostCanRemoveAsksBeforeDeleting() => HeadlessApp.Run(() =>
-        AskFromTheFirstRow(deletes: true, "ask.delete.host", "Delete", "delete-confirm-online.png"));
+    public void NoRowMovesOrResizesWhileOneAsksDeletesAndFails() => HeadlessApp.Run(() => WithRecent(deletes: true, (_, panel, host, uploader) =>
+    {
+        uploader.DeleteWaits = new TaskCompletionSource();
+        Rect[] normal = Layout(panel);
+
+        Click(panel, row: 1, "Delete");
+        AssertRowShows(panel, 1, "inline-asking.png", host, ["Delete", "Cancel"], "Delete from the host?", "Cached copies can stay up to an hour.");
+        Assert.Equal(normal, Layout(panel));
+
+        Click(panel, row: 1, "Delete");
+        AssertRowShows(panel, 1, "inline-deleting.png", host, [], "Deleting...");
+        Assert.Equal(normal, Layout(panel));
+
+        uploader.DeleteWaits.SetException(new ShareUploadException("the host answered 403 Forbidden because this made-up key may not delete objects"));
+        Dispatcher.UIThread.RunJobs();
+        AssertRowShows(panel, 1, "inline-failed.png", host, ["Try again", "Cancel"], "Not deleted");
+        Assert.Equal(normal, Layout(panel));
+        TextBlock reason = VisibleTexts(Row(panel, 1)).Single(text => text.Text!.StartsWith("the host answered", StringComparison.Ordinal));
+        Assert.Equal(reason.Text, ToolTip.GetTip(reason));
+        Log(normal);
+
+        Click(panel, row: 1, "Cancel");
+        Assert.Equal(["Copy link", "Open in browser", "Delete"], VisibleButtons(Row(panel, 1)).Select(Name));
+        Assert.Equal(normal, Layout(panel));
+    }));
 
     [Fact]
-    public void DeletingAnUploadTheHostCannotRemoveAsksToRemoveItFromTheList() => HeadlessApp.Run(() =>
-        AskFromTheFirstRow(deletes: false, "ask.delete.list", "Remove", "delete-confirm-list-only.png"));
-
-    private static void AskFromTheFirstRow(bool deletes, string question, string yes, string picture) => WithRecent(deletes, (bar, panel, _) =>
+    public void AskingToRemoveAListEntryKeepsTheLayout() => HeadlessApp.Run(() => WithRecent(deletes: false, (_, panel, host, _) =>
     {
-        BarWindow window = new(bar, new BarPositionStore(new SettingsFile(Path.Combine(Path.GetTempPath(), $"share-delete-{Guid.NewGuid():N}", "position.json"))), new BarSettings());
-        window.Summon();
-        Button delete = panel.GetVisualDescendants().OfType<Button>().First(button => AutomationProperties.GetName(button) == "Delete");
+        Rect[] normal = Layout(panel);
 
-        delete.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Click(panel, row: 0, "Delete");
+
+        AssertRowShows(panel, 0, "inline-list-only.png", host, ["Remove", "Cancel"], "Only remove from the list?", "The upload stays online.");
+        Assert.Equal(normal, Layout(panel));
+    }));
+
+    [Fact]
+    public void TheQuestionFocusesCancelAndTabReachesBothAnswersAndEscapeTakesItBack() => HeadlessApp.Run(() => WithRecent(deletes: true, (bar, panel, host, _) =>
+    {
+        Click(panel, row: 0, "Delete");
+
+        Assert.Equal("Cancel", Name(Focused(host)));
+        Press(host, PhysicalKey.Tab, RawInputModifiers.Shift);
+        Assert.Equal("Delete", Name(Focused(host)));
+        Press(host, PhysicalKey.Tab, RawInputModifiers.None);
+        Assert.Equal("Cancel", Name(Focused(host)));
+        Save(host, "inline-focus.png");
+
+        Press(host, PhysicalKey.Escape, RawInputModifiers.None);
+
+        Assert.True(bar.IsRecentOpen);
+        Assert.Equal(["Copy link", "Open in browser", "Delete"], VisibleButtons(Row(panel, 0)).Select(Name));
+        Press(host, PhysicalKey.Escape, RawInputModifiers.None);
+        Assert.False(bar.IsRecentOpen);
+    }));
+
+    private static ListBoxItem Row(RecentPanel panel, int index) => panel.GetVisualDescendants().OfType<ListBoxItem>().ElementAt(index);
+
+    private static Button[] VisibleButtons(Control within) => [.. within.GetVisualDescendants().OfType<Button>().Where(button => button.IsEffectivelyVisible)];
+
+    private static TextBlock[] VisibleTexts(Control within) =>
+        [.. within.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible && !string.IsNullOrEmpty(text.Text))];
+
+    private static string? Name(Button button) => AutomationProperties.GetName(button) ?? button.Content as string;
+
+    private static Button Focused(Window window) => Assert.IsType<Button>(window.FocusManager.GetFocusedElement());
+
+    private static void Press(Window window, PhysicalKey key, RawInputModifiers modifiers)
+    {
+        window.KeyPressQwerty(key, modifiers);
         Dispatcher.UIThread.RunJobs();
+    }
 
-        Border ask = window.FindControl<Border>("AccessAsk")!;
-        Assert.True(ask.IsEffectivelyVisible);
-        Assert.Equal(Strings.Get(question), bar.Ask!.Text);
-        Button[] answers = [.. ask.GetVisualDescendants().OfType<Button>()];
-        Assert.Equal([yes, "Cancel"], answers.Select(button => button.Content));
-        Assert.All(answers, button => Assert.True(button.Bounds.Right <= ask.Bounds.Width && button.Bounds.Height >= MinimumRowButtonSize));
-        TextBlock text = ask.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == bar.Ask.Text);
-        Assert.True(text.Bounds.Height >= text.TextLayout.Height, "the question is cut off");
-        Save(window, picture);
-        window.Quit();
-    });
+    private static void Click(RecentPanel panel, int row, string button)
+    {
+        VisibleButtons(Row(panel, row)).Single(candidate => Name(candidate) == button).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
 
-    private static void WithRecent(bool deletes, Action<BarViewModel, RecentPanel, Window> test)
+    /// <summary>The panel's size, then every row's place and size inside it.</summary>
+    private static Rect[] Layout(RecentPanel panel) =>
+    [
+        new Rect(panel.Bounds.Size),
+        .. panel.GetVisualDescendants().OfType<ListBoxItem>().Select(row => new Rect(row.TranslatePoint(default, panel)!.Value, row.Bounds.Size))
+    ];
+
+    private static void AssertRowShows(RecentPanel panel, int index, string picture, Window host, string[] buttons, params string[] texts)
+    {
+        Save(host, picture);
+        ListBoxItem row = Row(panel, index);
+        Button[] shown = VisibleButtons(row);
+        Assert.Equal(buttons, shown.Select(Name));
+        Assert.All(shown, button =>
+        {
+            Assert.True(button.Bounds.Height >= MinimumRowButtonSize);
+            Assert.True(button.TranslatePoint(new Point(button.Bounds.Width, button.Bounds.Height), row)!.Value is var end && end.X <= row.Bounds.Width && end.Y <= row.Bounds.Height);
+        });
+        TextBlock[] visible = VisibleTexts(row);
+        foreach (string expected in texts)
+        {
+            TextBlock text = visible.Single(block => block.Text == expected);
+            Assert.False(text.TextLayout.TextLines.Any(line => line.HasCollapsed), $"{expected} is cut off");
+            Assert.True(text.Bounds.Height >= text.TextLayout.Height, $"{expected} is clipped");
+            Assert.True(text.TranslatePoint(new Point(0, text.Bounds.Height), row)!.Value.Y <= row.Bounds.Height, $"{expected} leaves the row");
+        }
+    }
+
+    private static void Log(Rect[] layout)
+    {
+        if (Environment.GetEnvironmentVariable(RenderFolderVariable) is { Length: > 0 } folder)
+        {
+            File.WriteAllLines(Path.Combine(folder, "inline-measurements.txt"), layout.Select(rect => rect.ToString()));
+        }
+    }
+
+    private static void WithRecent(bool deletes, Action<BarViewModel, RecentPanel, Window, FakeUploader> test)
     {
         string root = Path.Combine(Path.GetTempPath(), $"share-delete-render-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -97,7 +185,7 @@ public sealed class RecentDeleteRenderTests
             host.Show();
             Dispatcher.UIThread.RunJobs();
 
-            test(bar, panel, host);
+            test(bar, panel, host, uploader);
             host.Close();
         }
         finally
