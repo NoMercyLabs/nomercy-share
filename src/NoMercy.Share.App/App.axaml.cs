@@ -52,7 +52,7 @@ public sealed class App : Application
             ServiceProvider services = BuildServices(() => _window);
             ShareSettings settings = services.GetRequiredService<ShareSettings>();
             BarWindow window = new(services.GetRequiredService<BarViewModel>(), services.GetRequiredService<BarPositionStore>(), settings.Bar,
-                services.GetRequiredService<ICaptureExclusion>());
+                services.GetRequiredService<ICaptureExclusion>(), services.GetService<IPointerMonitor>());
             _window = window;
             // The bar is not the main window: hiding it keeps the app on, and only Quit ends it.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -130,6 +130,7 @@ public sealed class App : Application
             services.GetService<IEncoderProbe>());
         model.QuitRequested += (_, _) => Quit();
         _settingsWindow = new SettingsWindow(model);
+        PointerScreen.CenterOnOpen(_settingsWindow, services.GetService<IPointerMonitor>());
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
     }
@@ -157,7 +158,7 @@ public sealed class App : Application
                 : new AvaloniaRegionSelector(owner, sp.GetService<IForegroundGrant>() ?? new NoForegroundGrant())));
         services.AddSingleton<IRegionSelector>(sp => sp.GetRequiredService<AreaPicker>());
         services.AddSingleton<IWebCaptureDialog>(sp => new WebCaptureDialog(
-            sp.GetRequiredService<Core.IClipboard>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture));
+            sp.GetRequiredService<Core.IClipboard>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture, sp.GetService<IPointerMonitor>()));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));
         AddPlatform(services);
         services.AddS3Storage();

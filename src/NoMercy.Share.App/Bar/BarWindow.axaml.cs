@@ -37,6 +37,7 @@ public partial class BarWindow : Window
     {
         _called = true;
         Show();
+        MoveToPointerScreen();
     }
 
     /// <summary>The cross: the bar goes away and the app, with its hotkeys, stays on.</summary>
@@ -84,6 +85,7 @@ public partial class BarWindow : Window
         if (needed && !IsVisible)
         {
             Show();
+            MoveToPointerScreen();
         }
         else if (!needed && IsVisible)
         {
@@ -92,6 +94,7 @@ public partial class BarWindow : Window
     }
 
     private ICaptureExclusion? _exclusion;
+    private IPointerMonitor? _pointer;
 
     // Popups and tooltips are windows of their own, so each one is kept out of captures too.
     static BarWindow() => Control.LoadedEvent.AddClassHandler<PopupRoot>((popup, _) => ExcludePopup(popup));
@@ -129,9 +132,11 @@ public partial class BarWindow : Window
         };
     }
 
-    public BarWindow(BarViewModel viewModel, BarPositionStore store, BarSettings settings, ICaptureExclusion? exclusion = null) : this()
+    public BarWindow(
+        BarViewModel viewModel, BarPositionStore store, BarSettings settings, ICaptureExclusion? exclusion = null, IPointerMonitor? pointer = null) : this()
     {
         _exclusion = exclusion;
+        _pointer = pointer;
         Opened += (_, _) => KeepOutOfCaptures(this);
         DataContext = viewModel;
         _store = store;
@@ -149,7 +154,11 @@ public partial class BarWindow : Window
         };
         Closed += (_, _) => IsClosed = true;
         viewModel.PropertyChanged += OnViewModelChanged;
-        Opened += (_, _) => Place();
+        Opened += (_, _) =>
+        {
+            Place();
+            MoveToPointerScreen();
+        };
         PositionChanged += (_, _) =>
         {
             viewModel.CloseRecent();
@@ -172,6 +181,21 @@ public partial class BarWindow : Window
         }
 
         _placed = true;
+    }
+
+    /// <summary>Brings the bar to the screen the mouse is on, at the same place as on the screen it was on.</summary>
+    private void MoveToPointerScreen()
+    {
+        double width = Bounds.Width * RenderScaling;
+        double height = Bounds.Height * RenderScaling;
+        PixelPoint center = new(Position.X + (int)(width / 2), Position.Y + (int)(height / 2));
+        if (!_placed || PointerScreen.Of(Screens, _pointer) is not { } to || Screens.ScreenFromPoint(center) is not { } from || from.Bounds == to.Bounds)
+        {
+            return;
+        }
+
+        BarPosition moved = BarPlacement.MoveTo(new BarPosition(Position.X, Position.Y), width, height, ToArea(from), ToArea(to));
+        Position = new PixelPoint((int)Math.Round(moved.X), (int)Math.Round(moved.Y));
     }
 
     private BarPosition? TargetPosition()

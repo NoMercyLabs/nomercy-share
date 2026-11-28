@@ -24,6 +24,14 @@ public static class BarPlacement
         return new BarPosition(x, y);
     }
 
+    /// <summary>The same place on another screen: as far along the free space from the top left as it was before.</summary>
+    public static BarPosition MoveTo(BarPosition position, double width, double height, ScreenArea from, ScreenArea to) =>
+        new(
+            to.X + (Along(position.X - from.X, from.Width - width) * Math.Max(0, to.Width - width)),
+            to.Y + (Along(position.Y - from.Y, from.Height - height) * Math.Max(0, to.Height - height)));
+
+    private static double Along(double offset, double room) => room > 0 ? Math.Clamp(offset / room, 0, 1) : 0;
+
     /// <summary>The first-open position: centered at the top of the area, below the margin.</summary>
     public static BarPosition FirstOpen(ScreenArea area, double width, double topMargin) =>
         new(area.X + ((area.Width - width) / 2), area.Y + topMargin);
