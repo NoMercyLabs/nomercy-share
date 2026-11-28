@@ -22,7 +22,7 @@ public sealed class RecordingBorderRenderTests
     {
         FakeScreenRecorder recorder = new() { Area = new ScreenRect(100, 100, 400, 300) };
         Exclusion exclusion = new(works: true);
-        RecordingBorderPresenter presenter = new(recorder, () => [(Primary, 1.0)], exclusion);
+        RecordingBorderPresenter presenter = new(recorder, () => [(Primary, 1.0)], exclusion, new PassThrough());
 
         Start(recorder);
         RecordingBorderWindow window = Assert.IsType<RecordingBorderWindow>(presenter.Window);
@@ -46,11 +46,24 @@ public sealed class RecordingBorderRenderTests
         Assert.False(second.IsVisible);
     });
 
+    // Windows refuses the exclusion on a window that already has the layered style that lets clicks through.
+    [Fact]
+    public void TheWindowIsKeptOutOfCapturesBeforeClicksAreLetThroughIt() => HeadlessApp.Run(() =>
+    {
+        List<string> calls = [];
+        RecordingBorderWindow window = new(new ScreenRect(100, 100, 400, 300), Primary, 1.0, new Exclusion(works: true, calls), new PassThrough(calls));
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["exclude", "pass input through"], calls);
+        window.Close();
+    });
+
     [Fact]
     public void TheWindowFollowsTheScaleOfAMonitorLeftOfAndAboveTheMainOne() => HeadlessApp.Run(() =>
     {
         FakeScreenRecorder recorder = new() { Area = new ScreenRect(-2000, -1000, 600, 300) };
-        RecordingBorderPresenter presenter = new(recorder, () => [(Primary, 1.0), (LeftAndAbove, 1.5)], new Exclusion(works: true));
+        RecordingBorderPresenter presenter = new(recorder, () => [(Primary, 1.0), (LeftAndAbove, 1.5)], new Exclusion(works: true), new PassThrough());
 
         Start(recorder);
         RecordingBorderWindow window = presenter.Window!;
@@ -71,7 +84,7 @@ public sealed class RecordingBorderRenderTests
     [InlineData(false, false)]
     public void ASideInsideTheRectangleShowsOnlyWhenTheWindowIsKeptOutOfCaptures(bool excluded, bool shown) => HeadlessApp.Run(() =>
     {
-        RecordingBorderWindow window = new(new ScreenRect(0, 100, 400, 300), Primary, 1.0, new Exclusion(excluded));
+        RecordingBorderWindow window = new(new ScreenRect(0, 100, 400, 300), Primary, 1.0, new Exclusion(excluded), new PassThrough());
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
@@ -85,7 +98,7 @@ public sealed class RecordingBorderRenderTests
     [Fact]
     public void WithoutTheExclusionAFullScreenRecordingShowsNoSide() => HeadlessApp.Run(() =>
     {
-        RecordingBorderWindow window = new(Primary, Primary, 1.0, new NoCaptureExclusion());
+        RecordingBorderWindow window = new(Primary, Primary, 1.0, new NoCaptureExclusion(), new PassThrough());
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
@@ -98,7 +111,7 @@ public sealed class RecordingBorderRenderTests
     [InlineData("Light", "border-light.png")]
     public void TheBorderIsDrawnInTheAccentColorAroundAnEmptyMiddle(string theme, string picture) => HeadlessApp.Run(() =>
     {
-        RecordingBorderWindow window = new(new ScreenRect(100, 100, 320, 200), Primary, 1.0, new Exclusion(works: true))
+        RecordingBorderWindow window = new(new ScreenRect(100, 100, 320, 200), Primary, 1.0, new Exclusion(works: true), new PassThrough())
         {
             RequestedThemeVariant = theme == "Dark" ? ThemeVariant.Dark : ThemeVariant.Light,
         };
@@ -131,14 +144,24 @@ public sealed class RecordingBorderRenderTests
         return System.Runtime.InteropServices.Marshal.ReadByte(pixels.Address, (y * pixels.RowBytes) + (x * 4) + 3);
     }
 
-    private sealed class Exclusion(bool works) : ICaptureExclusion
+    private sealed class Exclusion(bool works, List<string>? calls = null) : ICaptureExclusion
     {
         public List<nint> Windows { get; } = [];
 
         public bool Exclude(nint window)
         {
             Windows.Add(window);
+            calls?.Add("exclude");
             return works;
+        }
+    }
+
+    private sealed class PassThrough(List<string>? calls = null) : IInputPassThrough
+    {
+        public bool Apply(nint window)
+        {
+            calls?.Add("pass input through");
+            return true;
         }
     }
 }
