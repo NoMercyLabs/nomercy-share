@@ -88,9 +88,9 @@ Click the globe button. A small window asks for three things:
 - **Mode**: **Full page**, **Visible area**, or **One element**, where you give a CSS selector such as `#header`.
 - **Width**: **Desktop** or **Phone**, which decides how the page lays itself out.
 
-Press Enter to capture or Esc to cancel.
+Click a choice to pick it, or use Tab and the arrow keys. Press Enter to capture. Press Esc or click the cross to cancel. Drag the window by its background.
 
-![The Capture a web page window: Address https://example.test/articles/made-up, Mode Full page, Width Desktop, with Cancel and Capture buttons.](docs/images/web-page-capture.png)
+![The Capture a web page window: a title with a cross, the address https://example.test/articles/made-up, a row of Mode choices with Full page picked, a row of Width choices with Desktop picked, and Cancel and Capture.](docs/images/web-page-capture.png)
 
 The page opens in a private, headless Edge (or Chrome) that is closed again afterwards. It has no cookies, so you see the page as a signed-out visitor, and only http and https addresses are opened.
 

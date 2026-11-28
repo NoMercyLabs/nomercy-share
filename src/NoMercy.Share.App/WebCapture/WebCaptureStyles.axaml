@@ -1,0 +1,57 @@
+<!-- A row of choice pills, as the bar's record menu draws Area / Window / Full screen: the picked one's icon takes the accent. -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:icons="using:NoMercy.Share.App.Icons" xmlns:capture="using:NoMercy.Share.Core.Capture">
+  <Style Selector="ListBox.choices">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}" />
+      </ItemsPanelTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem">
+    <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Height" Value="{DynamicResource Nm-Space-9}" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Full-Corner}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <!-- The screen reader's name of a pill is the label it shows. -->
+  <Style Selector="ListBox.mode > ListBoxItem" x:DataType="capture:WebModeChoice">
+    <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+  </Style>
+  <Style Selector="ListBox.width > ListBoxItem" x:DataType="capture:WebDeviceChoice">
+    <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+  </Style>
+  <!-- Every pill holds the ring's 2 px, so focus moves nothing. -->
+  <Style Selector="ListBox.choices > ListBoxItem /template/ ContentPresenter#PART_ContentPresenter, ListBox.choices > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.choices > ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter, ListBox.choices > ListBoxItem:selected:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem icons|MoooomIcon">
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem:pointerover icons|MoooomIcon, ListBox.choices > ListBoxItem:focus-visible icons|MoooomIcon">
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Primary-Brush}" />
+  </Style>
+  <Style Selector="ListBox.choices > ListBoxItem:selected icons|MoooomIcon">
+    <Setter Property="Stroke" Value="{DynamicResource Nm-Accent-Brush}" />
+  </Style>
+</Styles>

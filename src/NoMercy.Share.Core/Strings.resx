@@ -186,6 +186,7 @@
   <data name="web.selector" xml:space="preserve"><value>CSS selector</value></data>
   <data name="web.width" xml:space="preserve"><value>Width</value></data>
   <data name="web.capture" xml:space="preserve"><value>Capture</value></data>
+  <data name="web.close" xml:space="preserve"><value>Close</value></data>
   <data name="web.hint" xml:space="preserve"><value>Pages open signed out.</value></data>
   <data name="web.mode.full" xml:space="preserve"><value>Full page</value></data>
   <data name="web.mode.viewport" xml:space="preserve"><value>Visible area</value></data>

@@ -19,6 +19,27 @@ public partial class WebCaptureWindow : Window
         viewModel.CloseRequested += (_, _) => Close();
         Opened += (_, _) => AddressBox.Focus();
         Closed += (_, _) => viewModel.StopRunning();
+        Surface.PointerPressed += OnSurfacePressed;
+        AddHandler(KeyDownEvent, OnChoiceEnter, RoutingStrategies.Tunnel);
+    }
+
+    /// <summary>A choice row would take Enter for itself, so the window takes it first and captures.</summary>
+    private void OnChoiceEnter(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && e.Source is ListBoxItem)
+        {
+            e.Handled = true;
+            OnCaptureClick(sender, e);
+        }
+    }
+
+    /// <summary>The window has no OS frame, so its background moves it; a control keeps its own press.</summary>
+    private void OnSurfacePressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            BeginMoveDrag(e);
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

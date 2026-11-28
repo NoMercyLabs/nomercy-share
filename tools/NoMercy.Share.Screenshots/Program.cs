@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -108,8 +109,10 @@ public static class Program
         WebCaptureWindow shown = new(model);
         Control content = (Control)shown.Content!;
         shown.Content = null;
-        content.Width = shown.Width;
-        LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = content };
+        // The window's own styles come along, and the panel keeps the window's width with the shadow margin inside it.
+        Panel host = new() { Width = shown.Width, Children = { content } };
+        host.Styles.Add(new StyleInclude((Uri?)null) { Source = new Uri("avares://nomercy-share/WebCapture/WebCaptureStyles.axaml") });
+        LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = host };
         Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, SizeToContent = SizeToContent.WidthAndHeight, CanResize = false };
         window.Show();
         Dispatcher.UIThread.RunJobs();

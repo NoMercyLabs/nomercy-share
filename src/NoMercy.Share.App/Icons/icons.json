@@ -21,6 +21,8 @@
     "camera",
     "mic",
     "volumeThree",
-    "trash"
+    "trash",
+    "fileLines",
+    "mobilePhone"
   ]
 }
