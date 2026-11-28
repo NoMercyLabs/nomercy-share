@@ -46,6 +46,32 @@ public sealed class SettingsWindowRenderTests
         }
     });
 
+    [Theory]
+    [InlineData(SettingsSection.Sharing)]
+    [InlineData(SettingsSection.Links)]
+    [InlineData(SettingsSection.Hotkeys)]
+    [InlineData(SettingsSection.Recording)]
+    public void EveryPageFitsWithoutScrollingAndItsTitleSitsLevelWithTheCross(SettingsSection section) => HeadlessApp.Run(() =>
+    {
+        (SettingsWindow window, string root) = Open(section, width: null);
+        try
+        {
+            ScrollViewer page = window.FindControl<ScrollViewer>("Page")!;
+            Assert.True(page.Extent.Height <= page.Viewport.Height + 0.5, $"{section} needs {page.Extent.Height}, has {page.Viewport.Height}");
+
+            TextBlock title = Assert.Single(window.GetVisualDescendants().OfType<TextBlock>(), text => text.Classes.Contains("section") && text.IsEffectivelyVisible);
+            Button cross = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button => button.Classes.Contains("close"));
+            Assert.Equal(CentreY(cross, window), CentreY(title, window), tolerance: 1);
+        }
+        finally
+        {
+            window.Close();
+            Directory.Delete(root, recursive: true);
+        }
+    });
+
+    private static double CentreY(Control control, Window window) => control.TranslatePoint(new Point(0, control.Bounds.Height / 2), window)!.Value.Y;
+
     [Fact]
     public void ThePlantedTooSmallWindowIsReportedAsCutOff() => HeadlessApp.Run(() =>
     {
@@ -68,8 +94,6 @@ public sealed class SettingsWindowRenderTests
         Assert.True(shown.IsEffectivelyVisible);
         Assert.False(shown.IsChecked);
 
-        window.GetVisualDescendants().OfType<ScrollViewer>().First(viewer => viewer.Extent.Height > viewer.Viewport.Height).ScrollToEnd();
-        Dispatcher.UIThread.RunJobs();
         using Avalonia.Media.Imaging.WriteableBitmap? frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
         if (Environment.GetEnvironmentVariable(RenderFolderVariable) is { Length: > 0 } folder)

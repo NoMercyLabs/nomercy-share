@@ -3,7 +3,7 @@
         xmlns:settings="using:NoMercy.Share.Core.Settings"
         x:Class="NoMercy.Share.App.SettingsWindow" x:DataType="settings:SettingsViewModel" Classes="settings"
         Title="{local:Loc settings.title}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
-        CanResize="False" Width="768" Height="688" WindowStartupLocation="CenterScreen">
+        CanResize="False" Width="768" Height="720" WindowStartupLocation="CenterScreen">
   <!-- The bar's own surface, ring and shadow; the margin holds the shadow, as on the bar. No OS frame: the brand row drags, the cross and Escape cancel. -->
   <Border x:Name="Surface" Classes="surface">
   <Panel>
@@ -25,7 +25,7 @@
     <Grid ColumnDefinitions="200,*">
       <Border BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,0,1,0">
         <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}" Spacing="{DynamicResource Nm-Space-3}">
-          <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="{DynamicResource Nm-Space-3-Thickness}"
+          <Border x:Name="Handle" Classes="brand" Background="Transparent" Cursor="SizeAll" Padding="12,0"
                   ToolTip.Tip="{local:Loc bar.drag}" AutomationProperties.Name="{local:Loc bar.drag}">
             <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
               <local:NoMercyMark Width="20" Height="20" VerticalAlignment="Center" />
@@ -61,8 +61,9 @@
         </StackPanel>
       </Border>
 
-      <ScrollViewer Grid.Column="1">
-        <Grid Margin="{DynamicResource Nm-Space-6-Thickness}">
+      <ScrollViewer x:Name="Page" Grid.Column="1">
+        <!-- 12 above and below, as the rail has: the page title shares the top row with the brand and the cross. -->
+        <Grid Margin="24,12">
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsSharing}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.sharing}" />

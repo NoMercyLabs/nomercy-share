@@ -63,7 +63,7 @@
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="LineHeight" Value="{DynamicResource Nm-Space-9}" />
   </Style>
-  <!-- The brand row and the section title share one 36 line box and one top offset, so their text sits on one baseline. -->
+  <!-- The brand, the section title and the cross share one 36 line box 12 from the top, so all three are centred on the top row. -->
   <Style Selector="TextBlock.section">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xl}" />
