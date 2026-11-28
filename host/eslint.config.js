@@ -1,3 +1,4 @@
 import strict from '@nomercy-entertainment/strict-typescript';
 
-export default strict();
+// Generated only: the built player bundle and wrangler's temporary files.
+export default [{ ignores: ['public/_player/**', '.wrangler/**'] }, ...strict()];

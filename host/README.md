@@ -18,6 +18,34 @@ One GET handler (`src/router.ts`). HEAD works too; other methods answer 405.
 
 A missing or unreadable sidecar means the link does not expire.
 
+## Video player
+
+A video share plays in the NoMercy video player; the plain `<video controls>` stays when the player script does not load. Images, audio and other files have no script.
+
+The code is in `client/`. `npm run build:player` bundles it with the pinned npm packages into `public/_player/` (not committed); wrangler runs that before `dev` and `deploy` and serves the files from this host. The player version is the one in `package.json`.
+
+| Keys | Effect |
+| --- | --- |
+| Space, media play and pause keys | Play or pause |
+| Left, Right (with Shift, Alt or Ctrl for other steps), media rewind and forward | Seek |
+| `1` `3` `6` `9`, TV color buttons | Jump forward |
+| Up, Down, `m` | Volume, mute |
+| `f`, F11, Escape | Fullscreen |
+| `i` | Picture in picture |
+| `[` `]` `=` | Slower, faster, normal speed |
+
+## Embed a share
+
+Every video share that has not expired can be embedded, `keep/` links for good. An expired one answers 410 in the frame too.
+
+```html
+<iframe src="https://share.nomercy.tv/keep/<id>.mp4" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+```
+
+Only this host and the origins in `EMBED_ORIGINS` may frame a video share. They can send `{ type: 'nm:command', action: 'play' }` (also `pause`, `seek` with `time`, `volume` with `level`, `mute`, `unmute`) and receive `nm:event` messages. In a frame the page shows only the player.
+
+For local runs use `npx wrangler dev --local-upstream 127.0.0.1:8787`. Without it wrangler builds the file addresses from the live route.
+
 ## Settings
 
 | Setting | Default | What it does |
