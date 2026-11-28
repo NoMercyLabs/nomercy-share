@@ -14,6 +14,8 @@ export const styles = `
   --accent: #0BD8B6;
   --accent-hover: #0EB39E;
   --accent-fg: #0A0A0A;
+  /* The height the bar and the buttons need around the media. */
+  --page-chrome-height: 160px;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -45,7 +47,7 @@ body {
   justify-content: center;
   padding: 0 24px;
 }
-.media { display: block; max-width: 100%; max-height: calc(100dvh - 160px); object-fit: contain; border-radius: 8px; background: var(--surface); }
+.media { display: block; max-width: 100%; max-height: calc(100dvh - var(--page-chrome-height)); object-fit: contain; border-radius: 8px; background: var(--surface); }
 audio.media { width: min(100%, 480px); }
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 24px; }
 .button {

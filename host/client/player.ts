@@ -4,6 +4,7 @@ import { PLAYER_ELEMENT_ID } from '../src/playerElement.js';
 import { SHARE_BUTTONS } from './shareButtons.js';
 import { ShareEmbedPlugin } from './shareEmbedPlugin.js';
 import { ShareKeyHandlerPlugin } from './shareKeyHandlerPlugin.js';
+import { followVideoShape } from './videoShape.js';
 
 function startPlayer(mount: HTMLElement) {
   const source = mount.dataset['source'] ?? '';
@@ -20,6 +21,8 @@ function startPlayer(mount: HTMLElement) {
         url: source,
       }],
     });
+
+  followVideoShape(player, mount);
 
   player.on('ready', () => {
     // The hidden fallback video must not keep loading beside the player.
