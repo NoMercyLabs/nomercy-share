@@ -18,6 +18,9 @@ public sealed record BarSettings
 
     /// <summary>Start hidden at sign-in, so the hotkeys always work; starting the app again shows the bar.</summary>
     public bool StartAtSignIn { get; init; } = ShareDefaults.StartAtSignIn;
+
+    /// <summary>Shows the bar in screenshots and recordings. A window screenshot holds only that window.</summary>
+    public bool ShowInCaptures { get; init; } = ShareDefaults.ShowBarInCaptures;
 }
 
 /// <summary>Everything the user can set, as one file.</summary>

@@ -20,6 +20,7 @@ public sealed class SettingsWindowRenderTests
     private const string RenderFolderVariable = "SHARE_RENDER_DIR";
 
     [Theory]
+    [InlineData(SettingsSection.General)]
     [InlineData(SettingsSection.Sharing)]
     [InlineData(SettingsSection.Links)]
     [InlineData(SettingsSection.Hotkeys)]
@@ -47,6 +48,7 @@ public sealed class SettingsWindowRenderTests
     });
 
     [Theory]
+    [InlineData(SettingsSection.General)]
     [InlineData(SettingsSection.Sharing)]
     [InlineData(SettingsSection.Links)]
     [InlineData(SettingsSection.Hotkeys)]
@@ -88,7 +90,7 @@ public sealed class SettingsWindowRenderTests
     });
 
     [Fact]
-    public void TheRecordingSectionHasTheShowBarSwitchOffAtFirst() => HeadlessApp.Run(() => WithRecordingSection((window, _, _) =>
+    public void TheGeneralSectionHasTheShowBarSwitchOffAtFirst() => HeadlessApp.Run(() => WithGeneralSection((window, _, _) =>
     {
         ToggleSwitch shown = ShowBarSwitch(window);
         Assert.True(shown.IsEffectivelyVisible);
@@ -98,18 +100,18 @@ public sealed class SettingsWindowRenderTests
         Assert.NotNull(frame);
         if (Environment.GetEnvironmentVariable(RenderFolderVariable) is { Length: > 0 } folder)
         {
-            frame.Save(Path.Combine(folder, "settings-recording.png"));
+            frame.Save(Path.Combine(folder, "settings-general.png"));
         }
     }));
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void TheShowBarSwitchIsKeptBySaveAndDroppedByCancel(bool save) => HeadlessApp.Run(() => WithRecordingSection((window, model, file) =>
+    public void TheShowBarSwitchIsKeptBySaveAndDroppedByCancel(bool save) => HeadlessApp.Run(() => WithGeneralSection((window, model, file) =>
     {
         ShowBarSwitch(window).IsChecked = true;
         Dispatcher.UIThread.RunJobs();
-        Assert.False(file.Load().Recording.ShowTool);
+        Assert.False(file.Load().Bar.ShowInCaptures);
 
         if (save)
         {
@@ -120,15 +122,15 @@ public sealed class SettingsWindowRenderTests
             model.Cancel();
         }
 
-        Assert.Equal(save, file.Load().Recording.ShowTool);
+        Assert.Equal(save, file.Load().Bar.ShowInCaptures);
     }));
 
     private static ToggleSwitch ShowBarSwitch(SettingsWindow window) => Assert.Single(
-        window.GetVisualDescendants().OfType<ToggleSwitch>(), toggle => AutomationName(toggle) == "Show bar in video");
+        window.GetVisualDescendants().OfType<ToggleSwitch>(), toggle => AutomationName(toggle) == "Show bar in captures");
 
-    private static void WithRecordingSection(Action<SettingsWindow, SettingsViewModel, SettingsFile> test)
+    private static void WithGeneralSection(Action<SettingsWindow, SettingsViewModel, SettingsFile> test)
     {
-        (SettingsWindow window, string root) = Open(SettingsSection.Recording, width: null);
+        (SettingsWindow window, string root) = Open(SettingsSection.General, width: null);
         try
         {
             test(window, (SettingsViewModel)window.DataContext!, new SettingsFile(Path.Combine(root, "settings.json")));
@@ -142,6 +144,7 @@ public sealed class SettingsWindowRenderTests
 
     /// <summary>The bar's rules: no OS frame, one surface with the bar's fill, ring and shadow, no box inside a box, and no accent at rest.</summary>
     [Theory]
+    [InlineData(SettingsSection.General)]
     [InlineData(SettingsSection.Sharing)]
     [InlineData(SettingsSection.Links)]
     [InlineData(SettingsSection.Hotkeys)]

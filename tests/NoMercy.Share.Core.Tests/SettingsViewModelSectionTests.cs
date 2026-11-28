@@ -10,15 +10,17 @@ public sealed class SettingsViewModelSectionTests : IDisposable
 {
     private readonly string _folder = Path.Combine(Path.GetTempPath(), $"share-section-test-{Guid.NewGuid():N}");
     private readonly SettingsViewModel _model;
+    private readonly SettingsFile _file;
+    private readonly LiveSettings _live;
 
     public SettingsViewModelSectionTests()
     {
-        SettingsFile file = new(SettingsFile.DefaultPath(_folder));
-        LiveSettings live = new(file.Load());
+        _file = new SettingsFile(SettingsFile.DefaultPath(_folder));
+        _live = new LiveSettings(_file.Load());
         BarViewModel bar = new(
             new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
             new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()));
-        _model = new SettingsViewModel(file, live, new FakeCredentialStore(), new HotkeyBinder(new FakeGlobalHotkeys(), bar, live.Current.Hotkeys), ["r2", "s3"]);
+        _model = new SettingsViewModel(_file, _live, new FakeCredentialStore(), new HotkeyBinder(new FakeGlobalHotkeys(), bar, _live.Current.Hotkeys), ["r2", "s3"]);
     }
 
     public void Dispose()
@@ -30,10 +32,11 @@ public sealed class SettingsViewModelSectionTests : IDisposable
     }
 
     [Fact]
-    public void TheWindowOpensOnSharingAndOnlyTheSelectedSectionIsShown()
+    public void TheWindowOpensOnGeneralAndOnlyTheSelectedSectionIsShown()
     {
-        Assert.Equal(SettingsSection.Sharing, _model.SelectedSection);
-        Assert.True(_model.ShowsSharing);
+        Assert.Equal(SettingsSection.General, _model.SelectedSection);
+        Assert.True(_model.ShowsGeneral);
+        Assert.False(_model.ShowsSharing);
 
         List<string?> changed = [];
         _model.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
@@ -45,6 +48,18 @@ public sealed class SettingsViewModelSectionTests : IDisposable
         Assert.False(_model.ShowsHotkeys);
         Assert.Contains(nameof(SettingsViewModel.ShowsSharing), changed);
         Assert.Contains(nameof(SettingsViewModel.ShowsRecording), changed);
+    }
+
+    [Fact]
+    public void ShowBarInCapturesIsSavedAndASaveThatTouchesNothingKeepsIt()
+    {
+        _model.ShowBarInCaptures = true;
+
+        _model.Save();
+
+        Assert.True(_model.Saved);
+        Assert.True(_file.Load().Bar.ShowInCaptures);
+        Assert.True(_live.Current.Bar.ShowInCaptures);
     }
 
     [Fact]

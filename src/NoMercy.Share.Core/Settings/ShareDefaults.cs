@@ -117,8 +117,8 @@ public static class ShareDefaults
     /// <summary>How long a new recording is watched for an ffmpeg that quits at once.</summary>
     public const int RecordingStartupCheckMilliseconds = 1000;
 
-    /// <summary>The tool stays out of recordings unless the user asks to show it.</summary>
-    public const bool RecordingShowTool = false;
+    /// <summary>The bar stays out of captures unless the user asks to show it.</summary>
+    public const bool ShowBarInCaptures = false;
 
     /// <summary>The global hotkeys, chosen to be familiar to people who know ShareX. An empty value turns a hotkey off.</summary>
     public const string HotkeyBar = "Win+Shift+S";

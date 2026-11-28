@@ -29,6 +29,9 @@
   <data name="bar.close" xml:space="preserve"><value>Close NoMercy Share</value></data>
   <data name="notice.later" xml:space="preserve"><value>Coming in a later step</value></data>
   <data name="settings.title" xml:space="preserve"><value>NoMercy Share settings</value></data>
+  <data name="settings.section.general" xml:space="preserve"><value>General</value></data>
+  <data name="settings.general.showbar" xml:space="preserve"><value>Show bar in captures</value></data>
+  <data name="settings.general.showbar.helper" xml:space="preserve"><value>Screenshots and recordings. A window screenshot holds only that window.</value></data>
   <data name="settings.section.sharing" xml:space="preserve"><value>Sharing</value></data>
   <data name="settings.section.links" xml:space="preserve"><value>Links</value></data>
   <data name="settings.discord.webhook" xml:space="preserve"><value>Webhook address</value></data>
@@ -95,7 +98,6 @@
   <data name="settings.unit.fps" xml:space="preserve"><value>fps</value></data>
   <data name="settings.sections" xml:space="preserve"><value>Settings sections</value></data>  <data name="settings.recording.systemsound" xml:space="preserve"><value>Record system sound</value></data>
   <data name="settings.recording.microphone" xml:space="preserve"><value>Record microphone</value></data>
-  <data name="settings.recording.showtool" xml:space="preserve"><value>Show bar in video</value></data>
   <data name="settings.save" xml:space="preserve"><value>Save</value></data>
   <data name="settings.cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="settings.save.failed" xml:space="preserve"><value>The settings were not saved: {0}</value></data>

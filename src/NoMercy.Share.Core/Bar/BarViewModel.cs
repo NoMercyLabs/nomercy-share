@@ -24,7 +24,6 @@ public sealed class BarViewModel : ObservableObject
     private readonly IFfmpegInstall? _ffmpeg;
     private readonly RecordingSoundStore? _sound;
     private readonly LiveSettings? _live;
-    private bool _isTakingScreenshot;
     private readonly LastActionStore? _lastAction;
     private readonly AreaPicker? _picker;
     private Task _running = Task.CompletedTask;
@@ -154,8 +153,8 @@ public sealed class BarViewModel : ObservableObject
 
     public bool IsDesktopAudioOn => _sound?.Current.SystemSound ?? false;
 
-    /// <summary>The bar is kept out of captures at all times, except in a running recording with Show bar in video on and no screenshot being taken.</summary>
-    public bool IsBarExcludedFromCaptures => !((_live?.Current.Recording.ShowTool ?? false) && IsRecording && !_isTakingScreenshot);
+    /// <summary>The bar is kept out of screenshots and recordings unless Show bar in captures is on.</summary>
+    public bool IsBarExcludedFromCaptures => !(_live?.Current.Bar.ShowInCaptures ?? false);
 
     /// <summary>A click on the target given as the parameter; see <see cref="PickTargetAsync"/>.</summary>
     public ICommand PickTargetCommand { get; }
@@ -491,7 +490,6 @@ public sealed class BarViewModel : ObservableObject
         OnChanged(nameof(IsRecording));
         OnChanged(nameof(RecordLabel));
         OnChanged(nameof(ElapsedText));
-        OnChanged(nameof(IsBarExcludedFromCaptures));
     }
 
     private void OnRecorderFailed(object? sender, string reason)
@@ -617,26 +615,7 @@ public sealed class BarViewModel : ObservableObject
         Row.ScreenshotSource = kind;
         _lastAction?.Save(new LastAction(LastActionTask.Screenshot, kind));
         Choice = null;
-        await ShareAsync(await TakeScreenshotAsync(kind, cancellationToken), cancellationToken);
-    }
-
-    private async Task<CaptureResult> TakeScreenshotAsync(CaptureKind kind, CancellationToken cancellationToken)
-    {
-        SetTakingScreenshot(true);
-        try
-        {
-            return await _capture.RunAsync(kind, cancellationToken);
-        }
-        finally
-        {
-            SetTakingScreenshot(false);
-        }
-    }
-
-    private void SetTakingScreenshot(bool taking)
-    {
-        _isTakingScreenshot = taking;
-        OnChanged(nameof(IsBarExcludedFromCaptures));
+        await ShareAsync(await _capture.RunAsync(kind, cancellationToken, keepBar: !IsBarExcludedFromCaptures), cancellationToken);
     }
 
     private async Task CaptureWebPageAsync(CancellationToken cancellationToken)

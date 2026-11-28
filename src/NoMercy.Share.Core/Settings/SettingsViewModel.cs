@@ -42,7 +42,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _recordSystemSound;
     private bool _recordMicrophone;
     private AudioSettings _followedAudio;
-    private bool _showBarInRecording;
+    private bool _showBarInCaptures;
     private readonly IEncoderProbe? _probe;
     private ResolutionChoice _selectedResolution;
     private OptionChoice _selectedCodec;
@@ -89,7 +89,7 @@ public sealed class SettingsViewModel : ObservableObject
         _recordSystemSound = current.Recording.Audio.SystemSound;
         _recordMicrophone = current.Recording.Audio.Microphone;
         _followedAudio = live.Current.Recording.Audio;
-        _showBarInRecording = current.Recording.ShowTool;
+        _showBarInCaptures = current.Bar.ShowInCaptures;
         live.Changed += OnLiveChanged;
 
         RecordingSettings recording = current.Recording;
@@ -156,7 +156,7 @@ public sealed class SettingsViewModel : ObservableObject
 
     public IReadOnlyList<HotkeyRow> Hotkeys { get; }
 
-    /// <summary>The section the window shows; it opens on Sharing.</summary>
+    /// <summary>The section the window shows; it opens on General.</summary>
     public SettingsSection SelectedSection
     {
         get => _selectedSection;
@@ -164,6 +164,7 @@ public sealed class SettingsViewModel : ObservableObject
         {
             Set(ref _selectedSection, value);
             OnChanged(nameof(SelectedSectionIndex));
+            OnChanged(nameof(ShowsGeneral));
             OnChanged(nameof(ShowsSharing));
             OnChanged(nameof(ShowsLinks));
             OnChanged(nameof(ShowsHotkeys));
@@ -183,6 +184,8 @@ public sealed class SettingsViewModel : ObservableObject
             }
         }
     }
+
+    public bool ShowsGeneral => SelectedSection == SettingsSection.General;
 
     public bool ShowsSharing => SelectedSection == SettingsSection.Sharing;
 
@@ -315,10 +318,10 @@ public sealed class SettingsViewModel : ObservableObject
         set => Set(ref _recordMicrophone, value);
     }
 
-    public bool ShowBarInRecording
+    public bool ShowBarInCaptures
     {
-        get => _showBarInRecording;
-        set => Set(ref _showBarInRecording, value);
+        get => _showBarInCaptures;
+        set => Set(ref _showBarInCaptures, value);
     }
 
     public IReadOnlyList<ResolutionChoice> ResolutionChoices { get; }
@@ -481,6 +484,7 @@ public sealed class SettingsViewModel : ObservableObject
 
         ShareSettings next = current with
         {
+            Bar = current.Bar with { ShowInCaptures = ShowBarInCaptures },
             Storage = storage,
             Discord = discord,
             Expiry = current.Expiry with { DefaultDays = SelectedExpiry.Days },
@@ -760,7 +764,6 @@ public sealed class SettingsViewModel : ObservableObject
                 MaxSizeMegabytes = size,
                 FrameRate = rate,
                 Audio = audio,
-                ShowTool = ShowBarInRecording,
                 MaxWidth = SelectedResolution.Width,
                 MaxHeight = SelectedResolution.Height,
                 Codec = SelectedCodec.Value,

@@ -12,7 +12,7 @@ namespace NoMercy.Share.App.Tests;
 public sealed class BarCaptureExclusionTests
 {
     [Fact]
-    public void TheBarIsLetIntoARecordingAndTakenOutAgainWhileTheBorderNeverIs() => HeadlessApp.Run(() =>
+    public void TheSwitchLetsTheBarIntoCapturesAndOutAgainWhileTheBorderNeverIs() => HeadlessApp.Run(() =>
     {
         string root = Path.Combine(Path.GetTempPath(), $"share-exclusion-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -31,15 +31,20 @@ public sealed class BarCaptureExclusionTests
             BarWindow window = new(bar, new BarPositionStore(file), new BarSettings(), barCalls);
             _ = new RecordingBorderPresenter(recorder, () => [(new ScreenRect(0, 0, 1920, 1080), 1.0)], borderCalls, new PassThrough());
             window.Summon();
-            live.Replace(new ShareSettings { Recording = new RecordingSettings { ShowTool = true } });
             Dispatcher.UIThread.RunJobs();
             Assert.Equal(["exclude"], barCalls.Calls.Distinct());
 
-            Pump(bar.RunAsync(BarAction.Record));
-            Pump(bar.StartRecordingAsync());
+            live.Replace(new ShareSettings { Bar = new BarSettings { ShowInCaptures = true } });
+            Dispatcher.UIThread.RunJobs();
             Assert.Equal("include", barCalls.Calls[^1]);
 
             Pump(bar.RunAsync(BarAction.Record));
+            Pump(bar.StartRecordingAsync());
+            Pump(bar.RunAsync(BarAction.Record));
+            Assert.Equal("include", barCalls.Calls[^1]);
+
+            live.Replace(new ShareSettings());
+            Dispatcher.UIThread.RunJobs();
             Assert.Equal("exclude", barCalls.Calls[^1]);
             Assert.NotEmpty(borderCalls.Calls);
             Assert.DoesNotContain("include", borderCalls.Calls);

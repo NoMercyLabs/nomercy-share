@@ -29,7 +29,8 @@ public sealed class SettingsFile(string path)
 
         try
         {
-            return FreeTheBarChord(JsonSerializer.Deserialize<ShareSettings>(File.ReadAllText(path), Json) ?? new ShareSettings());
+            string text = File.ReadAllText(path);
+            return KeepTheVideoSwitch(FreeTheBarChord(JsonSerializer.Deserialize<ShareSettings>(text, Json) ?? new ShareSettings()), text);
         }
         catch (JsonException)
         {
@@ -44,6 +45,25 @@ public sealed class SettingsFile(string path)
         && bar == region
             ? settings with { Hotkeys = settings.Hotkeys with { Region = ShareDefaults.HotkeyRegion } }
             : settings;
+
+    /// <summary>Files from before Bar.ShowInCaptures held the choice for videos only, as Recording.ShowTool; it carries over.</summary>
+    private static ShareSettings KeepTheVideoSwitch(ShareSettings settings, string text)
+    {
+        using JsonDocument file = JsonDocument.Parse(text);
+        return IsOn(file.RootElement, "Recording", "ShowTool") && !Has(file.RootElement, "Bar", nameof(BarSettings.ShowInCaptures))
+            ? settings with { Bar = settings.Bar with { ShowInCaptures = true } }
+            : settings;
+    }
+
+    private static bool Has(JsonElement root, string section, string key) => Find(root, section, key) is not null;
+
+    private static bool IsOn(JsonElement root, string section, string key) => Find(root, section, key) is { ValueKind: JsonValueKind.True };
+
+    private static JsonElement? Find(JsonElement root, string section, string key) =>
+        root.ValueKind == JsonValueKind.Object && root.TryGetProperty(section, out JsonElement group)
+        && group.ValueKind == JsonValueKind.Object && group.TryGetProperty(key, out JsonElement value)
+            ? value
+            : null;
 
     public void Save(ShareSettings settings)
     {

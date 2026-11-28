@@ -33,6 +33,12 @@
             </StackPanel>
           </Border>
           <ListBox Classes="rail" SelectedIndex="{Binding SelectedSectionIndex, Mode=TwoWay}" AutomationProperties.Name="{local:Loc settings.sections}">
+            <ListBoxItem AutomationProperties.Name="{local:Loc settings.section.general}">
+              <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
+                <icons:MoooomIcon Kind="settings" />
+                <TextBlock Text="{local:Loc settings.section.general}" />
+              </StackPanel>
+            </ListBoxItem>
             <ListBoxItem AutomationProperties.Name="{local:Loc settings.section.sharing}">
               <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-3}">
                 <icons:MoooomIcon Kind="cloudUpload" />
@@ -64,6 +70,20 @@
       <ScrollViewer x:Name="Page" Grid.Column="1">
         <!-- 12 above and below, as the rail has: the page title shares the top row with the brand and the cross. -->
         <Grid Margin="24,12">
+
+          <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsGeneral}">
+            <TextBlock Classes="section" Text="{local:Loc settings.section.general}" />
+            <Border Classes="group">
+              <StackPanel>
+                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="switch-label" Text="{local:Loc settings.general.showbar}" />
+                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowBarInCaptures}" OnContent="" OffContent="" MinWidth="0"
+                                AutomationProperties.Name="{local:Loc settings.general.showbar}" />
+                </Grid>
+                <TextBlock Classes="status note-text" Text="{local:Loc settings.general.showbar.helper}" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
 
           <StackPanel Spacing="{DynamicResource Nm-Space-4}" IsVisible="{Binding ShowsSharing}">
             <TextBlock Classes="section" Text="{local:Loc settings.section.sharing}" />
@@ -304,11 +324,6 @@
                   <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.microphone}" />
                   <ToggleSwitch Grid.Column="1" IsChecked="{Binding RecordMicrophone}" OnContent="" OffContent="" MinWidth="0"
                                 AutomationProperties.Name="{local:Loc settings.recording.microphone}" />
-                </Grid>
-                <Grid Classes="switch-row" ColumnDefinitions="*,Auto">
-                  <TextBlock Classes="switch-label" Text="{local:Loc settings.recording.showtool}" />
-                  <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowBarInRecording}" OnContent="" OffContent="" MinWidth="0"
-                                AutomationProperties.Name="{local:Loc settings.recording.showtool}" />
                 </Grid>
               </StackPanel>
             </Border>

@@ -33,7 +33,7 @@ How each recording target works. A recording reads one monitor, so a rectangle t
 | Window | The visible frame of the window a window screenshot would take, as it is at Start. The bar hides while it picks. The recording does not follow the window. |
 | Full screen | The monitor under the cursor. `Capture.FullScreenArea` does not change it. |
 
-The bar, its popups, its tooltips and the recording border are excluded from every screenshot and recording (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 version 2004 or later). You still see them. The one exception is `Recording.ShowTool`, which lets the bar, its popups and its tooltips into a running recording.
+The bar, its popups, its tooltips and the recording border are excluded from every screenshot and recording (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 version 2004 or later). You still see them. The one exception is `Bar.ShowInCaptures`, which lets the bar, its popups and its tooltips into screenshots and recordings.
 
 While a recording runs, a border 3 units thick shows 2 units outside the recorded rectangle, in the theme's accent color, scaled with the monitor it is on. A side with no room on that monitor lies just inside the rectangle; such a side shows only when the exclusion worked. These sizes are not settings.
 
@@ -67,7 +67,7 @@ An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share show
 | `Recording.Encoder` | `cpu` | What encodes the video: `cpu`, `nvidia`, `intel` or `amd`. Settings lists only the ones that pass a test encode on your PC. If a GPU encode fails, the recording is encoded again on the CPU. |
 | `Recording.Speed` | `fast` | `fast`, `balanced` or `quality`. A slower encode gives a sharper picture at the same file size. |
 | `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. The Desktop audio and Microphone switches on the bar save these same settings. |
-| `Recording.ShowTool` | off | Shows the bar, its popups and its tooltips in a recording. The **Show bar in video** switch in the Settings window, under Recording, saves this setting. Screenshots never contain them. |
+| `Bar.ShowInCaptures` | off | Shows the bar, its popups and its tooltips in screenshots and recordings. The **Show bar in captures** switch in the Settings window, under General, saves this setting. A window screenshot holds only that window. An older `Recording.ShowTool: true` turns it on. |
 | `Recording.AudioBitrateKbps` | 128 | The highest audio bitrate, taken off the size budget when a recording has sound. A tight budget steps it down: 128 kbps from 760 kbps of total budget, 96 from 520, 64 below that. |
 | `Recording.LowBudgetMinHeight`, `Recording.LowBudgetFrameRate` | 480, 15 | When the budget would shrink the picture below this height, the frame rate drops to this rate first, so the picture stays sharper. |
 | `Recording.SizeHeadroom` | 0.95 | The part of the size limit the video may use. |
