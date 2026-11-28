@@ -55,10 +55,16 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
 
     public event EventHandler<string>? Failed;
 
-    /// <summary>Ends the recording the way a dying ffmpeg does: no stop call, only the event.</summary>
+    public event EventHandler<ScreenRect?>? RecordedAreaChanged;
+
+    /// <summary>The rectangle a start reports as recorded.</summary>
+    public ScreenRect Area { get; set; } = new(0, 0, 640, 480);
+
+    /// <summary>Ends the recording the way a dying ffmpeg does: no stop call, only the events.</summary>
     public void Fail(string message)
     {
         IsRecording = false;
+        RecordedAreaChanged?.Invoke(this, null);
         Failed?.Invoke(this, message);
     }
 
@@ -85,11 +91,13 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
         }
 
         IsRecording = true;
+        RecordedAreaChanged?.Invoke(this, Area);
     }
 
     public Task<CaptureResult> StopAsync(CancellationToken cancellationToken = default)
     {
         IsRecording = false;
+        RecordedAreaChanged?.Invoke(this, null);
         return StopThrows is null
             ? Task.FromResult(Result)
             : Task.FromException<CaptureResult>(StopThrows);

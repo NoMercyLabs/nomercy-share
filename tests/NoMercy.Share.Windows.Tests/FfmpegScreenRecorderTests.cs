@@ -142,6 +142,57 @@ public sealed class FfmpegScreenRecorderTests : IDisposable
         Assert.Empty(Directory.GetFiles(Path.Combine(_folder, "out")));
     }
 
+    [DesktopFact]
+    public async Task TheRecordedRectangleIsReportedAtTheStartAndNoneWhenFfmpegDies()
+    {
+        ScreenRect screen = Desktop.VirtualScreen();
+        FfmpegScreenRecorder recorder = FakeFfmpegRecorder(startupMilliseconds: 200, script: "ping -n 3 127.0.0.1 >nul\r\nexit /b 3");
+        List<ScreenRect?> areas = [];
+        TaskCompletionSource failed = new();
+        recorder.RecordedAreaChanged += (_, area) => areas.Add(area);
+        recorder.Failed += (_, _) => failed.TrySetResult();
+
+        await recorder.StartAsync(new RecordingOptions());
+        Assert.Equal([new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240)], areas);
+        await failed.Task.WaitAsync(TimeSpan.FromSeconds(15));
+
+        Assert.Equal([new ScreenRect(screen.X + 10, screen.Y + 20, 320, 240), null], areas);
+    }
+
+    [DesktopFact]
+    public async Task AStartThatFailsOrIsCanceledReportsNoRecordedRectangle()
+    {
+        FfmpegScreenRecorder failing = FakeFfmpegRecorder(startupMilliseconds: 3000, script: "exit /b 2");
+        FfmpegScreenRecorder canceled = FakeFfmpegRecorder(startupMilliseconds: 200, script: "exit /b 0", region: null);
+        List<ScreenRect?> areas = [];
+        failing.RecordedAreaChanged += (_, area) => areas.Add(area);
+        canceled.RecordedAreaChanged += (_, area) => areas.Add(area);
+
+        await Assert.ThrowsAsync<RecordingException>(() => failing.StartAsync(new RecordingOptions()));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled.StartAsync(new RecordingOptions()));
+
+        Assert.Empty(areas);
+    }
+
+    [RecordingFact]
+    public async Task AStopReportsNoRecordedRectangleBeforeTheSqueeze()
+    {
+        ScreenRect screen = Desktop.VirtualScreen();
+        ScreenRect chosen = new(screen.X + 10, screen.Y + 20, 320, 240);
+        FfmpegScreenRecorder recorder = new(
+            new CaptureFiles(new CaptureSettings { Folder = _folder }, "unused", () => DateTimeOffset.UtcNow), new FixedRegion(chosen),
+            new RecordingSettings { FfmpegPath = FfmpegTools.Ffmpeg()!, StartupCheckMilliseconds = 200 });
+        List<ScreenRect?> areas = [];
+        recorder.RecordedAreaChanged += (_, area) => areas.Add(area);
+
+        await recorder.StartAsync(new RecordingOptions());
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        Task<CaptureResult> stopping = recorder.StopAsync();
+
+        Assert.Equal([chosen, null], areas);
+        await stopping;
+    }
+
     [RecordingFact]
     public async Task AFileThatStaysOverTheCapGetsTheRetriesAndThenIsKeptAndSharedAsOverTheCap()
     {
