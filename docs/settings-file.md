@@ -23,6 +23,18 @@ How each button captures:
 | Window | The window that was active before the bar, else the window under the cursor. PrintWindow with PW_RENDERFULLCONTENT, cropped to the DWM frame (no invisible border); BitBlt of the frame if PrintWindow fails. Works while other windows cover it. |
 | Region | One BitBlt freezes the virtual screen and one overlay per monitor shows it dimmed outside the selection. Each monitor keeps its own display scale, so a selection stays on one monitor. |
 
+On the bar, **Screenshot** opens a menu with Area, Window and Full screen. **Record** opens a menu with the same three targets (Area picked at first), the two sound switches and Start.
+
+How each recording target works. A recording reads one monitor, so a rectangle that crosses monitors is cut at the edge of the one it covers most.
+
+| Record target | How |
+| --- | --- |
+| Area | You drag it on a frozen picture of the screen after Start. |
+| Window | The visible frame of the window a window screenshot would take, as it is at Start. The bar hides while it picks. The recording does not follow the window. |
+| Full screen | The monitor under the cursor. `Capture.FullScreenArea` does not change it. |
+
+The bar, its popups and its tooltips are excluded from every screenshot and recording (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 version 2004 or later). You still see them.
+
 ## Hotkeys
 
 | Setting | Default |
@@ -33,7 +45,9 @@ How each button captures:
 | `Hotkeys.Window` | `Alt+PrintScreen` |
 | `Hotkeys.Record` | `Shift+PrintScreen` |
 
-An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share opens its own region capture instead of the Snipping Tool; clear the Region hotkey to give it back to Windows.
+The Region, FullScreen and Window hotkeys capture at once. The Record hotkey opens the record menu (a hidden bar shows) and stops a running recording.
+
+An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share shows its bar instead of the Snipping Tool; clear the Bar hotkey to give it back to Windows.
 
 `Bar.StartAtSignIn` (default on) starts NoMercy Share hidden when you sign in to Windows, so the hotkeys always work. Start NoMercy Share again to show the bar. The bar's cross hides it; **Quit NoMercy Share** in Settings ends the app. Off removes the sign-in start the next time the app starts.
 
@@ -48,7 +62,7 @@ An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share open
 | `Recording.Codec` | `h264` | The video codec: `h264`, `vp9`, `hevc` or `av1`. H.264 plays everywhere (MP4). VP9 encodes twice to fit the most picture into the size limit (WebM with Opus sound, CPU only), best for Discord. HEVC and AV1 look sharper at the same size, but not every browser or app plays them. |
 | `Recording.Encoder` | `cpu` | What encodes the video: `cpu`, `nvidia`, `intel` or `amd`. Settings lists only the ones that pass a test encode on your PC. If a GPU encode fails, the recording is encoded again on the CPU. |
 | `Recording.Speed` | `fast` | `fast`, `balanced` or `quality`. A slower encode gives a sharper picture at the same file size. |
-| `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. |
+| `Recording.Audio.SystemSound`, `Recording.Audio.Microphone` | off, off | Which sound goes into a recording. The Desktop audio and Microphone switches in the record menu save these same settings. |
 | `Recording.AudioBitrateKbps` | 128 | The highest audio bitrate, taken off the size budget when a recording has sound. A tight budget steps it down: 128 kbps from 760 kbps of total budget, 96 from 520, 64 below that. |
 | `Recording.LowBudgetMinHeight`, `Recording.LowBudgetFrameRate` | 480, 15 | When the budget would shrink the picture below this height, the frame rate drops to this rate first, so the picture stays sharper. |
 | `Recording.SizeHeadroom` | 0.95 | The part of the size limit the video may use. |

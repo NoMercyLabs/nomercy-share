@@ -2,7 +2,7 @@
 
 NoMercy Share puts a small floating bar on your Windows desktop. Click a button, and a screenshot, a screen recording or a picture of a web page is saved. Then you choose: **Copy image** to paste the picture itself, or **Copy link** to upload it to a host you choose and paste its link into a chat. Nothing is uploaded until you pick the link.
 
-![The NoMercy Share bar: a handle, then region, window, full screen, record, web page, recent links, settings and close buttons.](docs/images/bar.png)
+![The NoMercy Share bar: a handle, then screenshot, record, web page, recent links, settings and close buttons.](docs/images/bar.png)
 
 ## Before you start
 
@@ -23,7 +23,11 @@ Until sharing is set up, nothing is uploaded. Every capture is saved in a `NoMer
 
 The bar floats above your other windows. Drag it by the handle on the left edge and it remembers where you left it. Every button has a tooltip, and Tab and Enter work if you prefer the keyboard.
 
-From left to right: the handle, then **Capture a region**, **Capture a window**, **Capture the full screen**, **Record the screen**, **Capture a web page**, **Recent links**, **Settings** and **Close**.
+From left to right: the handle, then **Screenshot**, **Record the screen**, **Capture a web page**, **Recent links**, **Settings** and **Close**.
+
+**Screenshot** and **Record the screen** each open a second bar underneath. Press the same button again to close it. Opening one closes the other, and the cross closes it too.
+
+The bar and its tooltips are left out of your screenshots and recordings, but you still see them. This needs Windows 10 version 2004 or later.
 
 After a capture a second bar underneath offers **Copy image** (pictures only), **Copy link** and **Done**. The bar then says what happened, for example "Link copied". A failed upload keeps the choice open, keeps the file on your PC and says why.
 
@@ -31,7 +35,7 @@ After a capture a second bar underneath offers **Copy image** (pictures only), *
 
 ## Capture a region
 
-Press `Win+Shift+S`, or click the crosshair button. The screen freezes and dims. Drag over the part you want, and the size shows beside the selection. Let go of the mouse button or press Enter to capture. Press Esc to cancel.
+Press `Ctrl+PrintScreen`, or click **Screenshot** and then **Area**. (`Win+Shift+S` shows the bar, so you can pick.) The screen freezes and dims. Drag over the part you want, and the size shows beside the selection. Let go of the mouse button or press Enter to capture. Press Esc to cancel.
 
 NoMercy Share takes over `Win+Shift+S` from the Snipping Tool. If you want Windows to have it back, clear that hotkey in [Settings](#settings).
 
@@ -41,21 +45,27 @@ Each monitor keeps its own display scale, so a selection stays on one monitor.
 
 ## Capture a window or the full screen
 
-**Capture a window** takes the window you were using before you clicked the bar. If there was none, it takes the window under the cursor. Windows that are partly covered by others still come out whole.
+**Screenshot**, then **Window**, takes the window you were using before you clicked the bar. If there was none, it takes the window under the cursor. Windows that are partly covered by others still come out whole.
 
-**Capture the full screen** takes the monitor your cursor is on.
+**Screenshot**, then **Full screen**, takes the monitor your cursor is on.
 
-The bar hides itself for a moment so it is not in the picture. Both buttons have hotkeys: `Alt+PrintScreen` for a window and `PrintScreen` for the full screen. Once the capture is shared, the bar shows the notice you saw above.
+The shot is taken at once, and the bar hides itself for a moment. Both have hotkeys that skip the menu: `Alt+PrintScreen` for a window and `PrintScreen` for the full screen. Once the capture is shared, the bar shows the notice you saw above.
 
 ## Record the screen
 
-Click the record button (or press `Shift+PrintScreen`), then drag over the part of the screen to record, the same way as for a region. Esc cancels. The bar shows a red dot and a running timer while it records.
+Click the record button (or press `Shift+PrintScreen`, which also shows a hidden bar). A second bar opens, and nothing records until you press **Start**. Pick what to record:
+
+- **Area** (picked at first): after Start, drag over the part of the screen, the same way as for a region. Esc cancels.
+- **Window**: the rectangle of the window you were using, as it is when you press Start. The recording does not follow the window if you move it.
+- **Full screen**: the monitor your cursor is on.
+
+**Microphone** and **Desktop audio** switch sound on or off. The bar shows a red dot and a running timer while it records.
 
 ![The bar while recording: the record button is highlighted with a red dot and the timer reads 01:23.](docs/images/bar-recording.png)
 
-Click the button again to stop. The recording is squeezed into an MP4 that fits the size limit, 50 MB unless you change it, and shared like any other capture. A long recording is compressed harder to fit, so keep clips short if quality matters.
+Click the record button (or press its hotkey) again to stop at once. The recording is squeezed into an MP4 that fits the size limit, 50 MB unless you change it, and shared like any other capture. A long recording is compressed harder to fit, so keep clips short if quality matters.
 
-Sound is off until you turn it on. In [Settings](#settings), under Recording, switch on **Record system sound** for what your speakers play and **Record microphone** for your voice. If a microphone or sound output is missing, the recording still starts and the bar tells you what it left out.
+Sound is off until you turn it on. **Desktop audio** is what your speakers play and **Microphone** is your voice. They are the same switches as **Record system sound** and **Record microphone** in [Settings](#settings), under Recording, and your choice is saved. If a microphone or sound output is missing, the recording still starts and the bar tells you what it left out.
 
 ## Capture a web page
 
