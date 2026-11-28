@@ -49,7 +49,7 @@ Discord links are signed and expire (the `ex` value in the link, shown in the re
 
 ## Deleting a shared link
 
-The trash button in the recent list asks first. Every provider is asked whether it made the link, not only the selected one, so a link stays deletable after you switch providers. The local capture file is never deleted.
+The trash button in the recent list asks first, inside the row. Every provider is asked whether it made the link, not only the selected one, so a link stays deletable after you switch providers. The local capture file is never deleted.
 
 | Link | What a delete does | What it needs |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ The trash button in the recent list asks first. Every provider is asked whether 
 | Discord, uploaded with its message id kept | Deletes the webhook message that holds the file. | The same webhook that uploaded it. |
 | Any other link, such as an older Discord upload | Removes the link from the list only. The upload stays online. | Nothing. |
 
-If the host refuses or cannot be reached, the link stays in the list and the bar says why. For Discord that includes "not found", because it can also mean the webhook changed. A browser can show its cached copy for up to one hour, and Discord can keep its preview.
+If the host refuses or cannot be reached, the link stays in the list and its row says why. For Discord that includes "not found", because it can also mean the webhook changed. A browser can show its cached copy for up to one hour, and Discord can keep its preview.
 
 ## The share page
 

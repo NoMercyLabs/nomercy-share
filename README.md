@@ -112,7 +112,7 @@ While Full page or Pick element works, the browser shows its own "started debugg
 
 Click the link button to see the links you shared lately, newest first. Each row shows when you shared it and when it expires. Use the copy button to copy a link again, the arrow to open it in your browser, or the trash button to delete it. With a row selected, Enter copies its link and Esc closes the list.
 
-The trash button always asks first. When the app can delete the upload from the host, the link leaves the list only after the host deleted it. When it cannot, the question says so: the link leaves the list and the upload stays online. Your local capture file is never deleted. A browser can show its cached copy for up to one hour, and Discord can keep its preview. See [Deleting a shared link](docs/storage-hosts.md#deleting-a-shared-link).
+The trash button always asks first, inside the row, and the list stays open. When the app can delete the upload from the host, the link leaves the list only after the host deleted it. If that fails, the row says why and offers **Try again**. When the app cannot delete it, the question says so: the link leaves the list and the upload stays online. Esc or **Cancel** takes a question back. Your local capture file is never deleted. A browser can show its cached copy for up to one hour, and Discord can keep its preview. See [Deleting a shared link](docs/storage-hosts.md#deleting-a-shared-link).
 
 ![The recent links list with three rows, each with copy, open and delete buttons: an image that expires in 29 days, a video that expires in 4 days and an expired image shown dimmed.](docs/images/recent-links.png)
 

@@ -3,9 +3,18 @@ using System.Globalization;
 namespace NoMercy.Share.Core.Recent;
 
 /// <summary>One line of the recent list: a stored link and the text made from it for one moment, in invariant English.</summary>
-public sealed class RecentRow(RecentLink link, DateTimeOffset now)
+public sealed class RecentRow(RecentLink link, DateTimeOffset now) : ObservableObject
 {
+    private RecentRowState _state = RecentRowState.Normal;
+
     public RecentLink Link { get; } = link;
+
+    /// <summary>Normal, or the step of deleting this row; <see cref="RecentList"/> moves it on.</summary>
+    public RecentRowState State
+    {
+        get => _state;
+        internal set => Set(ref _state, value);
+    }
 
     /// <summary>The key part of the address, without the host: exp-30d/abc.png.</summary>
     public string PathText { get; } = Uri.TryCreate(link.Url, UriKind.Absolute, out Uri? url) ? url.AbsolutePath.TrimStart('/') : link.Url;

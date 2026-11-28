@@ -1,9 +1,11 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -28,7 +30,7 @@ public sealed class RecentDeleteRenderTests
     public void EveryRecentRowOffersCopyOpenAndDelete() => HeadlessApp.Run(() => WithRecent(deletes: true, (_, panel, host, _) =>
     {
         Button[][] rows = [.. panel.GetVisualDescendants().OfType<ListBoxItem>()
-            .Select(row => row.GetVisualDescendants().OfType<Button>().ToArray())];
+            .Select(VisibleButtons)];
 
         Assert.Equal(3, rows.Length);
         Assert.All(rows, buttons =>
@@ -50,7 +52,7 @@ public sealed class RecentDeleteRenderTests
         Rect[] normal = Layout(panel);
 
         Click(panel, row: 1, "Delete");
-        AssertRowShows(panel, 1, "inline-asking.png", host, ["Delete", "Cancel"], "Delete from the host?", "Cached copies can stay up to an hour.");
+        AssertRowShows(panel, 1, "inline-asking.png", host, ["Delete", "Cancel"], "Delete from the host?", "Cached up to 1 hour.");
         Assert.Equal(normal, Layout(panel));
 
         Click(panel, row: 1, "Delete");
@@ -87,6 +89,7 @@ public sealed class RecentDeleteRenderTests
         Click(panel, row: 0, "Delete");
 
         Assert.Equal("Cancel", Name(Focused(host)));
+        Assert.False(ShowsRing(Row(panel, 0)), "the row and the focused answer both show a ring");
         Press(host, PhysicalKey.Tab, RawInputModifiers.Shift);
         Assert.Equal("Delete", Name(Focused(host)));
         Press(host, PhysicalKey.Tab, RawInputModifiers.None);
@@ -95,11 +98,16 @@ public sealed class RecentDeleteRenderTests
 
         Press(host, PhysicalKey.Escape, RawInputModifiers.None);
 
+        Assert.True(ShowsRing(Row(panel, 0)), "a focused row shows its ring");
         Assert.True(bar.IsRecentOpen);
         Assert.Equal(["Copy link", "Open in browser", "Delete"], VisibleButtons(Row(panel, 0)).Select(Name));
         Press(host, PhysicalKey.Escape, RawInputModifiers.None);
         Assert.False(bar.IsRecentOpen);
     }));
+
+    private static bool ShowsRing(ListBoxItem row) =>
+        row.GetVisualDescendants().OfType<ContentPresenter>().First(presenter => presenter.Name == "PART_ContentPresenter" && presenter.TemplatedParent == row)
+            .BorderBrush is ISolidColorBrush { Color.A: > 0 };
 
     private static ListBoxItem Row(RecentPanel panel, int index) => panel.GetVisualDescendants().OfType<ListBoxItem>().ElementAt(index);
 

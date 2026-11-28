@@ -8,22 +8,33 @@
           CornerRadius="{DynamicResource Nm-Radius-2Xl-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
           Padding="{DynamicResource Nm-Space-1-Thickness}" AutomationProperties.Name="{local:Loc bar.recent}">
     <Panel>
-      <TextBlock Classes="recent-empty" Text="{local:Loc recent.empty}" IsVisible="{Binding IsRecentEmpty}" TextWrapping="Wrap" />
-      <ListBox x:Name="List" Classes="recent" ItemsSource="{Binding RecentRows}" IsVisible="{Binding !IsRecentEmpty}">
+      <TextBlock Classes="recent-empty" Text="{local:Loc recent.empty}" IsVisible="{Binding Recent.IsEmpty}" TextWrapping="Wrap" />
+      <ListBox x:Name="List" Classes="recent" ItemsSource="{Binding Recent.Rows}" IsVisible="{Binding !Recent.IsEmpty}" KeyboardNavigation.TabNavigation="Continue">
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="recent:RecentRow">
-            <Grid Classes="recent-row" Classes.expired="{Binding IsExpired}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource Nm-Space-3}">
+            <Grid Classes="recent-row" Classes.expired="{Binding IsExpired}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource Nm-Space-2}">
               <Border Classes="thumb">
                 <Panel>
                   <icons:MoooomIcon Kind="{Binding IconName}" />
                   <Image Source="{Binding ThumbnailPath, Converter={x:Static local:ThumbnailConverter.Instance}}" Stretch="UniformToFill" />
                 </Panel>
               </Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" IsVisible="{Binding State.IsNormal}">
                 <TextBlock Classes="row-path" Text="{Binding PathText}" />
                 <TextBlock Classes="row-detail" Text="{Binding DetailText}" />
               </StackPanel>
-              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="{DynamicResource Nm-Space-0-5}">
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" IsVisible="{Binding !State.IsNormal}" AutomationProperties.LiveSetting="Polite">
+                <TextBlock Classes="row-question" Text="{Binding State.Title}" TextWrapping="Wrap" />
+                <TextBlock Classes="row-detail" Text="{Binding State.Detail}" ToolTip.Tip="{Binding State.Detail}"
+                           IsVisible="{Binding State.Detail, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="{DynamicResource Nm-Space-0-5}"
+                          IsVisible="{Binding State.OffersAnswer}">
+                <Button Classes="bar ask answer first" Click="OnConfirmClick" Content="{Binding State.ConfirmLabel}" />
+                <Button Classes="bar ask answer cancel" Click="OnCancelClick" Content="{local:Loc ask.cancel}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="{DynamicResource Nm-Space-0-5}"
+                          IsVisible="{Binding State.IsNormal}">
                 <Button Classes="bar small" Click="OnCopyClick" ToolTip.Tip="{local:Loc recent.copy}" AutomationProperties.Name="{local:Loc recent.copy}">
                   <icons:MoooomIcon Kind="fileCopy" />
                 </Button>

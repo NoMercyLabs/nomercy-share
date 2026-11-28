@@ -44,6 +44,11 @@
   <Style Selector="Button.bar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
   </Style>
+  <!-- A row answer always holds the ring's 2 px, so focus never widens it and moves the text beside it. -->
+  <Style Selector="Button.bar.answer /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
   <!-- The ring is a 2 px border in the accent token, so each theme's own accent step sets its contrast. -->
   <Style Selector="Button.bar:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
@@ -73,6 +78,11 @@
   <Style Selector="Button.bar.ask.first">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
   </Style>
+  <!-- The answers inside a recent row are tighter, so the question beside them stays whole. -->
+  <Style Selector="Button.bar.ask.answer">
+    <Setter Property="Padding" Value="{DynamicResource Nm-Space-2-Thickness}" />
+    <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Xs}" />
+  </Style>
   <Style Selector="Button.bar.small">
     <Setter Property="Width" Value="{DynamicResource Nm-Space-7}" />
     <Setter Property="Height" Value="{DynamicResource Nm-Space-7}" />
@@ -89,15 +99,20 @@
   </Style>
   <Style Selector="ListBox.recent > ListBoxItem">
     <Setter Property="MinHeight" Value="0" />
-    <Setter Property="Padding" Value="{DynamicResource Nm-Space-2-Thickness}" />
+    <Setter Property="Padding" Value="{DynamicResource Nm-Space-1-5-Thickness}" />
     <Setter Property="CornerRadius" Value="{DynamicResource Nm-Radius-Xl-Corner}" />
+  </Style>
+  <!-- The row always holds its focus ring's 2 px inside its 8 px inset, so a focused row stays the same size. -->
+  <Style Selector="ListBox.recent > ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2" />
   </Style>
   <Style Selector="ListBox.recent > ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.recent > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
   </Style>
-  <Style Selector="ListBox.recent > ListBoxItem:selected:focus-within /template/ ContentPresenter#PART_ContentPresenter">
+  <!-- :focus, not :focus-within: while a button inside the row has the keyboard, only that button shows a ring. -->
+  <Style Selector="ListBox.recent > ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
-    <Setter Property="BorderThickness" Value="2" />
   </Style>
   <Style Selector="Border.thumb">
     <Setter Property="Width" Value="{DynamicResource Nm-Space-10}" />
@@ -113,7 +128,7 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Stroke" Value="{DynamicResource Nm-Text-Secondary-Brush}" />
   </Style>
-  <Style Selector="TextBlock.row-path">
+  <Style Selector="TextBlock.row-path, TextBlock.row-question">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />

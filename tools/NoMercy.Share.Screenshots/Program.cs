@@ -249,7 +249,7 @@ public static class Program
         Dispatcher.UIThread.RunJobs();
         using RenderTargetBitmap bitmap = Render(host, 1, 0, host.Bounds.Width);
         bitmap.Save(file);
-        Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height} rows={model.RecentRows.Count}");
+        Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height} rows={model.Recent.Rows.Count}");
         host.Close();
     }
 

@@ -60,7 +60,7 @@ public sealed class BarViewModelRecentTests : IDisposable
         Assert.Null(bar.Ask);
         Assert.Equal(RecentRowStep.Asking, state.Step);
         Assert.Equal("Delete from the host?", state.Title);
-        Assert.Equal("Cached copies can stay up to an hour.", state.Detail);
+        Assert.Equal("Cached up to 1 hour.", state.Detail);
         Assert.Equal("Delete", state.ConfirmLabel);
         Assert.Empty(host.Deleted);
         Assert.Single(_store.Load());
