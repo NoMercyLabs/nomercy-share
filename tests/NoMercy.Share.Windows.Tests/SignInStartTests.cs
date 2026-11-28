@@ -11,10 +11,14 @@ public sealed class SignInStartTests : IDisposable
 
     private readonly string _softwareKey = $@"Software\NoMercyShareTest\{Guid.NewGuid():N}";
 
-    public void Dispose() => Registry.CurrentUser.DeleteSubKeyTree(@"Software\NoMercyShareTest", throwOnMissingSubKey: false);
+    // Only this test's own key: the parent is shared, and deleting it can hit another test's key.
+    public void Dispose() => Registry.CurrentUser.DeleteSubKeyTree(_softwareKey, throwOnMissingSubKey: false);
 
-    private string? RunValue() =>
-        Registry.CurrentUser.OpenSubKey($@"{_softwareKey}\{SignInStart.RunKey}")?.GetValue(SignInStart.ValueName) as string;
+    private string? RunValue()
+    {
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey($@"{_softwareKey}\{SignInStart.RunKey}");
+        return key?.GetValue(SignInStart.ValueName) as string;
+    }
 
     [Fact]
     public void OnStartsTheAppHiddenAtSignIn()
