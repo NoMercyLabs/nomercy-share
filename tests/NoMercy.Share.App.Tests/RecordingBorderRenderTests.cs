@@ -154,6 +154,12 @@ public sealed class RecordingBorderRenderTests
             calls?.Add("exclude");
             return works;
         }
+
+        public bool Include(nint window)
+        {
+            calls?.Add("include");
+            return works;
+        }
     }
 
     private sealed class PassThrough(List<string>? calls = null) : IInputPassThrough

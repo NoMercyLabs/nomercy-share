@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -23,7 +24,7 @@ public sealed class BarMenuRenderTests
 
     [Fact]
     public void TheRecordMenuOffersTargetsSoundSwitchesAndStart() => HeadlessApp.Run(() =>
-        RenderMenu(BarAction.Record, "RecordMenu", ["Area", "Window", "Full screen", "Microphone", "Desktop audio", "Start"], "share-menu-record.png"));
+        RenderMenu(BarAction.Record, "RecordMenu", ["Area", "Window", "Full screen", "Microphone", "Desktop audio", "Show bar in video", "Start"], "share-menu-record.png"));
 
     [Fact]
     public void TheBarKeepsItselfOutOfCapturesOnceItIsOpen() => HeadlessApp.Run(() =>
@@ -61,6 +62,12 @@ public sealed class BarMenuRenderTests
         Button[] buttons = [.. menu.GetVisualDescendants().OfType<Button>()];
         Assert.Equal(names, buttons.Select(AutomationProperties.GetName));
         Assert.All(buttons, button => Assert.True(button.Bounds.Height >= MinimumHitSize && button.Bounds.Width >= MinimumHitSize));
+        Assert.All(menu.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible), text =>
+        {
+            // A clipped label is narrower than the words need, or ends outside the window.
+            Assert.True(text.Bounds.Width >= Math.Floor(text.TextLayout.Width), $"{text.Text} is clipped");
+            Assert.True(text.TranslatePoint(new Point(text.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width, $"{text.Text} ends outside the window");
+        });
 
         using Avalonia.Media.Imaging.WriteableBitmap? frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
@@ -107,5 +114,7 @@ public sealed class BarMenuRenderTests
             Windows.Add(window);
             return true;
         }
+
+        public bool Include(nint window) => true;
     }
 }
