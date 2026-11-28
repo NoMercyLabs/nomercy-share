@@ -165,6 +165,11 @@ public static class ShareDefaults
 
     public const bool StartAtSignIn = true;
 
+    /// <summary>What the bar hotkey starts before the user has started anything: a screenshot of an area.</summary>
+    public const Bar.LastActionTask LastActionTask = Bar.LastActionTask.Screenshot;
+
+    public const Capture.CaptureKind LastActionSource = Capture.CaptureKind.Region;
+
     /// <summary>The start argument for a start without the bar: the sign-in start uses it.</summary>
     public const string BackgroundArgument = "--background";
 

@@ -15,7 +15,19 @@ internal sealed class FakeScreenCapture : IScreenCapture
     /// <summary>Runs inside every capture, so a test can look at the state at that moment.</summary>
     public Action? OnCapture { get; set; }
 
-    public Task<CaptureResult> CaptureRegionAsync(CancellationToken cancellationToken = default) => Run("region");
+    /// <summary>When set, an area capture waits for it, as the real capture waits for the overlay.</summary>
+    public IRegionSelector? Picker { get; set; }
+
+    public async Task<CaptureResult> CaptureRegionAsync(CancellationToken cancellationToken = default)
+    {
+        Task<CaptureResult> shot = Run("region");
+        if (Picker is not null)
+        {
+            await FakeRegionSelector.PickAsync(Picker, cancellationToken);
+        }
+
+        return await shot;
+    }
 
     public Task<CaptureResult> CaptureWindowAsync(CancellationToken cancellationToken = default) => Run("window");
 
@@ -55,17 +67,24 @@ internal sealed class FakeScreenRecorder : IScreenRecorder
     /// <summary>Runs inside every start, so a test can look at the state at that moment.</summary>
     public Action? OnStart { get; set; }
 
-    public Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
+    /// <summary>When set, an area recording waits for it before it starts.</summary>
+    public IRegionSelector? Picker { get; set; }
+
+    public async Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
         Options = options;
         OnStart?.Invoke();
         if (StartThrows is not null)
         {
-            return Task.FromException(StartThrows);
+            throw StartThrows;
+        }
+
+        if (Picker is not null && options.Source == CaptureKind.Region)
+        {
+            await FakeRegionSelector.PickAsync(Picker, cancellationToken);
         }
 
         IsRecording = true;
-        return Task.CompletedTask;
     }
 
     public Task<CaptureResult> StopAsync(CancellationToken cancellationToken = default)

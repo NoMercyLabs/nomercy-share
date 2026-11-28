@@ -53,8 +53,11 @@ public sealed class BarViewModel : ObservableObject
         IFolderAccess? folderAccess = null,
         IFfmpegInstall? ffmpeg = null,
         RecordingSoundStore? sound = null,
-        ShareDeletion? deletion = null)
+        ShareDeletion? deletion = null,
+        LastActionStore? lastAction = null,
+        AreaPicker? picker = null)
     {
+        _ = (lastAction, picker);
         _deletion = deletion;
         _sound = sound;
         if (sound is not null)
