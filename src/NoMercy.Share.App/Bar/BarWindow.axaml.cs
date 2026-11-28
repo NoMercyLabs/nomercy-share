@@ -61,9 +61,26 @@ public partial class BarWindow : Window
         return shown;
     }
 
+    /// <summary>Puts a wanted bar back on top of an open area picker, so another choice can be clicked. A hidden bar stays hidden.</summary>
+    public void StayAbovePicker()
+    {
+        if (!IsNeeded)
+        {
+            return;
+        }
+
+        Show();
+        // Setting Topmost again moves the window above the other topmost windows without taking the focus.
+        Topmost = false;
+        Topmost = true;
+    }
+
+    private bool IsNeeded =>
+        _called || DataContext is BarViewModel bar && (bar.Notice is not null || bar.Ask is not null || bar.Choice is not null || bar.IsRecording);
+
     private void ShowWhileNeeded()
     {
-        bool needed = _called || DataContext is BarViewModel bar && (bar.Notice is not null || bar.Ask is not null || bar.Choice is not null || bar.IsRecording);
+        bool needed = IsNeeded;
         if (needed && !IsVisible)
         {
             Show();

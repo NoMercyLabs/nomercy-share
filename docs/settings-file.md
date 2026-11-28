@@ -39,13 +39,15 @@ The bar, its popups and its tooltips are excluded from every screenshot and reco
 
 | Setting | Default |
 | --- | --- |
-| `Hotkeys.Bar` (shows the bar) | `Win+Shift+S` |
+| `Hotkeys.Bar` (shows the bar and repeats the last action) | `Win+Shift+S` |
 | `Hotkeys.Region` | `Ctrl+PrintScreen` |
 | `Hotkeys.FullScreen` | `PrintScreen` |
 | `Hotkeys.Window` | `Alt+PrintScreen` |
 | `Hotkeys.Record` | `Shift+PrintScreen` |
 
 The Region, FullScreen and Window hotkeys capture at once. The Record hotkey opens the record menu (a hidden bar shows) and stops a running recording.
+
+`Bar.LastAction` is what the Bar hotkey starts again; the app writes it each time you start a capture. `Task` is `Screenshot` (the default), `Recording` or `WebPage`. `Source` is `Region` (the default), `Window` or `FullScreen`.
 
 An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share shows its bar instead of the Snipping Tool; clear the Bar hotkey to give it back to Windows.
 

@@ -54,7 +54,7 @@ public sealed class HotkeyBinderTests
     }
 
     [Fact]
-    public void TheBarHotkeyAsksForTheBarAndCapturesNothing()
+    public void TheBarHotkeyAsksForTheBarAndStartsAnAreaScreenshot()
     {
         int asked = 0;
         _bar.ShowRequested += (_, _) => asked++;
@@ -63,7 +63,7 @@ public sealed class HotkeyBinderTests
         _hotkeys.Press(BarAction.Show);
 
         Assert.Equal(1, asked);
-        Assert.Empty(_screen.Calls);
+        Assert.Equal(["region"], _screen.Calls);
     }
 
     [Fact]

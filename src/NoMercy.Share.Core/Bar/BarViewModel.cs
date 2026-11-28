@@ -26,6 +26,9 @@ public sealed class BarViewModel : ObservableObject
     private readonly IFolderAccess? _folderAccess;
     private readonly IFfmpegInstall? _ffmpeg;
     private readonly RecordingSoundStore? _sound;
+    private readonly LastActionStore? _lastAction;
+    private readonly AreaPicker? _picker;
+    private Task _running = Task.CompletedTask;
     private BarMenu _menu;
     private CaptureKind _recordSource = CaptureKind.Region;
     private BarAsk? _ask;
@@ -34,7 +37,6 @@ public sealed class BarViewModel : ObservableObject
     private bool _downloading;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
-    private bool _busy;
     private bool _isRecentOpen;
     private IReadOnlyList<RecentRow> _recentRows = [];
     private DateTimeOffset? _recordingStartedAt;
@@ -57,7 +59,8 @@ public sealed class BarViewModel : ObservableObject
         LastActionStore? lastAction = null,
         AreaPicker? picker = null)
     {
-        _ = (lastAction, picker);
+        _lastAction = lastAction;
+        _picker = picker;
         _deletion = deletion;
         _sound = sound;
         if (sound is not null)
@@ -91,11 +94,7 @@ public sealed class BarViewModel : ObservableObject
 
         _actions = new Dictionary<BarAction, Func<CancellationToken, Task>>
         {
-            [BarAction.Show] = _ =>
-            {
-                ShowRequested?.Invoke(this, EventArgs.Empty);
-                return Task.CompletedTask;
-            },
+            [BarAction.Show] = ShowAndRepeatAsync,
             [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
             [BarAction.Window] = token => CaptureAsync(CaptureKind.Window, token),
             [BarAction.FullScreen] = token => CaptureAsync(CaptureKind.FullScreen, token),
@@ -440,12 +439,18 @@ public sealed class BarViewModel : ObservableObject
 
     private async Task GuardAsync(BarAction action, Func<Task> work)
     {
-        if (_busy)
+        if (action != BarAction.Show && _picker?.Cancel() == true)
+        {
+            await _running;
+        }
+
+        if (!_running.IsCompleted)
         {
             return;
         }
 
-        _busy = true;
+        TaskCompletionSource finished = new();
+        _running = finished.Task;
         ClearNotice();
         if (action != BarAction.Recent)
         {
@@ -479,13 +484,13 @@ public sealed class BarViewModel : ObservableObject
         }
         finally
         {
-            _busy = false;
             if (_files?.TakeFallback() == true)
             {
                 CheckFolderAccess();
             }
 
             OnRecordingChanged();
+            finished.SetResult();
         }
     }
 
@@ -632,8 +637,40 @@ public sealed class BarViewModel : ObservableObject
         return Task.CompletedTask;
     }
 
+    /// <summary>The bar hotkey: shows the bar and starts the last action again; while recording it only shows the bar.</summary>
+    private Task ShowAndRepeatAsync(CancellationToken cancellationToken)
+    {
+        ShowRequested?.Invoke(this, EventArgs.Empty);
+        if (IsRecording)
+        {
+            return Task.CompletedTask;
+        }
+
+        LastAction last = _lastAction?.Load() ?? new LastAction();
+        return last.Task switch
+        {
+            LastActionTask.WebPage => CaptureWebPageAsync(cancellationToken),
+            LastActionTask.Recording => RepeatRecordingAsync(last.Source, cancellationToken),
+            _ => CaptureAsync(last.Source, cancellationToken)
+        };
+    }
+
+    private Task RepeatRecordingAsync(CaptureKind source, CancellationToken cancellationToken)
+    {
+        SelectRecordSource(source);
+        if (source == CaptureKind.Region)
+        {
+            return BeginRecordingAsync(cancellationToken);
+        }
+
+        // Without a picker there is no moment to change one's mind, so Start stays the user's press.
+        Menu = BarMenu.Record;
+        return Task.CompletedTask;
+    }
+
     private async Task CaptureAsync(CaptureKind kind, CancellationToken cancellationToken)
     {
+        _lastAction?.Save(new LastAction(LastActionTask.Screenshot, kind));
         Choice = null;
         await ShareAsync(await _capture.RunAsync(kind, cancellationToken), cancellationToken);
     }
@@ -646,6 +683,7 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
+        _lastAction?.Save(new LastAction(LastActionTask.WebPage));
         CaptureResult picture = _webDialog is null
             ? await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken)
             : await _webDialog.RunAsync(_web, cancellationToken);
@@ -683,6 +721,7 @@ public sealed class BarViewModel : ObservableObject
         }
 
         CloseMenu();
+        _lastAction?.Save(new LastAction(LastActionTask.Recording, _recordSource));
         if (_ffmpeg is not null && !_ffmpeg.IsFound())
         {
             if (!_downloading)
@@ -750,12 +789,13 @@ public sealed class BarViewModel : ObservableObject
     /// <summary>Runs one answer to the choice. A failure keeps the choice, so the user can try again or pick the other.</summary>
     private async Task ResolveChoiceAsync(Func<CaptureResult, Task<string>> answer)
     {
-        if (_busy || Choice is not { } choice)
+        if (!_running.IsCompleted || Choice is not { } choice)
         {
             return;
         }
 
-        _busy = true;
+        TaskCompletionSource finished = new();
+        _running = finished.Task;
         try
         {
             string done = await answer(choice.Capture);
@@ -773,7 +813,7 @@ public sealed class BarViewModel : ObservableObject
         }
         finally
         {
-            _busy = false;
+            finished.SetResult();
         }
     }
 

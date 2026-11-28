@@ -150,10 +150,12 @@ public sealed class App : Application
         services.AddSingleton<RecordingSoundStore>();
         services.AddSingleton(new RecentLinks(RecentLinks.DefaultPath(), settings.Recent));
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
-        services.AddSingleton<IRegionSelector>(sp =>
+        services.AddSingleton<LastActionStore>();
+        services.AddSingleton(sp => new AreaPicker(
             EnvironmentRegionSelector.FromEnvironment(Environment.GetEnvironmentVariable(EnvironmentRegionSelector.VariableName)) is { } fixedRegion
                 ? new EnvironmentRegionSelector(fixedRegion)
-                : new AvaloniaRegionSelector(owner, sp.GetService<IForegroundGrant>() ?? new NoForegroundGrant()));
+                : new AvaloniaRegionSelector(owner, sp.GetService<IForegroundGrant>() ?? new NoForegroundGrant())));
+        services.AddSingleton<IRegionSelector>(sp => sp.GetRequiredService<AreaPicker>());
         services.AddSingleton<IWebCaptureDialog>(sp => new WebCaptureDialog(
             sp.GetRequiredService<Core.IClipboard>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));

@@ -3,6 +3,7 @@ using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Settings;
+using NoMercy.Share.Core.Tests;
 
 namespace NoMercy.Share.App.Tests;
 
@@ -107,7 +108,10 @@ public sealed class BarHiddenTests
             // A captures folder under a file can never be written, so the folder question can be raised; nothing runs a capture or a share.
             File.WriteAllText(Path.Combine(root, "file"), "x");
             CaptureFiles files = new(new CaptureSettings { Folder = Path.Combine(root, "file", "Captures") }, "unused", () => DateTimeOffset.UnixEpoch, Path.Combine(root, "fallback"));
-            BarViewModel bar = new(null!, null!, files: files, folderAccess: new AlwaysOn());
+            // The bar hotkey starts an area screenshot; this one is canceled at once, as with Escape.
+            CaptureFlow capture = new(new FakeScreenCapture { Throws = new OperationCanceledException() }, new FakeCaptureHost(),
+                new CaptureSettings { HideDelayMilliseconds = 0 });
+            BarViewModel bar = new(capture, null!, files: files, folderAccess: new AlwaysOn());
             BarWindow window = new(bar, new BarPositionStore(new SettingsFile(Path.Combine(root, "position.json"))), new BarSettings());
             test(window, bar);
             window.Quit();

@@ -33,9 +33,18 @@ After a capture a second bar underneath offers **Copy image** (pictures only), *
 
 ![The bar after a capture, with the notice "Link copied" under it.](docs/images/bar-capture-done.png)
 
+## Repeat the last action
+
+`Win+Shift+S` shows the bar and starts what you started last: a screenshot or a recording of an area, a window or the full screen, or a web page capture. Before you have started anything, it is a screenshot of an area. NoMercy Share remembers it after a restart.
+
+- While the area picker is open, the bar stays above it. Click something else on the bar, or press another hotkey, and the picker closes and your new choice starts. Opening a menu closes the picker too.
+- Esc closes the picker and leaves the bar on screen.
+- A window or full screen recording does not start by itself. The record menu opens with it selected, and you press **Start**.
+- While you record, `Win+Shift+S` only shows the bar.
+
 ## Capture a region
 
-Press `Ctrl+PrintScreen`, or click **Screenshot** and then **Area**. (`Win+Shift+S` shows the bar, so you can pick.) The screen freezes and dims. Drag over the part you want, and the size shows beside the selection. Let go of the mouse button or press Enter to capture. Press Esc to cancel.
+Press `Ctrl+PrintScreen`, or click **Screenshot** and then **Area**. (`Win+Shift+S` does this too until you start something else; see [Repeat the last action](#repeat-the-last-action).) The screen freezes and dims. Drag over the part you want, and the size shows beside the selection. Let go of the mouse button or press Enter to capture. Press Esc to cancel.
 
 NoMercy Share takes over `Win+Shift+S` from the Snipping Tool. If you want Windows to have it back, clear that hotkey in [Settings](#settings).
 
@@ -115,7 +124,7 @@ The gear opens one window with four sections in the list on the left. Pick a sec
 | --- | --- |
 | Sharing | Where uploads go: **Cloudflare R2**, **S3-compatible** or **Discord**. See [Set up sharing](#set-up-sharing). |
 | Links | The default expiry: never, or 1, 7, 30 or 90 days. |
-| Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (show the bar, then pick what to capture), `Ctrl+PrintScreen` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
+| Hotkeys | Click a field and press the keys you want. The cross turns that hotkey off. The defaults are `Win+Shift+S` (show the bar and repeat the last action), `Ctrl+PrintScreen` (region), `PrintScreen` (full screen), `Alt+PrintScreen` (window) and `Shift+PrintScreen` (record). |
 | Recording | The largest picture size (720p up to 4K, or the original size), the largest file, the frame rate, the codec (H.264, VP9, HEVC or AV1), the encoder (the CPU, or your graphics card when it passes a test), the speed, and the two sound switches. |
 
 Your secret access key is stored in the Windows Credential Manager, never in a file. The box shows "Saved" afterwards and stays empty. Leave it empty and the stored key stays.

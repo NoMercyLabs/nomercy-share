@@ -54,5 +54,9 @@ public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner, IForegroundGra
         }
 
         overlays.ForEach(window => window.Show());
+        BarWindow? bar = owner() as BarWindow;
+        // An overlay that gets the focus comes to the front, so the bar goes back above it each time.
+        overlays.ForEach(window => window.Activated += (_, _) => bar?.StayAbovePicker());
+        bar?.StayAbovePicker();
     }
 }

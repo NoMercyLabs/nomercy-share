@@ -9,6 +9,9 @@ public sealed record BarSettings
 {
     public BarPosition? Position { get; init; }
 
+    /// <summary>What the bar hotkey starts again.</summary>
+    public Bar.LastAction LastAction { get; init; } = new();
+
     public int NoticeSeconds { get; init; } = ShareDefaults.NoticeSeconds;
 
     public double FirstOpenTopMargin { get; init; } = ShareDefaults.FirstOpenTopMargin;
