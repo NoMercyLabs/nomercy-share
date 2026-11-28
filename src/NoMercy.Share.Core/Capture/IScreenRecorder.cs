@@ -17,6 +17,9 @@ public interface IScreenRecorder
     /// <summary>Raised, on any thread, when the recording ends by itself instead of by a stop. The text says why. <see cref="IsRecording"/> is false by then.</summary>
     event EventHandler<string>? Failed;
 
+    /// <summary>Raised, on any thread, with the rectangle on the virtual screen when a recording of it starts, and with null when that recording ends in any way.</summary>
+    event EventHandler<ScreenRect?>? RecordedAreaChanged;
+
     Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>Ends the recording and returns the finished video file.</summary>

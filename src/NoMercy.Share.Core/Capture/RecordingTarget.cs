@@ -3,6 +3,10 @@ namespace NoMercy.Share.Core.Capture;
 /// <summary>What to record: one monitor (by its index) and a rectangle on it, with offsets from the monitor's own top-left corner, in physical pixels.</summary>
 public readonly record struct RecordingTarget(int MonitorIndex, int OffsetX, int OffsetY, int Width, int Height)
 {
+    /// <summary>The recorded rectangle on the virtual screen, from the same monitor list the target was made with.</summary>
+    public ScreenRect AreaOn(IReadOnlyList<ScreenRect> monitors) =>
+        new(monitors[MonitorIndex].X + OffsetX, monitors[MonitorIndex].Y + OffsetY, Width, Height);
+
     /// <summary>The monitor the region covers most, with the region cut at that monitor's edge. Desktop Duplication reads one monitor at a time.</summary>
     public static RecordingTarget For(ScreenRect region, IReadOnlyList<ScreenRect> monitors)
     {

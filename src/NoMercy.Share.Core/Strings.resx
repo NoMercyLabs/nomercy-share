@@ -105,6 +105,7 @@
   <data name="notice.clipboard" xml:space="preserve"><value>Copied to clipboard</value></data>
   <data name="notice.clipboard.local" xml:space="preserve"><value>Copied to clipboard. No share host is set up yet.</value></data>
   <data name="overlay.automation" xml:space="preserve"><value>Select a region of the screen</value></data>
+  <data name="border.automation" xml:space="preserve"><value>Recording border</value></data>
   <data name="overlay.size" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="notice.recording" xml:space="preserve"><value>Recording started</value></data>
   <data name="notice.recording.nomic" xml:space="preserve"><value>No microphone found; recording without it.</value></data>

@@ -42,6 +42,8 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 
     public event EventHandler<string>? Failed;
 
+    public event EventHandler<ScreenRect?>? RecordedAreaChanged;
+
     /// <summary>An area is dragged by the user, where Escape cancels; a window or full screen is taken as it is now.</summary>
     public async Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
@@ -80,6 +82,8 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
         }
 
         _recording = recording;
+        // Raised before the watch starts, so the null of an early death cannot come first.
+        RecordedAreaChanged?.Invoke(this, _target.AreaOn(monitors));
         _ = WatchAsync(recording, _rawPath);
     }
 
@@ -140,6 +144,7 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
             return; // StopAsync took the recording and reads the exit itself
         }
 
+        RecordedAreaChanged?.Invoke(this, null);
         string reason = recording.EndedByItself().Message;
         recording.Dispose();
         DeleteQuietly(raw);
@@ -163,6 +168,7 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
     public async Task<CaptureResult> StopAsync(CancellationToken cancellationToken = default)
     {
         FfmpegProcess recording = Interlocked.Exchange(ref _recording, null) ?? throw new InvalidOperationException("No recording is running.");
+        RecordedAreaChanged?.Invoke(this, null);
         string raw = _rawPath!;
         double seconds = _clock.Elapsed.TotalSeconds;
         RecordingSound? sound = _sound;

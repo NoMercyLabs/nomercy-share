@@ -68,6 +68,8 @@ Click the record button (or press `Shift+PrintScreen`, which also shows a hidden
 - **Window**: the rectangle of the window you were using, as it is when you press Start. The recording does not follow the window if you move it.
 - **Full screen**: the monitor your cursor is on.
 
+While you record, a colored border shows around what is being recorded. You see it, but it is not in the video, and your clicks go straight through it. It sits just outside the recorded rectangle. Where there is no room, as in a full screen recording, that side sits just inside the edge. Like the bar, it needs Windows 10 version 2004 or later to stay out of the video; without that, only the sides outside the rectangle show.
+
 **Microphone** and **Desktop audio** switch sound on or off. The bar shows a red dot and a running timer while it records.
 
 ![The bar while recording: the record button is highlighted with a red dot and the timer reads 01:23.](docs/images/bar-recording.png)

@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:NoMercy.Share.App"
+        x:Class="NoMercy.Share.App.RecordingBorderWindow"
+        Title="{local:Loc border.automation}" WindowDecorations="None" Topmost="True" ShowInTaskbar="False" ShowActivated="False"
+        CanResize="False" Focusable="False" IsHitTestVisible="False" WindowStartupLocation="Manual"
+        Background="Transparent" TransparencyLevelHint="Transparent"
+        AutomationProperties.Name="{local:Loc border.automation}">
+  <Canvas>
+    <Border x:Name="TopSide" Background="{DynamicResource Nm-Accent-Brush}" IsVisible="False" />
+    <Border x:Name="BottomSide" Background="{DynamicResource Nm-Accent-Brush}" IsVisible="False" />
+    <Border x:Name="LeftSide" Background="{DynamicResource Nm-Accent-Brush}" IsVisible="False" />
+    <Border x:Name="RightSide" Background="{DynamicResource Nm-Accent-Brush}" IsVisible="False" />
+  </Canvas>
+</Window>

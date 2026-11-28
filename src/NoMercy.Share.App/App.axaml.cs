@@ -54,6 +54,9 @@ public sealed class App : Application
             BarWindow window = new(services.GetRequiredService<BarViewModel>(), services.GetRequiredService<BarPositionStore>(), settings.Bar,
                 services.GetRequiredService<ICaptureExclusion>());
             _window = window;
+            _ = new RecordingBorderPresenter(services.GetRequiredService<IScreenRecorder>(),
+                () => [.. window.Screens.All.Select(screen => (new ScreenRect(screen.Bounds.X, screen.Bounds.Y, screen.Bounds.Width, screen.Bounds.Height), screen.Scaling))],
+                services.GetRequiredService<ICaptureExclusion>(), services.GetRequiredService<IInputPassThrough>());
             // The bar is not the main window: hiding it keeps the app on, and only Quit ends it.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             services.GetRequiredService<BarViewModel>().SettingsRequested += (_, _) => ShowSettings(services);

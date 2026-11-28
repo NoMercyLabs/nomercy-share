@@ -23,6 +23,17 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool SetWindowDisplayAffinity(nint window, uint affinity);
 
+    internal const int ExtendedStyle = -20;
+
+    /// <summary>WS_EX_TRANSPARENT with WS_EX_LAYERED passes the mouse to other programs; WS_EX_NOACTIVATE and WS_EX_TOOLWINDOW keep focus and the taskbar entry away.</summary>
+    internal const nint PassThroughStyles = 0x00000020 | 0x00080000 | 0x08000000 | 0x00000080;
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    internal static partial nint GetWindowLongPtr(nint window, int index);
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    internal static partial nint SetWindowLongPtr(nint window, int index, nint value);
+
     internal const uint GetAncestorRoot = 2;
 
     internal const uint MonitorDefaultToNearest = 2;

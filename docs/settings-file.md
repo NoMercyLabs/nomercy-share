@@ -33,7 +33,9 @@ How each recording target works. A recording reads one monitor, so a rectangle t
 | Window | The visible frame of the window a window screenshot would take, as it is at Start. The bar hides while it picks. The recording does not follow the window. |
 | Full screen | The monitor under the cursor. `Capture.FullScreenArea` does not change it. |
 
-The bar, its popups and its tooltips are excluded from every screenshot and recording (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 version 2004 or later). You still see them.
+The bar, its popups, its tooltips and the recording border are excluded from every screenshot and recording (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 version 2004 or later). You still see them.
+
+While a recording runs, a border 3 units thick shows 2 units outside the recorded rectangle, in the theme's accent color, scaled with the monitor it is on. A side with no room on that monitor lies just inside the rectangle; such a side shows only when the exclusion worked. These sizes are not settings.
 
 ## Hotkeys
 
