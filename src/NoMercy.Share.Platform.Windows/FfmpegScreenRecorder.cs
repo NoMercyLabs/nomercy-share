@@ -6,7 +6,7 @@ using NoMercy.Share.Core.Settings;
 namespace NoMercy.Share.Platform.Windows;
 
 /// <summary>
-/// Records a region of one monitor with ffmpeg's Desktop Duplication filter, then squeezes the file under the size cap.
+/// Records a region of one monitor with ffmpeg (Desktop Duplication, else GDI), then squeezes the file under the size cap.
 /// The sound switches in the settings decide whether system sound and the microphone are recorded to WAV files beside it.
 /// </summary>
 public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector selector, Func<RecordingSettings> current) : IScreenRecorder
@@ -60,31 +60,56 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
         _target = RecordingTarget.For(region, monitors);
         _rawPath = files.NewPath(RawExtension);
         _ffmpeg = ffmpeg;
-        FfmpegProcess recording = FfmpegProcess.Start(ffmpeg, FfmpegArguments.Record(_target, _settings.FrameRate, _rawPath, flushEachPacket: _settings.Audio.Any));
+        ScreenRect area = _target.AreaOn(monitors);
+        bool flush = _settings.Audio.Any;
+        FfmpegProcess recording = await GrabAsync(ffmpeg, await DesktopDuplicationWorksAsync(ffmpeg, cancellationToken)
+            ? FfmpegArguments.Record(_target, _settings.FrameRate, _rawPath, flush)
+            : FfmpegArguments.RecordWithGdi(area, _settings.FrameRate, _rawPath, flush));
+
+        _recording = recording;
+        // Raised before the watch starts, so the null of an early death cannot come first.
+        RecordedAreaChanged?.Invoke(this, area);
+        _ = WatchAsync(recording, _rawPath);
+    }
+
+    /// <summary>Desktop Duplication cannot start over Remote Desktop, among other places; the recording then uses GDI.</summary>
+    private async Task<bool> DesktopDuplicationWorksAsync(string ffmpeg, CancellationToken cancellationToken)
+    {
+        using FfmpegProcess probe = FfmpegProcess.Start(ffmpeg, FfmpegArguments.ProbeDesktopDuplication(_target, _settings.FrameRate));
+        bool works = await probe.WaitAsync(TimeSpan.FromSeconds(_settings.StopTimeoutSeconds), cancellationToken) == 0;
+        if (!works)
+        {
+            Trace.TraceWarning("Desktop Duplication did not start, recording with GDI: {0}", probe.LastLine);
+        }
+
+        return works;
+    }
+
+    /// <summary>Starts one grab with its sound; a grab that quits at once leaves no file and throws ffmpeg's reason.</summary>
+    private async Task<FfmpegProcess> GrabAsync(string ffmpeg, IReadOnlyList<string> arguments)
+    {
+        FfmpegProcess recording = FfmpegProcess.Start(ffmpeg, arguments);
         _clock = Stopwatch.StartNew();
         _sound = null;
         StartNotice = null;
         if (_settings.Audio.Any)
         {
-            long firstFrame = await FirstFrameAsync(recording, _rawPath);
+            long firstFrame = await FirstFrameAsync(recording, _rawPath!);
             _sound = RecordingSound.Start(_settings.Audio, () => files.NewPath(SoundExtension), firstFrame);
             StartNotice = _sound.Notice;
         }
 
-        if (await recording.ExitsWithinAsync(TimeSpan.FromMilliseconds(_settings.StartupCheckMilliseconds)))
+        if (!await recording.ExitsWithinAsync(TimeSpan.FromMilliseconds(_settings.StartupCheckMilliseconds)))
         {
-            using (recording)
-            {
-                DeleteQuietly(_rawPath);
-                await DiscardSoundAsync();
-                throw recording.EndedByItself();
-            }
+            return recording;
         }
 
-        _recording = recording;
-        // Raised before the watch starts, so the null of an early death cannot come first.
-        RecordedAreaChanged?.Invoke(this, _target.AreaOn(monitors));
-        _ = WatchAsync(recording, _rawPath);
+        using (recording)
+        {
+            DeleteQuietly(_rawPath!);
+            await DiscardSoundAsync();
+            throw recording.EndedByItself();
+        }
     }
 
     private async Task<ScreenRect> RegionOfAsync(CaptureKind source, CancellationToken cancellationToken)

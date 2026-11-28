@@ -217,12 +217,15 @@ public sealed class FfmpegScreenRecorderTests : IDisposable
     {
         Directory.CreateDirectory(_folder);
         string seen = Path.Combine(_folder, "arguments.txt");
-        FfmpegScreenRecorder recorder = FakeFfmpegRecorder(startupMilliseconds: 3000, script: $"echo %*> \"{seen}\"\r\nexit /b 2", region: null);
+        FfmpegScreenRecorder recorder = FakeFfmpegRecorder(startupMilliseconds: 3000, script: $"echo %*>> \"{seen}\"\r\nexit /b 2", region: null);
 
         // A cancelled region would throw OperationCanceledException; reaching ffmpeg proves the picker was never asked.
         await Assert.ThrowsAsync<RecordingException>(() => recorder.StartAsync(new RecordingOptions(Source: CaptureKind.FullScreen)));
 
-        Assert.Matches(@"offset_x=0:offset_y=0:video_size=\d{3,}x\d{3,}", File.ReadAllText(seen));
+        string[] runs = File.ReadAllLines(seen);
+        Assert.Matches(@"ddagrab=.*offset_x=0:offset_y=0:video_size=\d{3,}x\d{3,}", runs[0]);
+        // This ffmpeg fails the probe, so the recording itself falls back to GDI.
+        Assert.Matches(@"-f gdigrab .*-video_size \d{3,}x\d{3,} -i desktop", runs[1]);
     }
 
     /// <summary>A .cmd file stands in for ffmpeg. <c>%last%</c> in the script is the output path, the last argument.</summary>

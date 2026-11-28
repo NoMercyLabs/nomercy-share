@@ -20,11 +20,32 @@ public static class FfmpegArguments
 
     /// <summary>Records one monitor region with Desktop Duplication into a quick, near-lossless file. ffmpeg stops cleanly when it reads "q" on its input.</summary>
     public static IReadOnlyList<string> Record(RecordingTarget target, int frameRate, string outputPath, bool flushEachPacket = false) =>
+        [.. DesktopDuplication(target, frameRate), .. RecordOutput(outputPath, flushEachPacket)];
+
+    /// <summary>One frame of the same input into nothing: it exits with 0 only where Desktop Duplication can start.</summary>
+    public static IReadOnlyList<string> ProbeDesktopDuplication(RecordingTarget target, int frameRate) =>
+        [.. DesktopDuplication(target, frameRate), "-frames:v", "1", "-f", "null", "-"];
+
+    private static string[] DesktopDuplication(RecordingTarget target, int frameRate) =>
     [
         "-hide_banner", "-loglevel", QuietLog, "-nostats",
         "-f", "lavfi", "-i", string.Create(CultureInfo.InvariantCulture,
             $"ddagrab=output_idx={target.MonitorIndex}:framerate={frameRate}:draw_mouse=1:offset_x={target.OffsetX}:offset_y={target.OffsetY}:video_size={target.Width}x{target.Height}"),
-        "-vf", "hwdownload,format=bgra",
+        "-vf", "hwdownload,format=bgra"
+    ];
+
+    /// <summary>The same pass with the GDI grabber, for where Desktop Duplication cannot start, as over Remote Desktop.</summary>
+    public static IReadOnlyList<string> RecordWithGdi(ScreenRect area, int frameRate, string outputPath, bool flushEachPacket = false) =>
+    [
+        "-hide_banner", "-loglevel", QuietLog, "-nostats",
+        "-f", "gdigrab", "-framerate", frameRate.ToString(CultureInfo.InvariantCulture), "-draw_mouse", "1",
+        "-offset_x", area.X.ToString(CultureInfo.InvariantCulture), "-offset_y", area.Y.ToString(CultureInfo.InvariantCulture),
+        "-video_size", string.Create(CultureInfo.InvariantCulture, $"{area.Width}x{area.Height}"), "-i", "desktop",
+        .. RecordOutput(outputPath, flushEachPacket)
+    ];
+
+    private static string[] RecordOutput(string outputPath, bool flushEachPacket) =>
+    [
         "-c:v", "libx264", "-preset", RecordPreset, "-crf", RecordQuality,
         .. flushEachPacket ? (string[])["-flush_packets", "1"] : [],
         "-y", outputPath

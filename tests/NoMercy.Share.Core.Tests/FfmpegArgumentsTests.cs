@@ -22,6 +22,37 @@ public sealed class FfmpegArgumentsTests
     }
 
     [Fact]
+    public void TheFallbackRecordPassGrabsTheSameAreaOfTheDesktopWithGdi()
+    {
+        IReadOnlyList<string> args = FfmpegArguments.RecordWithGdi(new ScreenRect(-1820, 50, 320, 240), frameRate: 30, outputPath: "C:/caps/a.mkv", flushEachPacket: true);
+
+        Assert.Equal(
+        [
+            "-hide_banner", "-loglevel", "warning", "-nostats",
+            "-f", "gdigrab", "-framerate", "30", "-draw_mouse", "1", "-offset_x", "-1820", "-offset_y", "50", "-video_size", "320x240", "-i", "desktop",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "18",
+            "-flush_packets", "1",
+            "-y", "C:/caps/a.mkv"
+        ], args);
+    }
+
+    [Fact]
+    public void TheDesktopDuplicationProbeGrabsOneFrameOfTheSameInputAndWritesNoFile()
+    {
+        RecordingTarget target = new(MonitorIndex: 1, OffsetX: 100, OffsetY: 50, Width: 320, Height: 240);
+
+        IReadOnlyList<string> args = FfmpegArguments.ProbeDesktopDuplication(target, frameRate: 30);
+
+        Assert.Equal(
+        [
+            "-hide_banner", "-loglevel", "warning", "-nostats",
+            "-f", "lavfi", "-i", "ddagrab=output_idx=1:framerate=30:draw_mouse=1:offset_x=100:offset_y=50:video_size=320x240",
+            "-vf", "hwdownload,format=bgra",
+            "-frames:v", "1", "-f", "null", "-"
+        ], args);
+    }
+
+    [Fact]
     public void ARecordPassThatTimesTheSoundWritesEachPacketAtOnceSoTheFileShowsTheFirstFrame()
     {
         IReadOnlyList<string> args = FfmpegArguments.Record(new RecordingTarget(0, 0, 0, 2, 2), 30, "a.mkv", flushEachPacket: true);
