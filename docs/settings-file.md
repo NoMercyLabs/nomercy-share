@@ -27,12 +27,15 @@ How each button captures:
 
 | Setting | Default |
 | --- | --- |
-| `Hotkeys.Region` | `Win+Shift+S` |
+| `Hotkeys.Bar` (shows the bar) | `Win+Shift+S` |
+| `Hotkeys.Region` | `Ctrl+PrintScreen` |
 | `Hotkeys.FullScreen` | `PrintScreen` |
 | `Hotkeys.Window` | `Alt+PrintScreen` |
 | `Hotkeys.Record` | `Shift+PrintScreen` |
 
 An empty value turns that hotkey off. With `Win+Shift+S` set, NoMercy Share opens its own region capture instead of the Snipping Tool; clear the Region hotkey to give it back to Windows.
+
+`Bar.StartAtSignIn` (default on) starts NoMercy Share hidden when you sign in to Windows, so the hotkeys always work. Start NoMercy Share again to show the bar. The bar's cross hides it; **Quit NoMercy Share** in Settings ends the app. Off removes the sign-in start the next time the app starts.
 
 ## Recording
 

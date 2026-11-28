@@ -11,9 +11,11 @@
     <!-- Fixed under the content: Cancel and Save are bar pills, the accent only on focus; a failure that belongs to no field shows here, so scrolling never hides it. -->
     <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Share-Separator-Brush}" BorderThickness="0,1,0,0"
             Padding="{DynamicResource Nm-Space-3-Thickness}">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource Nm-Space-4}">
-        <TextBlock Classes="save-error" Text="{Binding SaveError}" VerticalAlignment="Center" />
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{DynamicResource Nm-Space-4}">
+        <!-- The bar's cross only hides the bar, so ending the app lives here. -->
+        <Button x:Name="QuitButton" Classes="footer" Content="{local:Loc settings.quit}" Command="{Binding QuitCommand}" />
+        <TextBlock Grid.Column="1" Classes="save-error" Text="{Binding SaveError}" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
           <Button Classes="footer" Content="{local:Loc settings.cancel}" Click="OnCancelClick" IsCancel="True" />
           <Button Classes="footer primary" Content="{local:Loc settings.save}" Click="OnSaveClick" IsDefault="True" />
         </StackPanel>

@@ -21,11 +21,25 @@ public sealed class HotkeySettingsTests : IDisposable
     {
         IReadOnlyDictionary<BarAction, string> chords = new ShareSettings().Hotkeys.Chords();
 
-        Assert.Equal("Win+Shift+S", chords[BarAction.Region]);
+        Assert.Equal("Win+Shift+S", chords[BarAction.Show]);
+        Assert.Equal("Ctrl+PrintScreen", chords[BarAction.Region]);
         Assert.Equal("PrintScreen", chords[BarAction.FullScreen]);
         Assert.Equal("Alt+PrintScreen", chords[BarAction.Window]);
         Assert.Equal("Shift+PrintScreen", chords[BarAction.Record]);
-        Assert.Equal(4, chords.Count);
+        Assert.Equal(5, chords.Count);
+    }
+
+    [Fact]
+    public void AFileFromBeforeTheBarHotkeyThatGaveWinShiftSToTheRegionNowOpensTheBarWithIt()
+    {
+        string path = Path.Combine(_folder, "settings.json");
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(path, JsonSerializer.Serialize(new { Hotkeys = new { Region = "Shift+Win+S" } }));
+
+        IReadOnlyDictionary<BarAction, string> chords = new SettingsFile(path).Load().Hotkeys.Chords();
+
+        Assert.Equal("Win+Shift+S", chords[BarAction.Show]);
+        Assert.Equal("Ctrl+PrintScreen", chords[BarAction.Region]);
     }
 
     [Fact]
@@ -45,13 +59,13 @@ public sealed class HotkeySettingsTests : IDisposable
     }
 
     [Fact]
-    public void AFileWithoutAHotkeysSectionGetsWinShiftSForRegion()
+    public void AFileWithoutAHotkeysSectionOpensTheBarWithWinShiftS()
     {
         string path = Path.Combine(_folder, "settings.json");
         Directory.CreateDirectory(_folder);
         File.WriteAllText(path, "{}");
 
-        Assert.Equal("Win+Shift+S", new SettingsFile(path).Load().Hotkeys.Chords()[BarAction.Region]);
+        Assert.Equal("Win+Shift+S", new SettingsFile(path).Load().Hotkeys.Chords()[BarAction.Show]);
     }
 
     [Fact]

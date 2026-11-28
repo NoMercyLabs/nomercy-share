@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows.Input;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
 using NoMercy.Share.Core.Discord;
@@ -18,7 +19,7 @@ public sealed class SettingsViewModel : ObservableObject
 
     private const string ValidText = "valid";
 
-    private static readonly BarAction[] HotkeyActions = [BarAction.Region, BarAction.FullScreen, BarAction.Window, BarAction.Record];
+    private static readonly BarAction[] HotkeyActions = [BarAction.Show, BarAction.Region, BarAction.FullScreen, BarAction.Window, BarAction.Record];
 
     private readonly SettingsFile _file;
     private readonly LiveSettings _live;
@@ -508,6 +509,15 @@ public sealed class SettingsViewModel : ObservableObject
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>The bar's cross only hides the bar; this ends the app. Unsaved changes are dropped, as with Cancel.</summary>
+    public ICommand QuitCommand => new BarCommand(_ =>
+    {
+        Cancel();
+        QuitRequested?.Invoke(this, EventArgs.Empty);
+    });
+
+    public event EventHandler? QuitRequested;
+
     /// <summary>A hotkey field got focus: recording starts, so the chords the shell would take (Win+Shift+S) reach this field.</summary>
     public void HotkeyFieldFocused(HotkeyRow row)
     {
@@ -749,6 +759,7 @@ public sealed class SettingsViewModel : ObservableObject
 
         return current with
         {
+            Bar = chosen.GetValueOrDefault(BarAction.Show, current.Bar),
             Region = chosen.GetValueOrDefault(BarAction.Region, current.Region),
             FullScreen = chosen.GetValueOrDefault(BarAction.FullScreen, current.FullScreen),
             Window = chosen.GetValueOrDefault(BarAction.Window, current.Window),

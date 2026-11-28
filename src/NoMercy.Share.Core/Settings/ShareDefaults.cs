@@ -118,7 +118,9 @@ public static class ShareDefaults
     public const int RecordingStartupCheckMilliseconds = 1000;
 
     /// <summary>The global hotkeys, chosen to be familiar to people who know ShareX. An empty value turns a hotkey off.</summary>
-    public const string HotkeyRegion = "Win+Shift+S";
+    public const string HotkeyBar = "Win+Shift+S";
+
+    public const string HotkeyRegion = "Ctrl+PrintScreen";
 
     public const string HotkeyFullScreen = "PrintScreen";
 
@@ -160,4 +162,12 @@ public static class ShareDefaults
 
     /// <summary>The gap between the screen's top edge and the bar the first time it opens.</summary>
     public const double FirstOpenTopMargin = 24;
+
+    public const bool StartAtSignIn = true;
+
+    /// <summary>The start argument for a start without the bar: the sign-in start uses it.</summary>
+    public const string BackgroundArgument = "--background";
+
+    /// <summary>The name the running copy is found by; a second start calls it instead of opening a second bar.</summary>
+    public const string SingleInstanceName = "NoMercyShare";
 }

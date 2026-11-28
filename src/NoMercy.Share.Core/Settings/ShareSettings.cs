@@ -12,6 +12,9 @@ public sealed record BarSettings
     public int NoticeSeconds { get; init; } = ShareDefaults.NoticeSeconds;
 
     public double FirstOpenTopMargin { get; init; } = ShareDefaults.FirstOpenTopMargin;
+
+    /// <summary>Start hidden at sign-in, so the hotkeys always work; starting the app again shows the bar.</summary>
+    public bool StartAtSignIn { get; init; } = ShareDefaults.StartAtSignIn;
 }
 
 /// <summary>Everything the user can set, as one file.</summary>

@@ -29,13 +29,21 @@ public sealed class SettingsFile(string path)
 
         try
         {
-            return JsonSerializer.Deserialize<ShareSettings>(File.ReadAllText(path), Json) ?? new ShareSettings();
+            return FreeTheBarChord(JsonSerializer.Deserialize<ShareSettings>(File.ReadAllText(path), Json) ?? new ShareSettings());
         }
         catch (JsonException)
         {
             return new ShareSettings();
         }
     }
+
+    /// <summary>Files from before the bar hotkey gave its chord to the region capture; the bar takes it and the region gets its default.</summary>
+    private static ShareSettings FreeTheBarChord(ShareSettings settings) =>
+        Hotkeys.HotkeyChord.TryParse(settings.Hotkeys.Bar, out Hotkeys.HotkeyChord? bar, out _)
+        && Hotkeys.HotkeyChord.TryParse(settings.Hotkeys.Region, out Hotkeys.HotkeyChord? region, out _)
+        && bar == region
+            ? settings with { Hotkeys = settings.Hotkeys with { Region = ShareDefaults.HotkeyRegion } }
+            : settings;
 
     public void Save(ShareSettings settings)
     {

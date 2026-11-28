@@ -87,7 +87,8 @@ public sealed class SettingsViewModelTests : IDisposable
         Assert.Equal(string.Empty, model.SecretAccessKey);
         Assert.Equal("Saved", model.SecretPlaceholder);
         Assert.Equal(7, model.SelectedExpiry.Days);
-        Assert.Equal("Win+Shift+S", model.Hotkeys.Single(row => row.Action == BarAction.Region).Chord);
+        Assert.Equal("Win+Shift+S", model.Hotkeys.Single(row => row.Action == BarAction.Show).Chord);
+        Assert.Equal("Show the bar", model.Hotkeys[0].Label);
         Assert.Equal("25", model.MaxSizeMegabytes);
         Assert.Equal("24", model.FrameRate);
         Assert.Equal("Links go to share.example.test", model.SharingStatus);
@@ -392,6 +393,24 @@ public sealed class SettingsViewModelTests : IDisposable
         Assert.Equal(string.Empty, _live.Current.Storage.Endpoint);
         Assert.DoesNotContain(Secret, model.SaveError);
     }
+
+    [Fact]
+    public void QuitWritesNothingClosesTheWindowAndAsksTheAppToEnd()
+    {
+        SettingsViewModel model = Open();
+        FillValid(model);
+        List<string> events = [];
+        model.CloseRequested += (_, _) => events.Add("close");
+        model.QuitRequested += (_, _) => events.Add("quit");
+
+        model.QuitCommand.Execute(null);
+
+        Assert.Equal(["close", "quit"], events);
+        Assert.False(File.Exists(SettingsFile.DefaultPath(_folder)));
+    }
+
+    [Fact]
+    public void TheAppStartsAtSignInByDefault() => Assert.True(new ShareSettings().Bar.StartAtSignIn);
 
     [Fact]
     public void CancelWritesNothingAndClosesTheWindow()

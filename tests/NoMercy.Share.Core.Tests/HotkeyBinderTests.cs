@@ -27,7 +27,8 @@ public sealed class HotkeyBinderTests
     {
         Binder().Start();
 
-        Assert.Equal(HotkeyChord.Parse("Win+Shift+S"), _hotkeys.Registered[BarAction.Region]);
+        Assert.Equal(HotkeyChord.Parse("Win+Shift+S"), _hotkeys.Registered[BarAction.Show]);
+        Assert.Equal(HotkeyChord.Parse("Ctrl+PrintScreen"), _hotkeys.Registered[BarAction.Region]);
         Assert.Equal(HotkeyChord.Parse("PrintScreen"), _hotkeys.Registered[BarAction.FullScreen]);
         Assert.Equal(HotkeyChord.Parse("Alt+PrintScreen"), _hotkeys.Registered[BarAction.Window]);
         Assert.Equal(HotkeyChord.Parse("Shift+PrintScreen"), _hotkeys.Registered[BarAction.Record]);
@@ -49,7 +50,20 @@ public sealed class HotkeyBinderTests
         Binder(new HotkeySettings { Record = "" }).Start();
 
         Assert.False(_hotkeys.Registered.ContainsKey(BarAction.Record));
-        Assert.Equal(3, _hotkeys.Registered.Count);
+        Assert.Equal(4, _hotkeys.Registered.Count);
+    }
+
+    [Fact]
+    public void TheBarHotkeyAsksForTheBarAndCapturesNothing()
+    {
+        int asked = 0;
+        _bar.ShowRequested += (_, _) => asked++;
+        Binder().Start();
+
+        _hotkeys.Press(BarAction.Show);
+
+        Assert.Equal(1, asked);
+        Assert.Empty(_screen.Calls);
     }
 
     [Fact]
@@ -72,7 +86,7 @@ public sealed class HotkeyBinderTests
         Binder().Start();
 
         Assert.Equal("Hotkey Win+Shift+S is in use by another app", _bar.Notice);
-        Assert.Equal(4, _hotkeys.Registered.Count);
+        Assert.Equal(5, _hotkeys.Registered.Count);
     }
 
     [Fact]
@@ -92,7 +106,7 @@ public sealed class HotkeyBinderTests
 
         Assert.False(_hotkeys.Registered.ContainsKey(BarAction.Window));
         Assert.Contains("Ctrl+Banana", _bar.Notice);
-        Assert.Equal(3, _hotkeys.Registered.Count);
+        Assert.Equal(4, _hotkeys.Registered.Count);
     }
 
     [Fact]

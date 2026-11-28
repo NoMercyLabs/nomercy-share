@@ -67,6 +67,11 @@ public sealed class BarViewModel : ObservableObject
 
         _actions = new Dictionary<BarAction, Func<CancellationToken, Task>>
         {
+            [BarAction.Show] = _ =>
+            {
+                ShowRequested?.Invoke(this, EventArgs.Empty);
+                return Task.CompletedTask;
+            },
             [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
             [BarAction.Window] = token => CaptureAsync(CaptureKind.Window, token),
             [BarAction.FullScreen] = token => CaptureAsync(CaptureKind.FullScreen, token),
@@ -255,6 +260,9 @@ public sealed class BarViewModel : ObservableObject
     public void ClearNotice() => Notice = null;
 
     public void CloseRecent() => IsRecentOpen = false;
+
+    /// <summary>The user wants the bar on screen, to pick what to capture.</summary>
+    public event EventHandler? ShowRequested;
 
     /// <summary>Shows text the caller made, such as the hotkeys that could not be registered.</summary>
     public void ShowMessage(string text) => Notice = text;

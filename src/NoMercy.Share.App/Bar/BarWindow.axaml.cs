@@ -22,6 +22,54 @@ public partial class BarWindow : Window
     private readonly DispatcherTimer _elapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private bool _placed;
 
+    /// <summary>True while the user wants the bar on screen; otherwise it shows only while a notice, a question or a recording needs it.</summary>
+    private bool _called;
+
+    private bool _quitting;
+
+    public bool IsClosed { get; private set; }
+
+    /// <summary>The user called the bar: it stays until the cross.</summary>
+    public void Summon()
+    {
+        _called = true;
+        Show();
+    }
+
+    /// <summary>The cross: the bar goes away and the app, with its hotkeys, stays on.</summary>
+    public void Dismiss()
+    {
+        _called = false;
+        ShowWhileNeeded();
+    }
+
+    public void Quit()
+    {
+        _quitting = true;
+        Close();
+    }
+
+    /// <summary>Hides the bar before a picture; true when it was on screen, so the capture puts it back.</summary>
+    public bool HideForCapture()
+    {
+        bool shown = IsVisible;
+        Hide();
+        return shown;
+    }
+
+    private void ShowWhileNeeded()
+    {
+        bool needed = _called || DataContext is BarViewModel bar && (bar.Notice is not null || bar.Ask is not null || bar.IsRecording);
+        if (needed && !IsVisible)
+        {
+            Show();
+        }
+        else if (!needed && IsVisible)
+        {
+            Hide();
+        }
+    }
+
     public BarWindow()
     {
         InitializeComponent();
@@ -40,7 +88,18 @@ public partial class BarWindow : Window
         DataContext = viewModel;
         _store = store;
         _settings = settings;
-        viewModel.CloseRequested += (_, _) => Close();
+        viewModel.CloseRequested += (_, _) => Dismiss();
+        viewModel.ShowRequested += (_, _) => Summon();
+        Closing += (_, e) =>
+        {
+            // Alt+F4 or a close from code only hides the bar; Quit, sign-out and app shutdown really close it.
+            if (!_quitting && e.CloseReason is WindowCloseReason.WindowClosing or WindowCloseReason.Undefined)
+            {
+                e.Cancel = true;
+                Dismiss();
+            }
+        };
+        Closed += (_, _) => IsClosed = true;
         viewModel.PropertyChanged += OnViewModelChanged;
         Opened += (_, _) => Place();
         PositionChanged += (_, _) =>
@@ -114,6 +173,11 @@ public partial class BarWindow : Window
             _noticeTimer.Stop();
             _noticeTimer.Interval = TimeSpan.FromSeconds(_settings.NoticeSeconds);
             _noticeTimer.Start();
+        }
+
+        if (e.PropertyName is nameof(BarViewModel.Notice) or nameof(BarViewModel.Ask) or nameof(BarViewModel.IsRecording))
+        {
+            ShowWhileNeeded();
         }
     }
 }

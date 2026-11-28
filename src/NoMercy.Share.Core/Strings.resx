@@ -48,6 +48,7 @@
   <data name="settings.expiry.never" xml:space="preserve"><value>Never</value></data>
   <data name="settings.expiry.day" xml:space="preserve"><value>{0} day</value></data>
   <data name="settings.expiry.days" xml:space="preserve"><value>{0} days</value></data>
+  <data name="hotkey.showbar" xml:space="preserve"><value>Show the bar</value></data>
   <data name="settings.hotkey.off" xml:space="preserve"><value>Off</value></data>
   <data name="settings.hotkey.listening" xml:space="preserve"><value>Press the new keys</value></data>
   <data name="settings.hotkey.clear" xml:space="preserve"><value>Turn off</value></data>
@@ -112,6 +113,7 @@
   <data name="ask.folder" xml:space="preserve"><value>Windows blocks NoMercy Share from saving in {0}. Allow the app?</value></data>
   <data name="ask.allow" xml:space="preserve"><value>Allow</value></data>
   <data name="ask.notnow" xml:space="preserve"><value>Not now</value></data>
+  <data name="settings.quit" xml:space="preserve"><value>Quit NoMercy Share</value></data>
   <data name="ask.ffmpeg" xml:space="preserve"><value>Screen recording needs FFmpeg. Download NoMercy FFmpeg (about 300 MB)?</value></data>
   <data name="ask.download" xml:space="preserve"><value>Download</value></data>
   <data name="notice.ffmpeg.progress" xml:space="preserve"><value>Downloading FFmpeg… {0}%</value></data>

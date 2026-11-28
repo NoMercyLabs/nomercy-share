@@ -21,6 +21,7 @@ public sealed class HotkeyRow(BarAction action, string chord) : ObservableObject
     /// <summary>The same words as the bar's tooltip for this action.</summary>
     public string Label => Strings.Get(Action switch
     {
+        BarAction.Show => "hotkey.showbar",
         BarAction.Region => "bar.region",
         BarAction.Window => "bar.window",
         BarAction.FullScreen => "bar.fullscreen",
