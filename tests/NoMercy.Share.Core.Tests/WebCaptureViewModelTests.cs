@@ -25,6 +25,34 @@ public sealed class WebCaptureViewModelTests
     }
 
     [Fact]
+    public void SixWidthsInOrderWithDesktopPicked()
+    {
+        WebCaptureViewModel model = Model();
+
+        Assert.Equal(
+            [("Phone", 390), ("Tablet", 834), ("Desktop", 1280), ("FullHd", 1920), ("QuadHd", 2560), ("UltraHd", 3840)],
+            model.Devices.Select(device => (device.Device.ToString(), device.Width)));
+        Assert.Equal(("Desktop", 1280), (model.SelectedDevice.Device.ToString(), model.SelectedDevice.Width));
+    }
+
+    [Fact]
+    public async Task EveryChoicePassesItsDeviceToTheCapture()
+    {
+        FakeWebPageCapture capture = new();
+        WebCaptureViewModel model = Model(capture);
+        model.Address = "https://example.test/";
+
+        foreach (WebDeviceChoice choice in model.Devices)
+        {
+            model.SelectedDevice = choice;
+            await model.CaptureAsync();
+        }
+
+        Assert.Equal(6, capture.Requests.Count);
+        Assert.Equal(model.Devices.Select(device => device.Device), capture.Requests.Select(request => request.Device));
+    }
+
+    [Fact]
     public void TheSelectorShowsOnlyForOneElement()
     {
         WebCaptureViewModel model = Model();

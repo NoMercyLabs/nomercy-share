@@ -82,6 +82,41 @@ public sealed class WebCaptureWindowRenderTests
     });
 
     [Fact]
+    public void SixShortPillsFitTheSameWindowAndNameTheirPixelWidth() => WithWindow((window, _, _) =>
+    {
+        window.UpdateLayout();
+        ListBoxItem[] pills = [.. Row(window, "Width").GetVisualDescendants().OfType<ListBoxItem>()];
+
+        Assert.Equal(528, window.ClientSize.Width);
+        Assert.Equal(
+            ["Phone", "Tablet", "Desktop", "1080p", "1440p", "4K"],
+            pills.Select(pill => pill.GetVisualDescendants().OfType<TextBlock>().Single().Text));
+        string[] full = ["Phone (390 px)", "Tablet (834 px)", "Desktop (1280 px)", "1080p (1920 px)", "1440p (2560 px)", "4K (3840 px)"];
+        Assert.Equal(full, pills.Select(AutomationProperties.GetName));
+        Assert.Equal(full, pills.Select(pill => ToolTip.GetTip(pill) as string));
+        Assert.All(pills, pill => Assert.True(pill.IsEffectivelyVisible && Inside(pill, window), $"{AutomationProperties.GetName(pill)} is not wholly in the window"));
+        AssertRowsAndTexts(window);
+        Render(window, "web-widths.png");
+    });
+
+    [Fact]
+    public void TheArrowKeysMoveThroughAllSixWidths() => WithWindow((window, model, _) =>
+    {
+        Pill(window, "Width", "Desktop (1280 px)").Focus(NavigationMethod.Tab);
+        Press(window, PhysicalKey.ArrowLeft);
+        Press(window, PhysicalKey.ArrowLeft);
+
+        List<int> reached = [model.SelectedDevice.Width];
+        for (int step = 0; step < 5; step++)
+        {
+            Press(window, PhysicalKey.ArrowRight);
+            reached.Add(model.SelectedDevice.Width);
+        }
+
+        Assert.Equal([390, 834, 1280, 1920, 2560, 3840], reached);
+    });
+
+    [Fact]
     public void TabReachesEveryControlAndArrowsMoveInsideARow() => WithWindow((window, model, _) =>
     {
         Assert.Equal("Address", FocusedName(window));
@@ -192,7 +227,7 @@ public sealed class WebCaptureWindowRenderTests
     {
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
-        foreach ((string row, int count) in new[] { ("Mode", 3), ("Width", 2) })
+        foreach ((string row, int count) in new[] { ("Mode", 3), ("Width", 6) })
         {
             ListBoxItem[] pills = [.. Row(window, row).GetVisualDescendants().OfType<ListBoxItem>()];
             Assert.Equal(count, pills.Length);

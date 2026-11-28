@@ -21,6 +21,14 @@ public sealed class WebBrowserFactAttribute : FactAttribute
     }
 }
 
+public sealed class WebBrowserTheoryAttribute : TheoryAttribute
+{
+    public WebBrowserTheoryAttribute()
+    {
+        Skip = new WebBrowserFactAttribute().Skip;
+    }
+}
+
 /// <summary>Captures a made-up page served from 127.0.0.1 with a real headless browser: 1280 wide, 3000 tall, a red #card of 300x200 at y=1500.</summary>
 public sealed class CdpWebPageCaptureTests : IDisposable
 {
@@ -99,6 +107,41 @@ public sealed class CdpWebPageCaptureTests : IDisposable
 
         Assert.Equal((780, 1600), Size(result));
         AssertBrowserGone();
+    }
+
+    [WebBrowserTheory]
+    [InlineData("Tablet", 834)]
+    [InlineData("FullHd", 1920)]
+    [InlineData("QuadHd", 2560)]
+    [InlineData("UltraHd", 3840)]
+    public async Task AnAddedWidthIsCapturedAtTwiceTheScale(string name, int width)
+    {
+        CaptureResult result = await _capture.CaptureAsync(new WebCaptureRequest(_address, WebCaptureKind.Viewport, Device: Device(name)));
+
+        Assert.Equal((width * 2, 1600), Size(result));
+        AssertBrowserGone();
+    }
+
+    /// <summary>A page without a viewport tag is laid out 980 wide on a touch device, and at the chosen width on a desktop.</summary>
+    [WebBrowserTheory]
+    [InlineData("Phone", 980)]
+    [InlineData("Tablet", 980)]
+    [InlineData("Desktop", 1280)]
+    [InlineData("FullHd", 1920)]
+    [InlineData("QuadHd", 2560)]
+    [InlineData("UltraHd", 3840)]
+    public async Task OnlyPhoneAndTabletAreTouchDevices(string name, int layoutWidth)
+    {
+        CaptureResult result = await _capture.CaptureAsync(new WebCaptureRequest(_address, WebCaptureKind.Element, "html", Device(name)));
+
+        Assert.Equal(layoutWidth * 2, Size(result).Width);
+        AssertBrowserGone();
+    }
+
+    private static WebCaptureDevice Device(string name)
+    {
+        Assert.True(Enum.TryParse(name, out WebCaptureDevice device), $"there is no {name} width");
+        return device;
     }
 
     [WebBrowserFact]
