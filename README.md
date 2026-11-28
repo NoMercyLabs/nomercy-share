@@ -23,7 +23,7 @@ Until sharing is set up, nothing is uploaded. Every capture is saved in a `NoMer
 
 The bar floats above your other windows. Drag it by the handle on the left edge and it remembers where you left it. Every button has a tooltip, and Tab and Enter work if you prefer the keyboard.
 
-The bar is one row. From left to right: the handle, then **Screenshot**, **Record the screen** and **Capture a web page**, the buttons of the picked one, then **Recent links**, **Settings** and **Close**. The buttons are icons, and the tooltip names each one; only **Start** has text.
+A click in another program hides the bar, unless a capture is still going on: the area picker, a recording, the web page options, an upload, or a picture that waits for **copy image** or **copy link**. The bar is one row. From left to right: the handle, then **Screenshot**, **Record the screen** and **Capture a web page**, the buttons of the picked one, then **Recent links**, **Settings** and **Close**. The buttons are icons, and the tooltip names each one; only **Start** has text.
 
 The first three pick what you want to do, and the row grows sideways to fit it:
 

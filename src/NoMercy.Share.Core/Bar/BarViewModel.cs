@@ -392,6 +392,9 @@ public sealed class BarViewModel : ObservableObject
 
     public bool IsRecording => _recorder?.IsRecording ?? false;
 
+    /// <summary>True while a bar action runs (area picker, picture, web panel, upload) or a recording does.</summary>
+    public bool HasActiveCapture => !_running.IsCompleted || IsRecording;
+
     /// <summary>The tooltip and screen-reader name of the record button: start, or stop while recording.</summary>
     public string RecordLabel => Strings.Get(IsRecording ? "bar.record.stop" : "bar.record");
 

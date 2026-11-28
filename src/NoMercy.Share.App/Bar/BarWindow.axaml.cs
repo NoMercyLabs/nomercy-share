@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Platform;
@@ -37,13 +38,27 @@ public partial class BarWindow : Window
 
     public bool IsClosed { get; private set; }
 
+    /// <summary>True while the area picker is open; its overlays take the focus, which is not a click outside.</summary>
+    internal bool IsPickingArea { get; set; }
+
     /// <summary>The user called the bar: it stays until the cross.</summary>
     public void Summon()
     {
         _called = true;
         Show();
         MoveToPointerScreen();
+        Activate(); // only a window that had the focus can notice a click somewhere else
     }
+
+    /// <summary>The focus moving to another window of this app, such as Settings, is not a click outside.</summary>
+    private void OnDeactivated(object? sender, EventArgs e) => Dispatcher.UIThread.Post(() =>
+    {
+        // Hiding for a picture also takes the focus away.
+        if (IsVisible && !IsActive && !IsPickingArea && !(Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime app && app.Windows.Any(window => window.IsActive)))
+        {
+            ClickedOutside();
+        }
+    });
 
     /// <summary>The cross: the bar goes away and the app, with its hotkeys, stays on.</summary>
     public void Dismiss()
@@ -53,6 +68,15 @@ public partial class BarWindow : Window
         (DataContext as BarViewModel)?.ReturnToLastMode();
         _called = false;
         ShowWhileNeeded();
+    }
+
+    /// <summary>The user went to another program: the bar goes away unless a capture is still going on.</summary>
+    public void ClickedOutside()
+    {
+        if (DataContext is not BarViewModel { HasActiveCapture: true })
+        {
+            Dismiss();
+        }
     }
 
     public void Quit()
@@ -198,6 +222,7 @@ public partial class BarWindow : Window
             }
         };
         SizeChanged += (_, _) => FitToScreen();
+        Deactivated += OnDeactivated;
         Closing += (_, _) => SavePosition();
     }
 

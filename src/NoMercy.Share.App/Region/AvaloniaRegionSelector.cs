@@ -17,7 +17,11 @@ public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner, IForegroundGra
     {
         TaskCompletionSource<ScreenRect?> done = new(TaskCreationOptions.RunContinuationsAsynchronously);
         List<RegionOverlayWindow> overlays = [];
-        await Dispatcher.UIThread.InvokeAsync(() => Open(frozen, overlays, done));
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            SetPicking(true);
+            Open(frozen, overlays, done);
+        });
         await using CancellationTokenRegistration registration = cancellationToken.Register(() => done.TrySetResult(null));
         try
         {
@@ -25,7 +29,19 @@ public sealed class AvaloniaRegionSelector(Func<TopLevel?> owner, IForegroundGra
         }
         finally
         {
-            await Dispatcher.UIThread.InvokeAsync(() => overlays.ForEach(window => window.Close()));
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                overlays.ForEach(window => window.Close());
+                SetPicking(false);
+            });
+        }
+    }
+
+    private void SetPicking(bool picking)
+    {
+        if (owner() is BarWindow bar)
+        {
+            bar.IsPickingArea = picking;
         }
     }
 

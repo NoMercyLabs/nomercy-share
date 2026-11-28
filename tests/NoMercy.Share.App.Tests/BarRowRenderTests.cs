@@ -153,6 +153,53 @@ public sealed class BarRowRenderTests
     }));
 
     [Fact]
+    public void AClickOutsideHidesAnIdleBar() => HeadlessApp.Run(() => WithBar((window, _) =>
+    {
+        window.ClickedOutside();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(window.IsVisible);
+    }));
+
+    [Fact]
+    public void AClickOutsideLeavesTheBarWhileItsWebPanelWaits() => HeadlessApp.Run(() => WithBar((window, bar) =>
+    {
+        _ = bar.RunAsync(BarAction.WebPage);
+        Dispatcher.UIThread.RunJobs();
+
+        window.ClickedOutside();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(window.IsVisible);
+        Assert.NotNull(bar.WebPanel);
+    }));
+
+    [Fact]
+    public void AClickOutsideLeavesTheBarWhileItRecords() => HeadlessApp.Run(() => WithBar((window, bar) =>
+    {
+        Pump(bar.RunAsync(BarAction.Record));
+        Pump(bar.StartRecordingAsync());
+        bar.ClearNotice();
+
+        window.ClickedOutside();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(window.IsVisible);
+    }));
+
+    [Fact]
+    public void AClickOutsideLeavesACaptureThatWaitsForCopyOrLink() => HeadlessApp.Run(() => WithBar((window, bar) =>
+    {
+        Pump(bar.RunAsync(BarAction.Region));
+
+        window.ClickedOutside();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotNull(bar.Choice);
+        Assert.True(window.IsVisible);
+    }));
+
+    [Fact]
     public void EscapeOnTheBarHidesIt() => HeadlessApp.Run(() => WithBar((window, _) =>
     {
         window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
