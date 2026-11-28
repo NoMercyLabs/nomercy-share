@@ -34,7 +34,7 @@ node tools/nm-icons/emit-avalonia-icons.mjs <moooom icons folder> src/NoMercy.Sh
 
 ## Screenshots
 
-`dotnet run --project tools/NoMercy.Share.Screenshots -- <folder>` renders the bar, the region overlay, the recent list, Settings and the web capture window headless, in the dark and light themes, with made-up content. The pictures in `docs/images` come from those renders and from headless Chrome runs of the extension and the share page on a made-up local page. Keep every capture free of real names, paths, addresses and keys.
+`dotnet run --project tools/NoMercy.Share.Screenshots -- <folder>` renders the bar, the region overlay, the recent list, Settings and the bar with its web page options headless, in the dark and light themes, with made-up content. The pictures in `docs/images` come from those renders and from headless Chrome runs of the extension and the share page on a made-up local page. Keep every capture free of real names, paths, addresses and keys.
 
 ## Share page host
 
