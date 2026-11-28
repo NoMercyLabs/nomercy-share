@@ -275,6 +275,33 @@ public sealed class WebCapturePanelRenderTests
     });
 
     /// <summary>The bar with its web panel opened by the globe, an https address on the clipboard.</summary>
+    [Fact]
+    public void ABarAtTheBottomOfTheScreenMovesUpForThePanelAndBackAfterIt() => WithWindow((window, _, _, bar) =>
+    {
+        bar.Escape();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        PixelRect area = window.Screens.Primary!.WorkingArea;
+        PixelPoint low = new(area.X + 20, area.Bottom - (int)Math.Ceiling(window.Bounds.Height * window.RenderScaling));
+        window.Position = low;
+        Dispatcher.UIThread.RunJobs();
+
+        _ = bar.RunAsync(BarAction.WebPage);
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(window.Position.Y + window.Bounds.Height * window.RenderScaling <= area.Bottom + 0.5,
+            $"the panel ends below the screen: top {window.Position.Y}, height {window.Bounds.Height}, screen bottom {area.Bottom}");
+
+        bar.Escape();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(low, window.Position);
+    });
+
     private static void WithWindow(Action<BarWindow, WebCaptureViewModel, FakeWebPageCapture, BarViewModel> test, IWebPageCapture? web = null) =>
         HeadlessApp.Run(() =>
         {

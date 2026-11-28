@@ -114,9 +114,9 @@ public sealed class BarViewModelLastActionTests : IDisposable
     [Fact]
     public async Task TheHotkeyOpensTheWebPageCaptureWhenThatWasLast()
     {
-        await Done(Bar().RunAsync(BarAction.WebPage));
+        await Done(Bar().CaptureWebPageAsync());
 
-        await Done(Bar().RunAsync(BarAction.Show));
+        await Done(Bar().CaptureWebPageAsync(BarAction.Show));
 
         Assert.Equal(2, _web.Requests.Count);
         Assert.Equal(LastActionTask.WebPage, Store().Load().Task);

@@ -48,6 +48,8 @@ public partial class BarWindow : Window
     /// <summary>The cross: the bar goes away and the app, with its hotkeys, stays on.</summary>
     public void Dismiss()
     {
+        // An open web panel would otherwise stay open on a hidden bar and swallow the next call.
+        (DataContext as BarViewModel)?.WebPanel?.Cancel();
         (DataContext as BarViewModel)?.ReturnToLastMode();
         _called = false;
         ShowWhileNeeded();
@@ -301,7 +303,13 @@ public partial class BarWindow : Window
             }
         }
 
-        if (e.PropertyName == nameof(BarViewModel.IsRecording) && DataContext is BarViewModel bar)
+        // The bar does not take the focus when shown, and the panel's address field is typed in.
+        if (e.PropertyName == nameof(BarViewModel.WebPanel) && DataContext is BarViewModel { WebPanel: not null })
+        {
+            Activate();
+        }
+
+        if (e.PropertyName == nameof(BarViewModel.IsRecording) &&DataContext is BarViewModel bar)
         {
             _elapsedTimer.IsEnabled = bar.IsRecording;
         }

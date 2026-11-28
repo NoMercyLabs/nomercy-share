@@ -51,16 +51,6 @@ public sealed class BarViewModelTests
     }
 
     [Fact]
-    public async Task TheWebPageButtonAsksTheWebCaptureForAFullPageOfTheOpenBrowserPage()
-    {
-        await Bar().RunAsync(BarAction.WebPage);
-
-        WebCaptureRequest request = Assert.Single(_web.Requests);
-        Assert.Null(request.Page);
-        Assert.Equal(WebCaptureKind.FullPage, request.Kind);
-    }
-
-    [Fact]
     public async Task TheRecordButtonStartsAndThenStopsAndSharesTheVideo()
     {
         BarViewModel bar = Bar();

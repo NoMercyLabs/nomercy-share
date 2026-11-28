@@ -15,7 +15,6 @@ public sealed class BarViewModel : ObservableObject
     private readonly ShareFlow _flow;
     private readonly IScreenRecorder? _recorder;
     private readonly IWebPageCapture? _web;
-    private readonly IWebCaptureDialog? _webDialog;
     private readonly Func<DateTimeOffset> _clock;
     private readonly IUrlOpener? _opener;
     private readonly IClipboard? _clipboard;
@@ -33,7 +32,7 @@ public sealed class BarViewModel : ObservableObject
     private CaptureChoice? _choice;
     private bool _accessAskDismissed;
     private bool _downloading;
-    private CancellationTokenSource? _openWebDialog;
+    private CancellationTokenSource? _openWebPanel;
     private readonly Dictionary<BarAction, Func<CancellationToken, Task>> _actions;
     private string? _notice;
     private bool _isRecentOpen;
@@ -48,7 +47,6 @@ public sealed class BarViewModel : ObservableObject
         RecentLinks? recent = null,
         IUrlOpener? opener = null,
         IClipboard? clipboard = null,
-        IWebCaptureDialog? webDialog = null,
         CaptureFiles? files = null,
         IFolderAccess? folderAccess = null,
         IFfmpegInstall? ffmpeg = null,
@@ -83,7 +81,6 @@ public sealed class BarViewModel : ObservableObject
         }
 
         _ffmpeg = ffmpeg;
-        _webDialog = webDialog;
         _files = files;
         _folderAccess = folderAccess;
         _capture = capture;
@@ -206,9 +203,10 @@ public sealed class BarViewModel : ObservableObject
         _ => BarMode.Screenshot
     };
 
-    /// <summary>Escape on the bar closes the recent list, else cancels a waiting pick, else hides the bar.</summary>
+    /// <summary>Escape closes the recent list, else a waiting pick or the web panel (back to screenshot mode), else hides the bar.</summary>
     public void Escape()
     {
+        bool webPanel = WebPanel is not null;
         if (IsRecentOpen)
         {
             CloseRecent();
@@ -216,6 +214,10 @@ public sealed class BarViewModel : ObservableObject
         else if (!CancelWhatWaitsForTheUser())
         {
             CloseRequested?.Invoke(this, EventArgs.Empty);
+        }
+        else if (webPanel)
+        {
+            Row.Mode = BarMode.Screenshot;
         }
     }
 
@@ -326,11 +328,6 @@ public sealed class BarViewModel : ObservableObject
         }
     }
 
-    private sealed class BarProgress(Action<double> report) : IProgress<double>
-    {
-        public void Report(double value) => report(value);
-    }
-
     /// <summary>Runs the system's allow request, then says whether captures save to the folder again.</summary>
     public async Task AllowAccessAsync(CancellationToken cancellationToken = default)
     {
@@ -379,7 +376,8 @@ public sealed class BarViewModel : ObservableObject
         }
     }
 
-    public WebCaptureViewModel? WebPanel => null;
+    /// <summary>The web options open under the bar, or null.</summary>
+    public WebCaptureViewModel? WebPanel { get; private set => Set(ref field, value); }
 
     /// <summary>The links as of the last time the list opened.</summary>
     public RecentList Recent { get; }
@@ -641,27 +639,26 @@ public sealed class BarViewModel : ObservableObject
 
         Row.Mode = BarMode.Web;
         _lastAction?.Save(new LastAction(LastActionTask.WebPage));
-        CaptureResult picture = _webDialog is null
-            ? await _web.CaptureAsync(new WebCaptureRequest(), cancellationToken)
-            : await RunWebDialogAsync(_webDialog, _web, cancellationToken);
-        await ShareAsync(picture, cancellationToken);
+        await ShareAsync(await RunWebPanelAsync(_web, cancellationToken), cancellationToken);
     }
 
-    private async Task<CaptureResult> RunWebDialogAsync(IWebCaptureDialog dialog, IWebPageCapture web, CancellationToken cancellationToken)
+    private async Task<CaptureResult> RunWebPanelAsync(IWebPageCapture web, CancellationToken cancellationToken)
     {
         using CancellationTokenSource open = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _openWebDialog = open;
+        _openWebPanel = open;
         try
         {
-            return await dialog.RunAsync(web, open.Token);
+            WebPanel = await WebCaptureViewModel.OpenAsync(web, _live?.Current.WebCapture ?? new WebCaptureSettings(), _clipboard, open.Token);
+            return await WebPanel.WaitForResultAsync(open.Token);
         }
         finally
         {
-            _openWebDialog = null;
+            WebPanel = null;
+            _openWebPanel = null;
         }
     }
 
-    /// <summary>Cancels an open area picker or web page window, so another choice can run; false when neither is open.</summary>
+    /// <summary>Cancels an open area picker or web panel, so another choice can run; false when neither is open.</summary>
     private bool CancelWhatWaitsForTheUser()
     {
         if (_picker?.Cancel() == true)
@@ -669,7 +666,7 @@ public sealed class BarViewModel : ObservableObject
             return true;
         }
 
-        if (_openWebDialog is not { IsCancellationRequested: false } open)
+        if (_openWebPanel is not { IsCancellationRequested: false } open)
         {
             return false;
         }

@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:NoMercy.Share.App" xmlns:icons="using:NoMercy.Share.App.Icons"
+             xmlns:capture="using:NoMercy.Share.Core.Capture"
+             x:Class="NoMercy.Share.App.WebCapturePanel" x:DataType="capture:WebCaptureViewModel" Classes="settings">
+  <UserControl.Styles>
+    <StyleInclude Source="avares://nomercy-share/WebCapture/WebCaptureStyles.axaml" />
+  </UserControl.Styles>
+  <!-- Joined under the bar with its fill, ring and shadow; the settings window's pill fields (class "settings"). -->
+  <Border Name="Surface" Width="480" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+          CornerRadius="{DynamicResource Nm-Radius-3Xl-Corner}" BoxShadow="{DynamicResource Share-Shadow-Bar}"
+          Padding="{DynamicResource Nm-Space-3-Thickness}" AutomationProperties.Name="{local:Loc web.title}">
+    <StackPanel Margin="{DynamicResource Nm-Space-3-Thickness}" Spacing="{DynamicResource Nm-Space-3}">
+      <StackPanel Spacing="{DynamicResource Nm-Space-3}" IsEnabled="{Binding !IsBusy}">
+        <TextBlock Classes="status note-text" Text="{local:Loc web.hint}" />
+        <StackPanel Classes="field">
+          <TextBlock Classes="field-label" Text="{local:Loc web.address}" />
+          <TextBox Name="AddressBox" Text="{Binding Address}" AutomationProperties.Name="{local:Loc web.address}" />
+          <TextBlock Classes="field-error" Text="{Binding AddressError}" IsVisible="{Binding AddressError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+        <StackPanel Classes="field">
+          <TextBlock Classes="field-label" Text="{local:Loc web.mode}" />
+          <ListBox Classes="choices mode" ItemsSource="{Binding Modes}" SelectedItem="{Binding SelectedMode}" SelectionMode="Single,AlwaysSelected"
+                   AutomationProperties.Name="{local:Loc web.mode}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="capture:WebModeChoice">
+                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+                  <icons:MoooomIcon Kind="{Binding Kind, Converter={x:Static local:WebChoiceIcons.Mode}}" />
+                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+        <StackPanel Classes="field" IsVisible="{Binding IsElementMode}">
+          <TextBlock Classes="field-label" Text="{local:Loc web.selector}" />
+          <TextBox Text="{Binding Selector}" AutomationProperties.Name="{local:Loc web.selector}" />
+          <TextBlock Classes="field-error" Text="{Binding SelectorError}" IsVisible="{Binding SelectorError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+        <StackPanel Classes="field">
+          <TextBlock Classes="field-label" Text="{local:Loc web.width}" />
+          <ListBox Classes="choices width" ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" SelectionMode="Single,AlwaysSelected"
+                   AutomationProperties.Name="{local:Loc web.width}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="capture:WebDeviceChoice">
+                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+                  <icons:MoooomIcon Kind="{Binding Device, Converter={x:Static local:WebChoiceIcons.Device}}" />
+                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </StackPanel>
+        <TextBlock Classes="save-error note-text" Text="{Binding FailureText}" IsVisible="{Binding FailureText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+      </StackPanel>
+      <Button Classes="bar ask first" Content="{local:Loc web.capture}" Click="OnCaptureClick" IsEnabled="{Binding !IsBusy}"
+              HorizontalAlignment="Right" AutomationProperties.Name="{local:Loc web.capture}" />
+    </StackPanel>
+  </Border>
+</UserControl>

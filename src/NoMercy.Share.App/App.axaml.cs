@@ -160,8 +160,6 @@ public sealed class App : Application
                 ? new EnvironmentRegionSelector(fixedRegion)
                 : new AvaloniaRegionSelector(owner, sp.GetService<IForegroundGrant>() ?? new NoForegroundGrant())));
         services.AddSingleton<IRegionSelector>(sp => sp.GetRequiredService<AreaPicker>());
-        services.AddSingleton<IWebCaptureDialog>(sp => new WebCaptureDialog(
-            sp.GetRequiredService<Core.IClipboard>(), () => sp.GetRequiredService<LiveSettings>().Current.WebCapture, sp.GetService<IPointerMonitor>()));
         services.AddSingleton<ICaptureHost>(new BarWindowHost(() => owner() as BarWindow));
         AddPlatform(services);
         services.AddS3Storage();

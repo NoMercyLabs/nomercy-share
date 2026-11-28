@@ -181,7 +181,6 @@ public sealed class BarRowRenderTests
                 new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
                 recorder: new FakeScreenRecorder(),
                 web: new FakeWebPageCapture(),
-                webDialog: new WaitingDialog(),
                 sound: new RecordingSoundStore(new SettingsFile(Path.Combine(root, "settings.json")),
                     new LiveSettings(new ShareSettings { Recording = new RecordingSettings { Audio = new AudioSettings { Microphone = true } } })));
             BarWindow window = new(bar, new BarPositionStore(new SettingsFile(Path.Combine(root, "position.json"))), new BarSettings(), exclusion);
@@ -193,17 +192,6 @@ public sealed class BarRowRenderTests
         finally
         {
             Directory.Delete(root, recursive: true);
-        }
-    }
-
-    /// <summary>A web window that stays open until it is canceled.</summary>
-    private sealed class WaitingDialog : IWebCaptureDialog
-    {
-        public Task<CaptureResult> RunAsync(IWebPageCapture capture, CancellationToken cancellationToken = default)
-        {
-            TaskCompletionSource<CaptureResult> closed = new();
-            cancellationToken.Register(() => closed.TrySetCanceled(cancellationToken));
-            return closed.Task;
         }
     }
 

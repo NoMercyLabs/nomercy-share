@@ -106,10 +106,13 @@ public sealed class BarViewModelRowTests : IDisposable
     {
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.WebPage);
+        Task run = bar.RunAsync(BarAction.WebPage);
 
         Assert.True(bar.Row.IsWebMode);
         Assert.False(bar.Row.ShowsTargets);
+        Assert.NotNull(bar.WebPanel);
+        bar.Escape();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
     }
 
     [Theory]
@@ -237,5 +240,15 @@ internal static class BarRecordingSteps
     {
         await bar.RunAsync(BarAction.Record);
         await bar.StartRecordingAsync();
+    }
+
+    /// <summary>The globe, or a hotkey that repeats it, opens the panel; the user gives an address and presses Capture.</summary>
+    public static async Task CaptureWebPageAsync(this BarViewModel bar, BarAction action = BarAction.WebPage)
+    {
+        Task run = bar.RunAsync(action);
+        WebCaptureViewModel panel = bar.WebPanel ?? throw new InvalidOperationException("The web panel did not open.");
+        panel.Address = "https://example.test/articles/made-up";
+        await panel.CaptureAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
     }
 }

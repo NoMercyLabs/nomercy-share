@@ -20,20 +20,20 @@
     <Setter Property="Margin" Value="{DynamicResource Nm-Space-3-Thickness}" />
   </Style>
   <!-- Inputs are the bar's pills: the hover tint as fill, no border, the accent ring only on focus. -->
-  <Style Selector="Window.settings TextBox, Window.settings TextBox:pointerover, Window.settings TextBox:focus">
+  <Style Selector=":is(Control).settings TextBox, :is(Control).settings TextBox:pointerover, :is(Control).settings TextBox:focus">
     <Setter Property="Foreground" Value="{DynamicResource Nm-Text-Primary-Brush}" />
     <Setter Property="PlaceholderForeground" Value="{DynamicResource Nm-Text-Muted-Brush}" />
   </Style>
-  <Style Selector="Window.settings TextBox /template/ Border#PART_BorderElement, Window.settings ComboBox /template/ Border#Background">
+  <Style Selector=":is(Control).settings TextBox /template/ Border#PART_BorderElement, Window.settings ComboBox /template/ Border#Background">
     <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="{DynamicResource Nm-Space-0-5-Thickness}" />
   </Style>
-  <Style Selector="Window.settings TextBox:pointerover /template/ Border#PART_BorderElement, Window.settings ComboBox:pointerover /template/ Border#Background, Window.settings ComboBox:pressed /template/ Border#Background">
+  <Style Selector=":is(Control).settings TextBox:pointerover /template/ Border#PART_BorderElement, Window.settings ComboBox:pointerover /template/ Border#Background, Window.settings ComboBox:pressed /template/ Border#Background">
     <Setter Property="Background" Value="{DynamicResource Share-Pressed-Brush}" />
     <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
-  <Style Selector="Window.settings TextBox:focus /template/ Border#PART_BorderElement, Window.settings ComboBox:focus-visible /template/ Border#Background">
+  <Style Selector=":is(Control).settings TextBox:focus /template/ Border#PART_BorderElement, Window.settings ComboBox:focus-visible /template/ Border#Background">
     <Setter Property="Background" Value="{DynamicResource Share-Hover-Brush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Nm-Accent-Brush}" />
   </Style>
@@ -171,7 +171,7 @@
   </Style>
 
   <!-- Inputs: 36 high pills like the bar buttons, the text 12 in from the round end. -->
-  <Style Selector="Window.settings TextBox, Window.settings ComboBox">
+  <Style Selector=":is(Control).settings TextBox, Window.settings ComboBox">
     <Setter Property="MinHeight" Value="{DynamicResource Nm-Space-9}" />
     <Setter Property="Height" Value="{DynamicResource Nm-Space-9}" />
     <Setter Property="FontSize" Value="{DynamicResource Nm-Font-Size-Sm}" />
@@ -179,7 +179,7 @@
     <Setter Property="Padding" Value="12,0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
-  <Style Selector="Window.settings TextBox">
+  <Style Selector=":is(Control).settings TextBox">
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
   <Style Selector="Window.settings ComboBox">
@@ -260,7 +260,7 @@
     <Setter Property="Margin" Value="12,0,0,0" />
   </Style>
   <!-- As on the bar, the accent ring on the control's own edge is the only focus cue: Fluent's square adorner is off. -->
-  <Style Selector="Window.settings ListBoxItem, Window.settings TextBox, Window.settings ComboBox, Window.settings ToggleSwitch">
+  <Style Selector=":is(Control).settings ListBoxItem, :is(Control).settings TextBox, Window.settings ComboBox, Window.settings ToggleSwitch">
     <Setter Property="FocusAdorner" Value="{x:Null}" />
   </Style>
   <!-- An off switch is a track in the stronger tint, no outline, as the bar has no borders on its controls. -->

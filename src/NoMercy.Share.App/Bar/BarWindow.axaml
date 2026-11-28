@@ -89,6 +89,14 @@
            HorizontalOffset="-24" VerticalOffset="-16" IsLightDismissEnabled="True" OverlayInputPassThroughElement="{Binding #Pill}">
       <local:RecentPanel />
     </Popup>
+    <ContentControl Content="{Binding WebPanel}" IsVisible="{Binding WebPanel, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    HorizontalAlignment="Left" Margin="0,8,0,0">
+      <ContentControl.ContentTemplate>
+        <DataTemplate x:DataType="capture:WebCaptureViewModel">
+          <local:WebCapturePanel />
+        </DataTemplate>
+      </ContentControl.ContentTemplate>
+    </ContentControl>
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
             BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"

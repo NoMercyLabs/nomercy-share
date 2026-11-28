@@ -4,8 +4,8 @@ using NoMercy.Share.Core.Settings;
 namespace NoMercy.Share.Core.Capture;
 
 /// <summary>
-/// The "Capture a web page" window: the address, what to capture and the page width. Capture checks the fields, runs the capture
-/// and closes with the picture; a failure shows under its field and the window stays open.
+/// The bar's web panel: the address, what to capture and the page width. Capture checks the fields, runs the capture
+/// and closes with the picture; a failure shows under its field and the panel stays open.
 /// </summary>
 public sealed class WebCaptureViewModel : ObservableObject
 {
@@ -39,8 +39,35 @@ public sealed class WebCaptureViewModel : ObservableObject
         }
     }
 
-    /// <summary>Raised after a good capture or a cancel; the window closes.</summary>
+    /// <summary>Raised after a good capture or a cancel; the panel closes.</summary>
     public event EventHandler? CloseRequested;
+
+    /// <summary>A model whose address is filled from the clipboard; a clipboard that cannot be read leaves it empty.</summary>
+    public static async Task<WebCaptureViewModel> OpenAsync(
+        IWebPageCapture capture, WebCaptureSettings settings, IClipboard? clipboard, CancellationToken cancellationToken = default)
+    {
+        string? copied = null;
+        try
+        {
+            copied = clipboard is null ? null : await clipboard.GetTextAsync(cancellationToken);
+        }
+        catch (Exception error) when (error is not OperationCanceledException)
+        {
+            Trace.TraceWarning("Reading the clipboard for the web panel failed: {0}", error.Message);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return new WebCaptureViewModel(capture, settings, copied);
+    }
+
+    /// <summary>Waits until the panel closes. Throws <see cref="OperationCanceledException"/> when it closes without a picture.</summary>
+    public async Task<CaptureResult> WaitForResultAsync(CancellationToken cancellationToken = default)
+    {
+        TaskCompletionSource<CaptureResult?> closed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        CloseRequested += (_, _) => closed.TrySetResult(Result);
+        using CancellationTokenRegistration stop = cancellationToken.Register(Cancel);
+        return await closed.Task ?? throw new OperationCanceledException("The web page capture was cancelled.");
+    }
 
     public IReadOnlyList<WebModeChoice> Modes { get; }
 
@@ -140,7 +167,7 @@ public sealed class WebCaptureViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            // Cancel already closed the window.
+            // Cancel already closed the panel.
         }
         catch (WebCaptureException error)
         {
@@ -158,15 +185,14 @@ public sealed class WebCaptureViewModel : ObservableObject
         }
     }
 
-    /// <summary>Stops a capture that is running and closes the window; nothing is shared.</summary>
+    /// <summary>Stops a capture that is running and closes the panel; nothing is shared.</summary>
     public void Cancel()
     {
         StopRunning();
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Stops a capture that is running, for a window that was closed some other way.</summary>
-    public void StopRunning() => _running?.Cancel();
+    private void StopRunning() => _running?.Cancel();
 
     private void ShowFailure(WebCaptureException error)
     {

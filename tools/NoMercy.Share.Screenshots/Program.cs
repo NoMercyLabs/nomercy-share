@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
@@ -62,14 +61,15 @@ public static class Program
             bar => typeof(BarViewModel).GetProperty(nameof(BarViewModel.Ask))!.SetValue(bar, ask));
     }
 
-    private static void SaveReadmeBar(string file, Func<DateTimeOffset> clock, Action<BarViewModel> prepare)
+    private static void SaveReadmeBar(string file, Func<DateTimeOffset> clock, Action<BarViewModel> prepare, string behind = "#2A2E39")
     {
         string temp = Path.Combine(Path.GetTempPath(), $"share-readme-shots-{Guid.NewGuid():N}");
         BarViewModel model = new(new CaptureFlow(new FakeScreenCapture(), new FakeCaptureHost(), new CaptureSettings { HideDelayMilliseconds = 0 }),
             new ShareFlow(new FakeUploader(), new FakeClipboard(), new ExpirySettings(), new ClipboardSettings()),
-            recorder: new FakeScreenRecorder(), web: new FakeWebPageCapture(), clock: clock);
+            recorder: new FakeScreenRecorder(), web: new FakeWebPageCapture(), clock: clock,
+            clipboard: new FakeClipboard { Text = "https://example.test/articles/made-up" });
         BarWindow window = new(model, new BarPositionStore(new SettingsFile(Path.Combine(temp, "settings.json"))), new BarSettings());
-        window.Background = new SolidColorBrush(Color.Parse("#2A2E39"));
+        window.Background = new SolidColorBrush(Color.Parse(behind));
         window.Show();
         Dispatcher.UIThread.RunJobs();
         prepare(model);
@@ -126,37 +126,23 @@ public static class Program
         }
     }
 
-    /// <summary>The web capture window at 2x, dark and light: Full page with a made-up address, and One element with a bad address and no selector.</summary>
+    /// <summary>The bar with its web panel, dark and light: Full page with a made-up address, and One element with a bad address and no selector.</summary>
     private static void RenderWebCapture(string folder)
     {
-        foreach ((ThemeVariant theme, string name) in new[] { (ThemeVariant.Dark, "dark"), (ThemeVariant.Light, "light") })
+        DateTimeOffset now = new(2026, 11, 27, 12, 0, 0, TimeSpan.Zero);
+        foreach ((ThemeVariant theme, string name, string behind) in new[] { (ThemeVariant.Dark, "dark", "#2A2E39"), (ThemeVariant.Light, "light", "#E6E8EE") })
         {
             Application.Current!.RequestedThemeVariant = theme;
-            WebCaptureViewModel model = new(new FakeWebPageCapture(), new WebCaptureSettings(), "https://example.test/articles/made-up");
-            SaveWebCapture(Path.Combine(folder, $"share-web-{name}.png"), model);
-            model.SelectedMode = model.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
-            model.Address = "example.test";
-            model.CaptureAsync().GetAwaiter().GetResult();
-            SaveWebCapture(Path.Combine(folder, $"share-web-element-errors-{name}.png"), model);
+            SaveReadmeBar(Path.Combine(folder, $"share-web-{name}.png"), () => now, bar => _ = bar.RunAsync(BarAction.WebPage), behind);
+            SaveReadmeBar(Path.Combine(folder, $"share-web-element-errors-{name}.png"), () => now, bar =>
+            {
+                _ = bar.RunAsync(BarAction.WebPage);
+                WebCaptureViewModel panel = bar.WebPanel!;
+                panel.SelectedMode = panel.Modes.Single(mode => mode.Kind == WebCaptureKind.Element);
+                panel.Address = "example.test";
+                panel.CaptureAsync().GetAwaiter().GetResult();
+            }, behind);
         }
-    }
-
-    private static void SaveWebCapture(string file, WebCaptureViewModel model)
-    {
-        WebCaptureWindow shown = new(model);
-        Control content = (Control)shown.Content!;
-        shown.Content = null;
-        // The window's own styles come along, and the panel keeps the window's width with the shadow margin inside it.
-        Panel host = new() { Width = shown.Width, Children = { content } };
-        host.Styles.Add(new StyleInclude((Uri?)null) { Source = new Uri("avares://nomercy-share/WebCapture/WebCaptureStyles.axaml") });
-        LayoutTransformControl scaled = new() { LayoutTransform = new ScaleTransform(2, 2), Child = host };
-        Window window = new() { Classes = { "settings" }, DataContext = model, Content = scaled, SizeToContent = SizeToContent.WidthAndHeight, CanResize = false };
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-        using RenderTargetBitmap bitmap = Render(window, 1, 0, window.Bounds.Width);
-        bitmap.Save(file);
-        Console.WriteLine($"{file} {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
-        window.Close();
     }
 
     private static SettingsViewModel SettingsModel(string temp, string provider = "r2", bool webhookStored = false, bool unset = false)
