@@ -68,7 +68,7 @@ public sealed class BarViewModelChoiceTests
     public async Task AVideoOffersTheLinkButNoPictureCopy()
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         await bar.RunAsync(BarAction.Record);
 

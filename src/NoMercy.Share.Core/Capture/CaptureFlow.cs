@@ -35,13 +35,17 @@ public sealed class CaptureFlow(
     private readonly Func<TimeSpan, CancellationToken, Task> _delay = delay ?? Task.Delay;
 
     /// <summary>Runs one capture. A cancelled capture throws <see cref="OperationCanceledException"/> and touches nothing else.</summary>
-    public async Task<CaptureResult> RunAsync(CaptureKind kind, CancellationToken cancellationToken = default)
+    public Task<CaptureResult> RunAsync(CaptureKind kind, CancellationToken cancellationToken = default) =>
+        WhileHiddenAsync(() => CaptureAsync(kind, cancellationToken), cancellationToken);
+
+    /// <summary>Runs work with the bar out of the way, so the previous window is the active one again.</summary>
+    public async Task<T> WhileHiddenAsync<T>(Func<Task<T>> work, CancellationToken cancellationToken = default)
     {
         await host.HideAsync(cancellationToken);
         try
         {
             await _delay(TimeSpan.FromMilliseconds(settings.HideDelayMilliseconds), cancellationToken);
-            return await CaptureAsync(kind, cancellationToken);
+            return await work();
         }
         finally
         {

@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -40,6 +42,7 @@ public partial class BarWindow : Window
     /// <summary>The cross: the bar goes away and the app, with its hotkeys, stays on.</summary>
     public void Dismiss()
     {
+        (DataContext as BarViewModel)?.CloseMenu();
         _called = false;
         ShowWhileNeeded();
     }
@@ -71,6 +74,31 @@ public partial class BarWindow : Window
         }
     }
 
+    private ICaptureExclusion? _exclusion;
+
+    // Popups and tooltips are windows of their own, so each one is kept out of captures too.
+    static BarWindow() => Control.LoadedEvent.AddClassHandler<PopupRoot>((popup, _) => ExcludePopup(popup));
+
+    private static void ExcludePopup(PopupRoot popup)
+    {
+        TopLevel? owner = popup.ParentTopLevel;
+        while (owner is PopupRoot parent)
+        {
+            owner = parent.ParentTopLevel;
+        }
+
+        (owner as BarWindow)?.KeepOutOfCaptures(popup);
+    }
+
+    private void KeepOutOfCaptures(TopLevel window)
+    {
+        nint handle = window.TryGetPlatformHandle()?.Handle ?? 0;
+        if (_exclusion is not null && !_exclusion.Exclude(handle))
+        {
+            Trace.TraceWarning("A bar window could not be left out of screen captures.");
+        }
+    }
+
     public BarWindow()
     {
         InitializeComponent();
@@ -86,7 +114,8 @@ public partial class BarWindow : Window
 
     public BarWindow(BarViewModel viewModel, BarPositionStore store, BarSettings settings, ICaptureExclusion? exclusion = null) : this()
     {
-        _ = exclusion;
+        _exclusion = exclusion;
+        Opened += (_, _) => KeepOutOfCaptures(this);
         DataContext = viewModel;
         _store = store;
         _settings = settings;

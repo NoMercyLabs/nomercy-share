@@ -24,6 +24,9 @@ public sealed class BarViewModel : ObservableObject
     private readonly CaptureFiles? _files;
     private readonly IFolderAccess? _folderAccess;
     private readonly IFfmpegInstall? _ffmpeg;
+    private readonly RecordingSoundStore? _sound;
+    private BarMenu _menu;
+    private CaptureKind _recordSource = CaptureKind.Region;
     private BarAsk? _ask;
     private CaptureChoice? _choice;
     private bool _accessAskDismissed;
@@ -50,7 +53,18 @@ public sealed class BarViewModel : ObservableObject
         IFfmpegInstall? ffmpeg = null,
         RecordingSoundStore? sound = null)
     {
-        _ = sound;
+        _sound = sound;
+        if (sound is not null)
+        {
+            sound.Changed += (_, _) =>
+            {
+                OnChanged(nameof(IsMicrophoneOn));
+                OnChanged(nameof(IsDesktopAudioOn));
+                OnChanged(nameof(MicrophoneState));
+                OnChanged(nameof(DesktopAudioState));
+            };
+        }
+
         _ffmpeg = ffmpeg;
         _webDialog = webDialog;
         _files = files;
@@ -79,6 +93,11 @@ public sealed class BarViewModel : ObservableObject
             [BarAction.Region] = token => CaptureAsync(CaptureKind.Region, token),
             [BarAction.Window] = token => CaptureAsync(CaptureKind.Window, token),
             [BarAction.FullScreen] = token => CaptureAsync(CaptureKind.FullScreen, token),
+            [BarAction.Screenshot] = _ =>
+            {
+                Menu = Menu == BarMenu.Screenshot ? BarMenu.None : BarMenu.Screenshot;
+                return Task.CompletedTask;
+            },
             [BarAction.Record] = ToggleRecordingAsync,
             [BarAction.WebPage] = CaptureWebPageAsync,
             [BarAction.Recent] = _ => ToggleRecent(),
@@ -111,34 +130,107 @@ public sealed class BarViewModel : ObservableObject
         CopyImageCommand = new BarCommand(_ => _ = CopyImageAsync());
         ShareLinkCommand = new BarCommand(_ => _ = ShareLinkAsync());
         DismissChoiceCommand = new BarCommand(_ => Choice = null);
+        SelectRecordSourceCommand = new BarCommand(parameter =>
+        {
+            if (parameter is CaptureKind source)
+            {
+                SelectRecordSource(source);
+            }
+        });
+        StartRecordingCommand = new BarCommand(_ => _ = StartRecordingAsync());
+        ToggleMicrophoneCommand = new BarCommand(_ => SaveSound(audio => audio with { Microphone = !audio.Microphone }));
+        ToggleDesktopAudioCommand = new BarCommand(_ => SaveSound(audio => audio with { SystemSound = !audio.SystemSound }));
     }
 
-    public BarMenu Menu => BarMenu.None;
-
-    public bool IsScreenshotMenuOpen => false;
-
-    public bool IsRecordMenuOpen => false;
-
-    public bool IsRecordArea => false;
-
-    public bool IsRecordWindow => false;
-
-    public bool IsRecordFullScreen => false;
-
-    public bool IsMicrophoneOn => false;
-
-    public bool IsDesktopAudioOn => false;
-
-    public ICommand SelectRecordSourceCommand { get; } = new BarCommand(_ => { });
-
-    public ICommand ToggleMicrophoneCommand { get; } = new BarCommand(_ => { });
-
-    public ICommand ToggleDesktopAudioCommand { get; } = new BarCommand(_ => { });
-
-    public Task StartRecordingAsync(CancellationToken cancellationToken = default)
+    /// <summary>The second pill under the bar.</summary>
+    public BarMenu Menu
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.CompletedTask;
+        get => _menu;
+        private set
+        {
+            if (_menu != value)
+            {
+                Set(ref _menu, value);
+                OnChanged(nameof(IsScreenshotMenuOpen));
+                OnChanged(nameof(IsRecordMenuOpen));
+                OnChanged(nameof(IsRecordHighlighted));
+            }
+        }
+    }
+
+    public bool IsScreenshotMenuOpen => Menu == BarMenu.Screenshot;
+
+    public bool IsRecordMenuOpen => Menu == BarMenu.Record;
+
+    public bool IsRecordArea => _recordSource == CaptureKind.Region;
+
+    public bool IsRecordWindow => _recordSource == CaptureKind.Window;
+
+    public bool IsRecordFullScreen => _recordSource == CaptureKind.FullScreen;
+
+    public bool IsMicrophoneOn => _sound?.Current.Microphone ?? false;
+
+    public bool IsDesktopAudioOn => _sound?.Current.SystemSound ?? false;
+
+    /// <summary>Picks the <see cref="CaptureKind"/> given as the parameter as what Start records.</summary>
+    public ICommand SelectRecordSourceCommand { get; }
+
+    /// <summary>The record button carries the active accent while its menu is open or a recording runs.</summary>
+    public bool IsRecordHighlighted => IsRecording || IsRecordMenuOpen;
+
+    /// <summary>The screen-reader words for the selected target and the sound switches.</summary>
+    public string? RecordAreaState => Selected(IsRecordArea);
+
+    public string? RecordWindowState => Selected(IsRecordWindow);
+
+    public string? RecordFullScreenState => Selected(IsRecordFullScreen);
+
+    public string MicrophoneState => OnOff(IsMicrophoneOn);
+
+    public string DesktopAudioState => OnOff(IsDesktopAudioOn);
+
+    private static string? Selected(bool selected) => selected ? Strings.Get("menu.selected") : null;
+
+    private static string OnOff(bool on) => Strings.Get(on ? "menu.on" : "menu.off");
+
+    public ICommand StartRecordingCommand { get; }
+
+    public ICommand ToggleMicrophoneCommand { get; }
+
+    public ICommand ToggleDesktopAudioCommand { get; }
+
+    public void CloseMenu() => Menu = BarMenu.None;
+
+    /// <summary>The Start button of the record menu. Never throws: a failure becomes a notice.</summary>
+    public Task StartRecordingAsync(CancellationToken cancellationToken = default) =>
+        GuardAsync(BarAction.Record, () => BeginRecordingAsync(cancellationToken));
+
+    private void SelectRecordSource(CaptureKind source)
+    {
+        _recordSource = source;
+        OnChanged(nameof(IsRecordArea));
+        OnChanged(nameof(IsRecordWindow));
+        OnChanged(nameof(IsRecordFullScreen));
+        OnChanged(nameof(RecordAreaState));
+        OnChanged(nameof(RecordWindowState));
+        OnChanged(nameof(RecordFullScreenState));
+    }
+
+    private void SaveSound(Func<AudioSettings, AudioSettings> change)
+    {
+        if (_sound is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _sound.Save(change(_sound.Current));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            Notice = Strings.Get("settings.save.failed", error.Message);
+        }
     }
 
     public ICommand CopyImageCommand { get; }
@@ -319,7 +411,18 @@ public sealed class BarViewModel : ObservableObject
     public void RefreshElapsed() => OnChanged(nameof(ElapsedText));
 
     /// <summary>Runs one button. Never throws: a failure becomes a notice.</summary>
-    public async Task RunAsync(BarAction action, CancellationToken cancellationToken = default)
+    public Task RunAsync(BarAction action, CancellationToken cancellationToken = default) =>
+        GuardAsync(action, () =>
+        {
+            if (action is not (BarAction.Screenshot or BarAction.Record))
+            {
+                CloseMenu(); // before the action, so no menu is up while a shot is taken
+            }
+
+            return _actions[action](cancellationToken);
+        });
+
+    private async Task GuardAsync(BarAction action, Func<Task> work)
     {
         if (_busy)
         {
@@ -335,7 +438,7 @@ public sealed class BarViewModel : ObservableObject
 
         try
         {
-            await _actions[action](cancellationToken);
+            await work();
         }
         catch (OperationCanceledException)
         {
@@ -366,10 +469,16 @@ public sealed class BarViewModel : ObservableObject
                 CheckFolderAccess();
             }
 
-            OnChanged(nameof(IsRecording));
-            OnChanged(nameof(RecordLabel));
-            OnChanged(nameof(ElapsedText));
+            OnRecordingChanged();
         }
+    }
+
+    private void OnRecordingChanged()
+    {
+        OnChanged(nameof(IsRecording));
+        OnChanged(nameof(IsRecordHighlighted));
+        OnChanged(nameof(RecordLabel));
+        OnChanged(nameof(ElapsedText));
     }
 
     private void OnRecorderFailed(object? sender, string reason)
@@ -388,9 +497,7 @@ public sealed class BarViewModel : ObservableObject
     {
         _recordingStartedAt = null;
         Notice = Strings.Get("notice.recording.failed", reason);
-        OnChanged(nameof(IsRecording));
-        OnChanged(nameof(RecordLabel));
-        OnChanged(nameof(ElapsedText));
+        OnRecordingChanged();
     }
 
     private Task ShowNotice(string key)
@@ -497,11 +604,27 @@ public sealed class BarViewModel : ObservableObject
 
         if (_recorder.IsRecording)
         {
+            CloseMenu();
             _recordingStartedAt = null;
             await ShareAsync(await _recorder.StopAsync(cancellationToken), cancellationToken);
             return;
         }
 
+        Menu = IsRecordMenuOpen ? BarMenu.None : BarMenu.Record;
+        if (IsRecordMenuOpen)
+        {
+            ShowRequested?.Invoke(this, EventArgs.Empty); // the hotkey opens the menu on a hidden bar
+        }
+    }
+
+    private async Task BeginRecordingAsync(CancellationToken cancellationToken)
+    {
+        if (_recorder is null || _recorder.IsRecording)
+        {
+            return;
+        }
+
+        CloseMenu();
         if (_ffmpeg is not null && !_ffmpeg.IsFound())
         {
             if (!_downloading)
@@ -512,7 +635,21 @@ public sealed class BarViewModel : ObservableObject
             return;
         }
 
-        await _recorder.StartAsync(new RecordingOptions(), cancellationToken);
+        RecordingOptions options = new(Source: _recordSource);
+        if (options.Source == CaptureKind.Window)
+        {
+            // The window to record is the one that was active before the bar, as for a window screenshot.
+            await _capture.WhileHiddenAsync(async () =>
+            {
+                await _recorder.StartAsync(options, cancellationToken);
+                return true;
+            }, cancellationToken);
+        }
+        else
+        {
+            await _recorder.StartAsync(options, cancellationToken);
+        }
+
         _recordingStartedAt = _clock();
         await ShowNotice("notice.recording");
         if (_recorder.StartNotice is { } without)

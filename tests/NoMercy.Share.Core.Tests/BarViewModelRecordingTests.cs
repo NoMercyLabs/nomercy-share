@@ -23,7 +23,7 @@ public sealed class BarViewModelRecordingTests
         BarViewModel bar = Bar();
         Assert.Equal("Record the screen", bar.RecordLabel);
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         Assert.Equal("Stop recording", bar.RecordLabel);
 
         await bar.RunAsync(BarAction.Record);
@@ -36,7 +36,7 @@ public sealed class BarViewModelRecordingTests
         BarViewModel bar = Bar();
         Assert.Null(bar.ElapsedText);
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         Assert.Equal("00:00", bar.ElapsedText);
 
         _now = _now.AddSeconds(65);
@@ -52,7 +52,7 @@ public sealed class BarViewModelRecordingTests
     public async Task RefreshingTheTimerRaisesAChangeSoTheBarRedraws()
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         List<string?> changed = [];
         bar.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
@@ -65,7 +65,7 @@ public sealed class BarViewModelRecordingTests
     public async Task StoppingClearsTheTimerAndSharesTheVideo()
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         await bar.RunAsync(BarAction.Record);
         await bar.ShareLinkAsync();
@@ -79,7 +79,7 @@ public sealed class BarViewModelRecordingTests
     {
         _recorder.StopThrows = new RecordingException("ddagrab: Access is denied");
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         await bar.RunAsync(BarAction.Record);
 
@@ -89,7 +89,7 @@ public sealed class BarViewModelRecordingTests
         Assert.Empty(_uploader.Uploads);
 
         _recorder.StopThrows = null;
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         Assert.True(bar.IsRecording);
     }
 
@@ -99,7 +99,7 @@ public sealed class BarViewModelRecordingTests
         _recorder.StartNotice = "No microphone found; recording without it.";
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         Assert.True(bar.IsRecording);
         Assert.Equal("Recording started No microphone found; recording without it.", bar.Notice);
@@ -111,7 +111,7 @@ public sealed class BarViewModelRecordingTests
         _recorder.StartThrows = new RecordingException("ffmpeg was not found");
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         Assert.Equal("Recording failed: ffmpeg was not found", bar.Notice);
         Assert.False(bar.IsRecording);
@@ -122,7 +122,7 @@ public sealed class BarViewModelRecordingTests
     public async Task WhenFfmpegDiesDuringARecordingTheBarLeavesTheRecordingStateAtOnceAndShowsTheReason()
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         List<string?> changed = [];
         bar.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 
@@ -136,7 +136,7 @@ public sealed class BarViewModelRecordingTests
         Assert.Contains(nameof(BarViewModel.RecordLabel), changed);
         Assert.Empty(_uploader.Uploads);
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         Assert.True(bar.IsRecording);
     }
 
@@ -146,7 +146,7 @@ public sealed class BarViewModelRecordingTests
         const long megabyte = 1024 * 1024;
         _recorder.Result = new CaptureResult("/tmp/recording.mp4", "video/mp4", 640, 360, SizeBytes: 63 * megabyte + megabyte / 2, SizeCapBytes: 50 * megabyte);
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         await bar.RunAsync(BarAction.Record);
         await bar.ShareLinkAsync();
@@ -162,7 +162,7 @@ public sealed class BarViewModelRecordingTests
         const long megabyte = 1024 * 1024;
         _recorder.Result = new CaptureResult("/tmp/recording.mp4", "video/mp4", 640, 360, SizeBytes: 10 * megabyte, SizeCapBytes: 50 * megabyte);
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         await bar.RunAsync(BarAction.Record);
 
@@ -175,7 +175,7 @@ public sealed class BarViewModelRecordingTests
         _recorder.StartThrows = new OperationCanceledException();
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         Assert.Null(bar.Notice);
         Assert.False(bar.IsRecording);

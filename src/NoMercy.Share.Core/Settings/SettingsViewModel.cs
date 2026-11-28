@@ -41,6 +41,7 @@ public sealed class SettingsViewModel : ObservableObject
     private string _frameRate;
     private bool _recordSystemSound;
     private bool _recordMicrophone;
+    private AudioSettings _followedAudio;
     private readonly IEncoderProbe? _probe;
     private ResolutionChoice _selectedResolution;
     private OptionChoice _selectedCodec;
@@ -86,6 +87,8 @@ public sealed class SettingsViewModel : ObservableObject
         _frameRate = current.Recording.FrameRate.ToString(CultureInfo.InvariantCulture);
         _recordSystemSound = current.Recording.Audio.SystemSound;
         _recordMicrophone = current.Recording.Audio.Microphone;
+        _followedAudio = live.Current.Recording.Audio;
+        live.Changed += OnLiveChanged;
 
         RecordingSettings recording = current.Recording;
         ResolutionChoice savedSize = recording.MaxWidth <= 0 || recording.MaxHeight <= 0 ? new(0, 0) : new(recording.MaxWidth, recording.MaxHeight);
@@ -501,6 +504,26 @@ public sealed class SettingsViewModel : ObservableObject
         Saved = true;
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>A sound switch changed on the bar shows here too, so a later Save keeps it. Only the changed switch is copied.</summary>
+    private void OnLiveChanged(object? sender, EventArgs e)
+    {
+        AudioSettings audio = _live.Current.Recording.Audio;
+        AudioSettings before = _followedAudio;
+        _followedAudio = audio;
+        if (audio.SystemSound != before.SystemSound)
+        {
+            RecordSystemSound = audio.SystemSound;
+        }
+
+        if (audio.Microphone != before.Microphone)
+        {
+            RecordMicrophone = audio.Microphone;
+        }
+    }
+
+    /// <summary>Ends following the bar's choices; the window calls it when it closes.</summary>
+    public void StopFollowing() => _live.Changed -= OnLiveChanged;
 
     /// <summary>Closes the window and writes nothing.</summary>
     public void Cancel()

@@ -32,6 +32,7 @@ public partial class SettingsWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         (DataContext as SettingsViewModel)?.ReleaseHotkeys(); // whichever way the window closed, the hotkeys come back
+        (DataContext as SettingsViewModel)?.StopFollowing();
         base.OnClosed(e);
     }
 

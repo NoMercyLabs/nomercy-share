@@ -22,7 +22,7 @@ public sealed class BarViewModelFfmpegTests
     {
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         Assert.Equal(Strings.Get("ask.ffmpeg"), bar.Ask?.Text);
         Assert.Equal(Strings.Get("ask.download"), bar.Ask?.YesLabel);
@@ -33,7 +33,7 @@ public sealed class BarViewModelFfmpegTests
     public async Task YesDownloadsItAndSaysItIsReady()
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         bar.AskYesCommand.Execute(null);
         await _ffmpeg.Finished;
@@ -48,7 +48,7 @@ public sealed class BarViewModelFfmpegTests
     {
         _ffmpeg.Fails = new IOException("the checksum does not match");
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         bar.AskYesCommand.Execute(null);
         await _ffmpeg.Finished;
@@ -60,7 +60,7 @@ public sealed class BarViewModelFfmpegTests
     public async Task NotNowClosesTheQuestionAndDownloadsNothing()
     {
         BarViewModel bar = Bar();
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         bar.AskNoCommand.Execute(null);
 
@@ -74,7 +74,7 @@ public sealed class BarViewModelFfmpegTests
         _ffmpeg.Found = true;
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
 
         Assert.Null(bar.Ask);
         Assert.True(_recorder.IsRecording);

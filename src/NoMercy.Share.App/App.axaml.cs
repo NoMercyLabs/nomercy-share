@@ -51,7 +51,8 @@ public sealed class App : Application
             _desktop = desktop;
             ServiceProvider services = BuildServices(() => _window);
             ShareSettings settings = services.GetRequiredService<ShareSettings>();
-            BarWindow window = new(services.GetRequiredService<BarViewModel>(), services.GetRequiredService<BarPositionStore>(), settings.Bar);
+            BarWindow window = new(services.GetRequiredService<BarViewModel>(), services.GetRequiredService<BarPositionStore>(), settings.Bar,
+                services.GetRequiredService<ICaptureExclusion>());
             _window = window;
             // The bar is not the main window: hiding it keeps the app on, and only Quit ends it.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -146,6 +147,7 @@ public sealed class App : Application
         services.AddSingleton(settings.Hotkeys);
         services.AddSingleton(settings.Recent);
         services.AddSingleton<BarPositionStore>();
+        services.AddSingleton<RecordingSoundStore>();
         services.AddSingleton(new RecentLinks(RecentLinks.DefaultPath(), settings.Recent));
         services.AddSingleton<Core.IClipboard>(new AvaloniaClipboard(owner));
         services.AddSingleton<IRegionSelector>(sp =>

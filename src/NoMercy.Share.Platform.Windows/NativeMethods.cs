@@ -16,6 +16,13 @@ internal static partial class NativeMethods
 
     internal const int DwmExtendedFrameBounds = 9;
 
+    /// <summary>WDA_EXCLUDEFROMCAPTURE: on screen for the user, absent from every capture.</summary>
+    internal const uint ExcludeFromCapture = 0x11;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool SetWindowDisplayAffinity(nint window, uint affinity);
+
     internal const uint GetAncestorRoot = 2;
 
     internal const uint MonitorDefaultToNearest = 2;

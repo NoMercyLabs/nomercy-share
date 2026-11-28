@@ -65,7 +65,7 @@ public sealed class BarViewModelTests
     {
         BarViewModel bar = Bar();
 
-        await bar.RunAsync(BarAction.Record);
+        await bar.OpenAndStartAsync();
         Assert.True(bar.IsRecording);
         Assert.Empty(_uploader.Uploads);
 

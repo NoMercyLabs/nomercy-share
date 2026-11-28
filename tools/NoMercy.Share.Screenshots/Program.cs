@@ -266,7 +266,7 @@ public static class Program
         recordClasses.Set(":pointerover", true);
         Save(window, Path.Combine(folder, "share-bar-hover.png"));
         recordClasses.Set(":pointerover", false);
-        Named<Button>(window, "RegionButton").Focus(NavigationMethod.Tab);
+        Named<Button>(window, "ScreenshotButton").Focus(NavigationMethod.Tab);
         Save(window, Path.Combine(folder, "share-bar-focus.png"));
         ((BarViewModel)window.DataContext!).ShowMessage("Link copied");
         Save(window, Path.Combine(folder, "share-bar-notice.png"));

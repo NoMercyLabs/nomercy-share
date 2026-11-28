@@ -7,5 +7,11 @@ public sealed class LiveSettings(ShareSettings initial)
 
     public ShareSettings Current => _current;
 
-    public void Replace(ShareSettings next) => _current = next;
+    public event EventHandler? Changed;
+
+    public void Replace(ShareSettings next)
+    {
+        _current = next;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
 }

@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:NoMercy.Share.App" xmlns:icons="using:NoMercy.Share.App.Icons"
-        xmlns:bar="using:NoMercy.Share.Core.Bar"
+        xmlns:bar="using:NoMercy.Share.Core.Bar" xmlns:capture="using:NoMercy.Share.Core.Capture"
         x:Class="NoMercy.Share.App.BarWindow" x:DataType="bar:BarViewModel"
         Title="{local:Loc app.name}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" CanResize="False" SizeToContent="WidthAndHeight" WindowStartupLocation="Manual">
@@ -18,17 +18,12 @@
           </StackPanel>
         </Border>
         <Border Classes="separator" />
-        <Button x:Name="RegionButton" Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Region}" ToolTip.Tip="{local:Loc bar.region}" AutomationProperties.Name="{local:Loc bar.region}">
-          <icons:MoooomIcon Kind="crossHair" />
-        </Button>
-        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Window}" ToolTip.Tip="{local:Loc bar.window}" AutomationProperties.Name="{local:Loc bar.window}">
-          <icons:MoooomIcon Kind="macOsWindow" />
-        </Button>
-        <Button Classes="bar" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.FullScreen}" ToolTip.Tip="{local:Loc bar.fullscreen}" AutomationProperties.Name="{local:Loc bar.fullscreen}">
-          <icons:MoooomIcon Kind="monitor" />
+        <Button x:Name="ScreenshotButton" Classes="bar" Classes.active="{Binding IsScreenshotMenuOpen}" Command="{Binding ActionCommand}"
+                CommandParameter="{x:Static bar:BarAction.Screenshot}" ToolTip.Tip="{local:Loc bar.screenshot}" AutomationProperties.Name="{local:Loc bar.screenshot}">
+          <icons:MoooomIcon Kind="camera" />
         </Button>
         <Border Classes="separator" />
-        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecording}" Classes.recording="{Binding IsRecording}" Command="{Binding ActionCommand}"
+        <Button x:Name="RecordButton" Classes="bar" Classes.active="{Binding IsRecordHighlighted}" Classes.recording="{Binding IsRecording}" Command="{Binding ActionCommand}"
                 CommandParameter="{x:Static bar:BarAction.Record}" ToolTip.Tip="{Binding RecordLabel}" AutomationProperties.Name="{Binding RecordLabel}">
           <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}" VerticalAlignment="Center">
             <icons:MoooomIcon Kind="webcam" />
@@ -57,6 +52,78 @@
            HorizontalOffset="-24" VerticalOffset="-16" IsLightDismissEnabled="True" OverlayInputPassThroughElement="{Binding #Pill}">
       <local:RecentPanel />
     </Popup>
+    <Border x:Name="ScreenshotMenu" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+            CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-1-Thickness}"
+            BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
+            IsVisible="{Binding IsScreenshotMenuOpen}">
+      <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}">
+        <Button Classes="bar ask" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Region}" AutomationProperties.Name="{local:Loc menu.area}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="crossHair" />
+            <TextBlock Text="{local:Loc menu.area}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="bar ask" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.Window}" AutomationProperties.Name="{local:Loc menu.window}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="macOsWindow" />
+            <TextBlock Text="{local:Loc menu.window}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="bar ask" Command="{Binding ActionCommand}" CommandParameter="{x:Static bar:BarAction.FullScreen}" AutomationProperties.Name="{local:Loc menu.fullscreen}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="monitor" />
+            <TextBlock Text="{local:Loc menu.fullscreen}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+    <!-- Nothing records before Start. The picked target and a switched-on sound carry the bar's active accent. -->
+    <Border x:Name="RecordMenu" Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
+            CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-1-Thickness}"
+            BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"
+            IsVisible="{Binding IsRecordMenuOpen}">
+      <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-0-5}">
+        <Button Classes="bar ask" Classes.active="{Binding IsRecordArea}" Command="{Binding SelectRecordSourceCommand}" CommandParameter="{x:Static capture:CaptureKind.Region}"
+                AutomationProperties.Name="{local:Loc menu.area}" AutomationProperties.HelpText="{Binding RecordAreaState}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="crossHair" />
+            <TextBlock Text="{local:Loc menu.area}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="bar ask" Classes.active="{Binding IsRecordWindow}" Command="{Binding SelectRecordSourceCommand}" CommandParameter="{x:Static capture:CaptureKind.Window}"
+                AutomationProperties.Name="{local:Loc menu.window}" AutomationProperties.HelpText="{Binding RecordWindowState}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="macOsWindow" />
+            <TextBlock Text="{local:Loc menu.window}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="bar ask" Classes.active="{Binding IsRecordFullScreen}" Command="{Binding SelectRecordSourceCommand}" CommandParameter="{x:Static capture:CaptureKind.FullScreen}"
+                AutomationProperties.Name="{local:Loc menu.fullscreen}" AutomationProperties.HelpText="{Binding RecordFullScreenState}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="monitor" />
+            <TextBlock Text="{local:Loc menu.fullscreen}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Border Classes="separator" />
+        <Button Classes="bar ask" Classes.active="{Binding IsMicrophoneOn}" Command="{Binding ToggleMicrophoneCommand}"
+                AutomationProperties.Name="{local:Loc menu.microphone}" AutomationProperties.HelpText="{Binding MicrophoneState}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="mic" />
+            <TextBlock Text="{local:Loc menu.microphone}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="bar ask" Classes.active="{Binding IsDesktopAudioOn}" Command="{Binding ToggleDesktopAudioCommand}"
+                AutomationProperties.Name="{local:Loc menu.desktopaudio}" AutomationProperties.HelpText="{Binding DesktopAudioState}">
+          <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Nm-Space-2}">
+            <icons:MoooomIcon Kind="volumeThree" />
+            <TextBlock Text="{local:Loc menu.desktopaudio}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Border Classes="separator" />
+        <Button x:Name="StartButton" Classes="bar ask first" Command="{Binding StartRecordingCommand}" Content="{local:Loc menu.start}"
+                AutomationProperties.Name="{local:Loc menu.start}" />
+      </StackPanel>
+    </Border>
     <Border Background="{DynamicResource Share-Bar-Brush}" BorderBrush="{DynamicResource Share-Ring-Brush}" BorderThickness="1"
             CornerRadius="{DynamicResource Nm-Radius-Full-Corner}" Padding="{DynamicResource Nm-Space-3-Thickness}"
             BoxShadow="{DynamicResource Share-Shadow-Bar}" Margin="{DynamicResource Nm-Space-2-Thickness}" HorizontalAlignment="Left"

@@ -32,6 +32,7 @@ public static class WindowsPlatformExtensions
         services.AddSingleton<IGlobalHotkeys, Win32GlobalHotkeys>();
         services.AddSingleton<IUrlOpener>(new ShellUrlOpener());
         services.AddSingleton<IForegroundGrant, WindowsForegroundGrant>();
+        services.AddSingleton<ICaptureExclusion, WindowsCaptureExclusion>();
         services.AddSingleton<IFolderAccess, WindowsFolderAccess>();
         services.AddSingleton<IEncoderProbe>(sp => new FfmpegEncoderProbe(() => sp.GetRequiredService<LiveSettings>().Current.Recording));
         services.AddSingleton<IFfmpegInstall>(sp => new FfmpegDownload(DownloadClient, FfmpegDownload.DefaultFolder(), ShareDefaults.FfmpegReleaseUrl, FfmpegDownload.ThisPlatform(),

@@ -17,6 +17,9 @@
     "picture",
     "cloudUpload",
     "keyboard",
-    "infoCircle"
+    "infoCircle",
+    "camera",
+    "mic",
+    "volumeThree"
   ]
 }

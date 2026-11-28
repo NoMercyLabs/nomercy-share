@@ -10,6 +10,16 @@
   <data name="bar.region" xml:space="preserve"><value>Capture a region</value></data>
   <data name="bar.window" xml:space="preserve"><value>Capture a window</value></data>
   <data name="bar.fullscreen" xml:space="preserve"><value>Capture the full screen</value></data>
+  <data name="bar.screenshot" xml:space="preserve"><value>Screenshot</value></data>
+  <data name="menu.area" xml:space="preserve"><value>Area</value></data>
+  <data name="menu.window" xml:space="preserve"><value>Window</value></data>
+  <data name="menu.fullscreen" xml:space="preserve"><value>Full screen</value></data>
+  <data name="menu.microphone" xml:space="preserve"><value>Microphone</value></data>
+  <data name="menu.desktopaudio" xml:space="preserve"><value>Desktop audio</value></data>
+  <data name="menu.start" xml:space="preserve"><value>Start</value></data>
+  <data name="menu.selected" xml:space="preserve"><value>Selected</value></data>
+  <data name="menu.on" xml:space="preserve"><value>On</value></data>
+  <data name="menu.off" xml:space="preserve"><value>Off</value></data>
   <data name="bar.record" xml:space="preserve"><value>Record the screen</value></data>
   <data name="bar.record.stop" xml:space="preserve"><value>Stop recording</value></data>
   <data name="bar.webpage" xml:space="preserve"><value>Capture a web page</value></data>

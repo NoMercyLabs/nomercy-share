@@ -42,18 +42,13 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 
     public event EventHandler<string>? Failed;
 
-    /// <summary>The user picks the region; Escape cancels and nothing starts.</summary>
+    /// <summary>An area is dragged by the user, where Escape cancels; a window or full screen is taken as it is now.</summary>
     public async Task StartAsync(RecordingOptions options, CancellationToken cancellationToken = default)
     {
         _settings = current();
         string ffmpeg = FfmpegLocator.Find(_settings.FfmpegPath, Environment.GetEnvironmentVariable("PATH"), FfmpegLocator.NoMercyBuilds())
             ?? throw new RecordingException(Strings.Get("error.ffmpeg.missing"));
-        ScreenFrame frozen = await Task.Run(WindowsScreenCapture.FrozenVirtualScreen, cancellationToken);
-        if (await selector.SelectAsync(frozen, cancellationToken) is not { IsEmpty: false } region)
-        {
-            throw new OperationCanceledException("The region selection was cancelled.");
-        }
-
+        ScreenRect region = await RegionOfAsync(options.Source, cancellationToken);
         IReadOnlyList<ScreenRect> monitors;
         using (DpiScope.PerMonitor())
         {
@@ -86,6 +81,33 @@ public sealed class FfmpegScreenRecorder(CaptureFiles files, IRegionSelector sel
 
         _recording = recording;
         _ = WatchAsync(recording, _rawPath);
+    }
+
+    private async Task<ScreenRect> RegionOfAsync(CaptureKind source, CancellationToken cancellationToken)
+    {
+        if (source == CaptureKind.Region)
+        {
+            ScreenFrame frozen = await Task.Run(WindowsScreenCapture.FrozenVirtualScreen, cancellationToken);
+            return await selector.SelectAsync(frozen, cancellationToken) is { IsEmpty: false } area
+                ? area
+                : throw new OperationCanceledException("The region selection was cancelled.");
+        }
+
+        using DpiScope scope = DpiScope.PerMonitor();
+        return source == CaptureKind.Window ? TargetWindowBounds() : GdiScreen.CursorMonitor();
+    }
+
+    private static ScreenRect TargetWindowBounds()
+    {
+        try
+        {
+            nint window = WindowFinder.FindTarget();
+            return WindowFinder.VisibleBounds(window, WindowFinder.OuterBounds(window));
+        }
+        catch (InvalidOperationException error)
+        {
+            throw new RecordingException(error.Message);
+        }
     }
 
     /// <summary>The moment ffmpeg has written its first bytes, which it does when the first frame arrives; at the wait limit it is just now.</summary>
