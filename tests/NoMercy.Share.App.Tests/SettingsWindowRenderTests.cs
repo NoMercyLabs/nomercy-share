@@ -60,6 +60,61 @@ public sealed class SettingsWindowRenderTests
         }
     });
 
+    [Fact]
+    public void TheRecordingSectionHasTheShowBarSwitchOffAtFirst() => HeadlessApp.Run(() => WithRecordingSection((window, _, _) =>
+    {
+        ToggleSwitch shown = ShowBarSwitch(window);
+        Assert.True(shown.IsEffectivelyVisible);
+        Assert.False(shown.IsChecked);
+
+        window.GetVisualDescendants().OfType<ScrollViewer>().First(viewer => viewer.Extent.Height > viewer.Viewport.Height).ScrollToEnd();
+        Dispatcher.UIThread.RunJobs();
+        using Avalonia.Media.Imaging.WriteableBitmap? frame = window.CaptureRenderedFrame();
+        Assert.NotNull(frame);
+        if (Environment.GetEnvironmentVariable(RenderFolderVariable) is { Length: > 0 } folder)
+        {
+            frame.Save(Path.Combine(folder, "settings-recording.png"));
+        }
+    }));
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TheShowBarSwitchIsKeptBySaveAndDroppedByCancel(bool save) => HeadlessApp.Run(() => WithRecordingSection((window, model, file) =>
+    {
+        ShowBarSwitch(window).IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(file.Load().Recording.ShowTool);
+
+        if (save)
+        {
+            model.Save();
+        }
+        else
+        {
+            model.Cancel();
+        }
+
+        Assert.Equal(save, file.Load().Recording.ShowTool);
+    }));
+
+    private static ToggleSwitch ShowBarSwitch(SettingsWindow window) => Assert.Single(
+        window.GetVisualDescendants().OfType<ToggleSwitch>(), toggle => AutomationName(toggle) == "Show bar in video");
+
+    private static void WithRecordingSection(Action<SettingsWindow, SettingsViewModel, SettingsFile> test)
+    {
+        (SettingsWindow window, string root) = Open(SettingsSection.Recording, width: null);
+        try
+        {
+            test(window, (SettingsViewModel)window.DataContext!, new SettingsFile(Path.Combine(root, "settings.json")));
+        }
+        finally
+        {
+            window.Close();
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     /// <summary>The bar's rules: no OS frame, one surface with the bar's fill, ring and shadow, no box inside a box, and no accent at rest.</summary>
     [Theory]
     [InlineData(SettingsSection.Sharing)]

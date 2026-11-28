@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using NoMercy.Share.App.Icons;
 using NoMercy.Share.Core;
 using NoMercy.Share.Core.Bar;
 using NoMercy.Share.Core.Capture;
@@ -17,14 +18,56 @@ public sealed class BarMenuRenderTests
 {
     private const string RenderFolderVariable = "SHARE_RENDER_DIR";
     private const double MinimumHitSize = 36;
+    private const double MaximumRecordMenuWidth = 420;
 
     [Fact]
     public void TheScreenshotMenuOffersAreaWindowAndFullScreen() => HeadlessApp.Run(() =>
-        RenderMenu(BarAction.Screenshot, "ScreenshotMenu", ["Area", "Window", "Full screen"], "share-menu-screenshot.png"));
+        RenderMenu(BarAction.Screenshot, "ScreenshotMenu", ["Area", "Window", "Full screen"], "narrow-screenshot-menu.png"));
 
     [Fact]
     public void TheRecordMenuOffersTargetsSoundSwitchesAndStart() => HeadlessApp.Run(() =>
-        RenderMenu(BarAction.Record, "RecordMenu", ["Area", "Window", "Full screen", "Microphone", "Desktop audio", "Show bar in video", "Start"], "share-menu-record.png"));
+        RenderMenu(BarAction.Record, "RecordMenu", ["Area", "Window", "Full screen", "Microphone", "Desktop audio", "Start"], "narrow-record-menu.png"));
+
+    [Theory]
+    [InlineData(BarAction.Screenshot, "ScreenshotMenu")]
+    [InlineData(BarAction.Record, "RecordMenu")]
+    public void AMenuShowsNoTextExceptStart(BarAction open, string panel) => HeadlessApp.Run(() => WithMenu(open, panel, (_, menu) =>
+    {
+        string?[] texts = [.. menu.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text)];
+
+        Assert.Equal(open == BarAction.Record ? ["Start"] : [], texts);
+    }));
+
+    [Theory]
+    [InlineData(BarAction.Screenshot, "ScreenshotMenu", new[] { "Area", "Window", "Full screen" })]
+    [InlineData(BarAction.Record, "RecordMenu", new[] { "Area", "Window", "Full screen", "Microphone: On", "Desktop audio: Off", "Start" })]
+    public void EveryMenuButtonHasATooltip(BarAction open, string panel, string[] tips) => HeadlessApp.Run(() => WithMenu(open, panel, (_, menu) =>
+    {
+        Assert.Equal(tips, menu.GetVisualDescendants().OfType<Button>().Select(button => ToolTip.GetTip(button) as string));
+    }));
+
+    [Fact]
+    public void ASoundSwitchThatIsOffShowsACrossedOutIcon() => HeadlessApp.Run(() => WithMenu(BarAction.Record, "RecordMenu", (_, menu) =>
+    {
+        string[] icons = [.. menu.GetVisualDescendants().OfType<MoooomIcon>().Where(icon => icon.IsEffectivelyVisible).Select(icon => icon.Kind)];
+
+        Assert.Equal(["crossHair", "macOsWindow", "monitor", "mic", "volumeMuted"], icons);
+    }));
+
+    [Fact]
+    public void TheRecordMenuIsNarrow() => HeadlessApp.Run(() => WithMenu(BarAction.Record, "RecordMenu", (_, menu) =>
+    {
+        Assert.True(menu.Bounds.Width < MaximumRecordMenuWidth, $"the record menu is {menu.Bounds.Width} units wide");
+    }));
+
+    private static void WithMenu(BarAction open, string panel, Action<BarWindow, Border> test) => WithBar(null, (window, bar) =>
+    {
+        window.Summon();
+        Pump(bar.RunAsync(open));
+        Dispatcher.UIThread.RunJobs();
+
+        test(window, window.FindControl<Border>(panel)!);
+    });
 
     [Fact]
     public void TheBarKeepsItselfOutOfCapturesOnceItIsOpen() => HeadlessApp.Run(() =>
